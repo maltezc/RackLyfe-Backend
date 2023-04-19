@@ -64,6 +64,7 @@ class User(db.Model):
         default=5.0
     )
 
+
     # TODO: owned_books_for_rent
 
     # TODO: others_books_rented
@@ -81,6 +82,11 @@ class User(db.Model):
     #     secondary='booker',
     #     backref='owner'
     # )
+
+
+    books = db.relationship('Book', backref='user')
+    reservations = db.relationship('Reservation', backref='user')
+
 
     def serialize(self):
         """ returns self """
@@ -201,7 +207,6 @@ class Message(db.Model):
             "recipient_uid": self.recipient_uid,
             "text": self.text,
             "timestamp": self.timestamp
-
         }
 
 
@@ -256,6 +261,7 @@ class Book(db.Model):
     condition = db.Column(
         db.Text,
         nullable=False
+
         # TODO: select form (like new, fair, old af)
     )
 
@@ -263,6 +269,9 @@ class Book(db.Model):
         db.Integer,
         nullable=False  # select from $1-$10 / week
     )
+
+
+    reservations = db.relationship('Reservation', backref='book')
 
     def serialize(self):
         """ returns self """
@@ -278,7 +287,6 @@ class Book(db.Model):
             "genre": self.genre,
             "condition": self.condition,
             "price": self.price
-
         }
 
 
@@ -336,6 +344,8 @@ class Reservation(db.Model):
     total = db.Column(
         db.Integer,
     )
+
+
 
     def serialize(self):
         """ returns self """
