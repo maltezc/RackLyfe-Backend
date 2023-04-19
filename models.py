@@ -10,8 +10,8 @@ db = SQLAlchemy()
 
 # TODO: USER DEFAULT IMAGE URL
 DEFAULT_USER_IMAGE_URL = "testimage.jpg"
-# TODO: POOL DEFAULT IMAGE URL
-DEFAULT_POOL_IMAGE_URL = ""
+# TODO: Book DEFAULT IMAGE URL
+DEFAULT_BOOK_IMAGE_URL = ""
 
 
 # USERS
@@ -20,15 +20,9 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    username = db.Column(
-        db.Text,
-        nullable=False,
-        unique=True,
+    user_uid = db.Column(
+        db.Integer,
         primary_key=True
-    )
-
-    image_url = db.Column(
-        db.Text,
     )
 
     email = db.Column(
@@ -37,23 +31,53 @@ class User(db.Model):
         unique=True,
     )
 
-    location = db.Column(
-        db.Text,
-    )
-
     password = db.Column(
         db.Text,
         nullable=False,
     )
 
-    # reserved_pools = db.relationship(
-    #     'Pools',
+    firstname = db.Column(
+        db.Text,
+        nullable=False,
+    )
+
+    lastname = db.Column(
+        db.Text,
+        nullable=False,
+    )
+
+    image_url = db.Column(
+        db.Text,
+    )
+
+    address = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    preferred_trade_location = db.Column(
+        db.Text
+    )
+
+    user_rating = db.Column(
+        db.Integer,
+        default=5.0
+    )
+
+    # TODO: owned_books_for_rent
+
+    # TODO: others_books_rented
+
+    # TODO: reservations
+
+    # reserved_books = db.relationship(
+    #     'Books',
     #     secondary='owner',
     #     backref='booker'
     # )
 
-    # owned_pools = db.relationship(
-    #     'Pools',
+    # owned_books = db.relationship(
+    #     'Books',
     #     secondary='booker',
     #     backref='owner'
     # )
@@ -61,17 +85,23 @@ class User(db.Model):
     def serialize(self):
         """ returns self """
         return {
-            "username" : self.username,
-            "email" : self.email,
-            "location" : self.location,
-            "image_url" : self.image_url,
 
-            # "reserved_pools" : self.reserved_pools,
-            # "owned_pools" : self.owned_pools
+            "user_uid": self.user_uid,
+            "email": self.email,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "image_url": self.image_url,
+            "address": self.address,
+            "preferred_trade_location": self.preferred_trade_location,
+            "user_rating": self.user_rating
+
+
+            # "owned_books" : self.owned_books
+            # "reserved_books" : self.reserved_books,
         }
 
     @classmethod
-    def signup(cls, username, email, password, location, image_url=DEFAULT_USER_IMAGE_URL):
+    def signup(cls, email, password, firstname, lastname, address, preferred_trade_location, image_url=DEFAULT_USER_IMAGE_URL):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -80,18 +110,20 @@ class User(db.Model):
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
         user = User(
-            username=username,
             email=email,
             password=hashed_pwd,
             image_url=image_url,
-            location=location
+            firstname=firstname,
+            lastname=lastname,
+            address=address,
+            preferred_trade_location=preferred_trade_location
         )
 
         db.session.add(user)
         return user
 
     @classmethod
-    def authenticate(cls, username, password):
+    def authenticate(cls, email, password):
         """Find user with `username` and `password`.
 
         This is a class method (call it on the class, not an individual user.)
@@ -102,7 +134,7 @@ class User(db.Model):
         False.
         """
 
-        user = cls.query.filter_by(username=username).first()
+        user = cls.query.filter_by(email=email).first()
 
         if user:
             is_auth = bcrypt.check_password_hash(user.password, password)
@@ -112,7 +144,7 @@ class User(db.Model):
         return False
 
     def __repr__(self):
-        return f"<User #{self.username}, {self.email}>"
+        return f"<User #{self.email}"
 
 
 # Messages
@@ -121,40 +153,35 @@ class Message(db.Model):
 
     __tablename__ = "messages"
 
-    id = db.Column(
+    message_uid = db.Column(
         db.Integer,
         primary_key=True
     )
 
+    # listing message is associated with
+    res_uid = db.Column(
+        db.Integer,
+        nullable=False,
+    )
+
     # userid to
-    sender_username = db.Column(
+    sender_uid = db.Column(
         db.Text,
-        db.ForeignKey('users.username'),
+        db.ForeignKey('users.user_uid'),
         nullable=False
     )
 
     # userid from
-    recipient_username = db.Column(
+    recipient_uid = db.Column(
         db.Text,
-        db.ForeignKey('users.username'),
+        db.ForeignKey('users.user_uid'),
         nullable=False
     )
 
     # text
-    title = db.Column(
+    text = db.Column(
         db.Text,
         # nullable=False,
-    )
-    # text
-    body = db.Column(
-        db.Text,
-        nullable=False,
-    )
-
-    #listing message is associated with
-    listing = db.Column(
-        db.Integer,
-        nullable=False,
     )
 
     # timestamp
@@ -167,52 +194,32 @@ class Message(db.Model):
     def serialize(self):
         """ returns self """
         return {
-            "id" : self.id,
-            "sender_username" : self.sender_username,
-            "recipient_username" : self.recipient_username,
-            "body" : self.body,
-            "title" : self.title,
-            "listing" : self.listing,
-            "timestamp" : self.timestamp
+
+            "message_uid": self.message_uid,
+            "res_uid": self.res_uid,
+            "sender_uid": self.sender_uid,
+            "recipient_uid": self.recipient_uid,
+            "text": self.text,
+            "timestamp": self.timestamp
 
         }
 
 
-# POOLS
+# BOOKS
 
-class Pool(db.Model):
-    """ Pool in the system """
+class Book(db.Model):
+    """ Book in the system """
 
-    __tablename__ = 'pools'
+    __tablename__ = 'books'
 
-    id = db.Column(
+    book_uid = db.Column(
         db.Integer,
         primary_key=True,
     )
 
-    owner_username = db.Column(
+    owner_uid = db.Column(
         db.Text,
-        db.ForeignKey("users.username"),
-        nullable=False,
-    )
-
-    rate = db.Column(
-        db.Numeric(10,2),
-        nullable=False
-    )
-
-    size = db.Column(
-        db.Text,
-        nullable=False,
-    )
-
-    description = db.Column(
-        db.Text,
-        nullable=False,
-    )
-
-    city = db.Column(
-        db.Text,
+        db.ForeignKey("users.user_uid"),
         nullable=False,
     )
 
@@ -226,39 +233,78 @@ class Pool(db.Model):
         nullable=False,
     )
 
+    title = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    author = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    isbn = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    genre = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    condition = db.Column(
+        db.Text,
+        nullable=False
+        # TODO: select form (like new, fair, old af)
+    )
+
+    price = db.Column(
+        db.Integer,
+        nullable=False  # select from $1-$10 / week
+    )
 
     def serialize(self):
         """ returns self """
         return {
-            "id" : self.id,
-            "owner_username" : self.owner_username,
-            "rate" : self.rate,
-            "size" : self.size,
-            "description" : self.description,
-            "city" : self.city,
+
+            "book_uid": self.book_uid,
+            "owner_uid": self.owner_uid,
             "orig_image_url": self.orig_image_url,
-            "small_image_url": self.small_image_url
+            "small_image_url": self.small_image_url,
+            "title": self.title,
+            "author": self.author,
+            "isbn": self.isbn,
+            "genre": self.genre,
+            "condition": self.condition,
+            "price": self.price
+
         }
 
 
 class Reservation(db.Model):
-    """ Connection of a User and Pool that they reserve """
+    """ Connection of a User and Book that they reserve """
 
     __tablename__ = "reservations"
 
-    id = db.Column(
+    reservation_uid = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    booked_username = db.Column(
-        db.Text,
-        db.ForeignKey("users.username", ondelete="CASCADE"),
+    book_uid = db.Column(
+        db.Integer,
+        db.ForeignKey("books.book_uid", ondelete="CASCADE"),
     )
 
-    pool_id = db.Column(
-        db.Integer,
-        db.ForeignKey("pools.id", ondelete="CASCADE"),
+    owner_uid = db.Column(
+        db.Text,
+        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+    )
+
+    renter_uid = db.Column(
+        db.Text,
+        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
     reservation_date_created = db.Column(
@@ -271,21 +317,41 @@ class Reservation(db.Model):
         db.DateTime,
         nullable=False,
     )
+
     end_date = db.Column(
         db.DateTime,
         nullable=False,
     )
 
+    status = db.Column(
+        db.Text,
+        default="Booked"
+    )
+
+    rental_period = db.Column(
+        db.Text,
+        default="Week"
+    )
+
+    total = db.Column(
+        db.Integer,
+    )
+
     def serialize(self):
         """ returns self """
         return {
-            "id" : self.id,
-            "username" : self.booked_username,
-            "pool_id" : self.pool_id,
+            "reservation_uid" : self.reservation_uid,
+            "book_uid" : self.book_uid,
+            "owner_uid" : self.owner_uid,
+            "renter_uid" : self.renter_uid,
             "reservation_date_created" : self.reservation_date_created,
             "start_date" : self.start_date,
             "end_date" : self.end_date,
+            "status" : self.status,
+            "rental_period" : self.rental_period,
+            "total" : self.total
         }
+
 
 class UserImage(db.Model):
     """ Connection from the user to their profile images. """
@@ -303,34 +369,35 @@ class UserImage(db.Model):
 
     image_path = db.Column(
         db.Text,
-        nullable = False
+        nullable=False
     )
 
-class PoolImage(db.Model):
-    """ One to many table connecting a pool to many image paths """
 
-    __tablename__ = "pool_images"
+class BookImage(db.Model):
+    """ One to many table connecting a book to many image paths """
+
+    __tablename__ = "book_images"
 
     id = db.Column(
         db.Integer,
         primary_key=True
     )
-    pool_owner = db.Column(
+    book_owner = db.Column(
         db.Text,
         db.ForeignKey("users.username", ondelete="CASCADE"),
     )
 
     image_url = db.Column(
         db.Text,
-        nullable = False
+        nullable=False
     )
 
     def serialize(self):
         """ returns self """
         return {
-            "id" : self.id,
-            "pool_owner" : self.pool_owner,
-            "image_url" : self.image_url,
+            "id": self.id,
+            "book_owner": self.book_owner,
+            "image_url": self.image_url,
         }
 
 
