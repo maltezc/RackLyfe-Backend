@@ -14,7 +14,7 @@ DEFAULT_USER_IMAGE_URL = "testimage.jpg"
 DEFAULT_BOOK_IMAGE_URL = ""
 
 
-#region USERS
+#region Users
 class User(db.Model):
     """User in the system."""
 
@@ -50,7 +50,7 @@ class User(db.Model):
         db.Text,
     )
 
-    address_street_address = db.Column(
+    address_street = db.Column(
         db.Text,
         nullable=False
     )
@@ -99,7 +99,7 @@ class User(db.Model):
     # )
 
 
-    books = db.relationship('Book', backref='user')
+    owned_books = db.relationship('Book', backref='user')
     reservations = db.relationship('Reservation', backref='user')
 
 
@@ -168,64 +168,31 @@ class User(db.Model):
         return f"<User #{self.email}"
 #endregion
 
-#region Messages
-class Message(db.Model):
-    "Messages between users in the system"
 
-    __tablename__ = "messages"
+#region userimage
+class UserImage(db.Model):
+    """ Connection from the user to their profile images. """
 
-    message_uid = db.Column(
+    __tablename__ = "user_images"
+
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
-
-    # listing message is associated with
-    res_uid = db.Column(
-        db.Integer,
-        nullable=False,
+    username = db.Column(
+        db.Text,
+        db.ForeignKey("users.username", ondelete="CASCADE"),
     )
 
-    # userid to
-    sender_uid = db.Column(
+    image_path = db.Column(
         db.Text,
-        db.ForeignKey('users.user_uid'),
         nullable=False
     )
-
-    # userid from
-    recipient_uid = db.Column(
-        db.Text,
-        db.ForeignKey('users.user_uid'),
-        nullable=False
-    )
-
-    # text
-    text = db.Column(
-        db.Text,
-        # nullable=False,
-    )
-
-    # timestamp
-    timestamp = db.Column(
-        db.DateTime,
-        nullable=False,
-        default=datetime.utcnow,
-    )
-
-    def serialize(self):
-        """ returns self """
-        return {
-
-            "message_uid": self.message_uid,
-            "res_uid": self.res_uid,
-            "sender_uid": self.sender_uid,
-            "recipient_uid": self.recipient_uid,
-            "text": self.text,
-            "timestamp": self.timestamp
-        }
 #endregion
 
-#region books
+
+
+#region Books
 class Book(db.Model):
     """ Book in the system """
 
@@ -304,6 +271,37 @@ class Book(db.Model):
         }
 #endregion
 
+
+#region bookimage
+class BookImage(db.Model):
+    """ One to many table connecting a book to many image paths """
+
+    __tablename__ = "book_images"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+    book_owner = db.Column(
+        db.Text,
+        db.ForeignKey("users.username", ondelete="CASCADE"),
+    )
+
+    image_url = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    def serialize(self):
+        """ returns self """
+        return {
+            "id": self.id,
+            "book_owner": self.book_owner,
+            "image_url": self.image_url,
+        }
+#endregion
+
+
 #region reservations
 class Reservation(db.Model):
     """ Connection of a User and Book that they reserve """
@@ -379,55 +377,64 @@ class Reservation(db.Model):
 
 #endregion
 
-#region userimage
-class UserImage(db.Model):
-    """ Connection from the user to their profile images. """
 
-    __tablename__ = "user_images"
+#region Messages
+class Message(db.Model):
+    "Messages between users in the system"
 
-    id = db.Column(
+    __tablename__ = "messages"
+
+    message_uid = db.Column(
         db.Integer,
         primary_key=True
     )
-    username = db.Column(
-        db.Text,
-        db.ForeignKey("users.username", ondelete="CASCADE"),
-    )
 
-    image_path = db.Column(
-        db.Text,
-        nullable=False
-    )
-#endregion
-
-#region bookimage
-class BookImage(db.Model):
-    """ One to many table connecting a book to many image paths """
-
-    __tablename__ = "book_images"
-
-    id = db.Column(
+    # listing message is associated with
+    reservation_uid = db.Column(
         db.Integer,
-        primary_key=True
-    )
-    book_owner = db.Column(
-        db.Text,
-        db.ForeignKey("users.username", ondelete="CASCADE"),
+        nullable=False,
     )
 
-    image_url = db.Column(
+    # userid to
+    sender_uid = db.Column(
         db.Text,
+        db.ForeignKey('users.user_uid'),
         nullable=False
+    )
+
+    # userid from
+    recipient_uid = db.Column(
+        db.Text,
+        db.ForeignKey('users.user_uid'),
+        nullable=False
+    )
+
+    # text
+    message_text = db.Column(
+        db.Text,
+        # nullable=False,
+    )
+
+    # timestamp
+    timestamp = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
     )
 
     def serialize(self):
         """ returns self """
         return {
-            "id": self.id,
-            "book_owner": self.book_owner,
-            "image_url": self.image_url,
+
+            "message_uid": self.message_uid,
+            "res_uid": self.res_uid,
+            "sender_uid": self.sender_uid,
+            "recipient_uid": self.recipient_uid,
+            "text": self.text,
+            "timestamp": self.timestamp
         }
 #endregion
+
 
 
 # db
