@@ -14,7 +14,7 @@ DEFAULT_USER_IMAGE_URL = "testimage.jpg"
 DEFAULT_BOOK_IMAGE_URL = ""
 
 
-# USERS
+#region USERS
 class User(db.Model):
     """User in the system."""
 
@@ -50,7 +50,22 @@ class User(db.Model):
         db.Text,
     )
 
-    address = db.Column(
+    address_street_address = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    address_city = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    address_state = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    address_zipcode = db.Column(
         db.Text,
         nullable=False
     )
@@ -151,9 +166,9 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User #{self.email}"
+#endregion
 
-
-# Messages
+#region Messages
 class Message(db.Model):
     "Messages between users in the system"
 
@@ -208,10 +223,9 @@ class Message(db.Model):
             "text": self.text,
             "timestamp": self.timestamp
         }
+#endregion
 
-
-# BOOKS
-
+#region books
 class Book(db.Model):
     """ Book in the system """
 
@@ -288,8 +302,9 @@ class Book(db.Model):
             "condition": self.condition,
             "price": self.price
         }
+#endregion
 
-
+#region reservations
 class Reservation(db.Model):
     """ Connection of a User and Book that they reserve """
 
@@ -362,7 +377,9 @@ class Reservation(db.Model):
             "total" : self.total
         }
 
+#endregion
 
+#region userimage
 class UserImage(db.Model):
     """ Connection from the user to their profile images. """
 
@@ -381,8 +398,9 @@ class UserImage(db.Model):
         db.Text,
         nullable=False
     )
+#endregion
 
-
+#region bookimage
 class BookImage(db.Model):
     """ One to many table connecting a book to many image paths """
 
@@ -409,6 +427,7 @@ class BookImage(db.Model):
             "book_owner": self.book_owner,
             "image_url": self.image_url,
         }
+#endregion
 
 
 # db

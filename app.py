@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Message, Pool, Reservation, PoolImage
+from models import db, connect_db, User, Message, Book, Reservation, BookImage
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -37,18 +37,19 @@ app.config["JWT_IDENTITY_CLAIM"] = "username"
 connect_db(app)
 db.create_all()
 
-#######################  AUTH ENDPOINTS START  ################################
+
+#region AUTH ENDPOINTS START
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
     """ Login user, returns JWT if authenticated """
 
     data = request.json
-    username = data['username']
+    email = data['email']
     password = data['password']
 
-    user = User.authenticate(username, password)
-    token = create_access_token(identity=user.username)
+    user = User.authenticate(email, password)
+    token = create_access_token(identity=user.email)
 
     return jsonify(token=token)
 
@@ -58,7 +59,7 @@ def create_user():
     """Add user, and return data about new user.
 
     Returns JSON like:
-        {user: {id, email, username, image_url, location, reserved_pools, owned_pools}}
+        {user: {user_uid, email, image_url, firstname, lastname, address, preferred_trade_location}}
     """
     print("form", request.form)
     try:
@@ -77,17 +78,19 @@ def create_user():
             # print("request.forms.items", request.form.items())
 
         user = User.signup(
-            username=form['username'],
+            username=form['email'],
             password=form['password'],
-            email=form['email'],
-            location=form['location'],
+            firstname=form['firstname'],
+            lastname=form['lastname'],
+            address=form['address'],
+            preferred_trade_location=form['preferred_trade_location'],
             image_url=url
         )
         db.session.commit()
 
 
         # user = User.authenticate(username, password)
-        token = create_access_token(identity=user.username)
+        token = create_access_token(identity=user.email)
         print("jsonify token: ", jsonify(token=token))
 
         return jsonify(token=token)
@@ -99,17 +102,18 @@ def create_user():
         print("Error", error)
         return (jsonify({"error": "Failed to signup"}), 424)
 
+#endregion
 
-################################################################################
-#######################  USERS ENDPOINTS START  ################################
+
+#region USERS ENDPOINTS START
 
 @app.get("/api/users")
 def list_users():
     """Return all users in system.
 
     Returns JSON like:
-        {users: [{id, email, username, image_url,
-        location, reserved_pools, owned_pools}, ...]}
+        {users: [{user_uid, email, firstname, lastname, image_url,
+        location, books, reservations}, ...]}
     """
     users = User.query.all()
 
@@ -117,31 +121,31 @@ def list_users():
 
     return jsonify(users=serialized)
 
-@app.get('/api/users/<username>')
-def show_user(username):
+@app.get('/api/users/<int:user_uid>')
+def show_user(user_uid):
     """Show user profile.
 
     Returns JSON like:
-        {user: id, email, username, image_url, location, reserved_pools, owned_pools}
+        {user: user_uid, email, image_url, firstname, lastname, address, owned_books, reservations}
     """
-    user = User.query.get_or_404(username)
+    user = User.query.get_or_404(user_uid)
     user = user.serialize()
 
     return jsonify(user=user)
 
 
-@app.patch('/api/users/<username>')
+@app.patch('/api/users/<int:user_uid>')
 @jwt_required()
-def update_user(username):
+def update_user(user_uid):
     """ update user information
 
     Returns JSON like:
-        {user: id, email, username, image_url, location, reserved_pools, owned_pools}
+        {user: user_uid, email, firstname, lastname, image_url, location, owned_books, reservations}
     """
 
     current_user = get_jwt_identity()
-    if current_user == username:
-        user = User.query.get_or_404(username)
+    if current_user == user_uid:
+        user = User.query.get_or_404(user_uid)
         data = request.json
         # TODO: ADD "CHANGE PASSWORD FEATURE LATER"
         user.email = data['email'],
@@ -155,14 +159,14 @@ def update_user(username):
     return (jsonify({"error": "not authorized"}), 401)
 
 
-@app.delete('/api/users/delete/<username>')
+@app.delete('/api/users/delete/<int:user_uid>')
 @jwt_required()
-def delete_user(username):
+def delete_user(user_uid):
     """Delete user. """
 
     current_user = get_jwt_identity()
-    if current_user == username:
-        user = User.query.get_or_404(username)
+    if current_user == user_uid:
+        user = User.query.get_or_404(user_uid)
 
         db.session.delete(user)
         db.session.commit()
@@ -171,59 +175,74 @@ def delete_user(username):
     return (jsonify({"error": "not authorized"}), 401)
 
 
-@app.get('/api/users/<username>/pools')
-def list_pools_of_user(username):
-    """Show pools of logged in user.
+@app.get('/api/users/<user_uid>/books')
+def list_pools_of_user(user_uid):
+    """Show books of logged in user.
 
     Returns JSON like:
-        {pools: {id, owner_id, rate, size, description, address, image_url}, ...}
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    pools = Pool.query.filter(Pool.owner_username == username)
-    serialized = [pool.serialize() for pool in pools]
+    books = Book.query.filter(Book.owner_uid == user_uid)
+    serialized = [book.serialize() for book in books]
 
+    return jsonify(books=serialized)
+
+#endregion
+
+
+#region BOOKS ENDPOINTS START
+
+@app.get("/api/books")
+def list_books():
+    """Return all books in system.
+
+    Returns JSON like:
+       {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+    books = Book.query.all()
+
+    serialized = [book.serialize() for book in books]
     return jsonify(pools=serialized)
 
 
-################################################################################
-######################## POOLS ENDPOINTS START #################################
-
-@app.get("/api/pools")
-def list_pools():
-    """Return all pools in system.
+@app.get('/api/books/<int:book_uid>')
+def show_pool_by_id(book_uid):
+    """Return information on a specific book.
 
     Returns JSON like:
-        {pools: {id, owner_id, rate, size, description, address, small_image_url}, ...}
+        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    pools = Pool.query.all()
+    book = Book.query.get_or_404(book_uid)
+    serialized = book.serialize()
 
-    serialized = [pool.serialize() for pool in pools]
-    return jsonify(pools=serialized)
+    return jsonify(book=serialized)
 
-
-@app.get('/api/pools/<int:pool_id>')
-def show_pool_by_id(pool_id):
-    """Show information on a specific pool.
+@app.get('/api/books/<int:zipcode>')
+def show_books_by_zipcode(zipcode):
+    """Return books in a specific zipcode.
 
     Returns JSON like:
-        {pool: owner_username, rate, size, description, address}
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    pool = Pool.query.get_or_404(pool_id)
-    pool = pool.serialize()
 
-    return jsonify(pool=pool)
+    books = Book.query.filter(User.address_zipcode == zipcode)
+    serialized = [book.serialize() for book in books]
 
-@app.get('/api/pools/<city>')
-def show_pool_by_city(city):
-    """Show information on a specific pool.
+    return jsonify(books=serialized)
+
+
+@app.get('/api/books/<city>')
+def show_books_by_city(city):
+    """Return books in a specific city.
 
     Returns JSON like:
-        {pool: owner_username, rate, size, description, address}
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
-    pools = Pool.query.filter(Pool.city == city)
-    serialized = [pool.serialize() for pool in pools]
+    books = Book.query.filter(User.address_city == city)
+    serialized = [book.serialize() for book in books]
 
-    return jsonify(pools=serialized)
+    return jsonify(books=serialized)
 
 # @app.post("/api/pools")
 # @jwt_required()
@@ -255,15 +274,16 @@ def show_pool_by_city(city):
 
 #     return (jsonify({"error": "not authorized"}), 401)
 
-@app.post("/api/pools")
+# @app.post("/api/users/<int:user_uid>/books")
+@app.post("/api/books")
 @jwt_required()
-def create_pool():
-    """Add pool, and return data about new pool.
+def create_book():
+    """Add book, and return data about new book.
 
     Returns JSON like:
-        {pool: {id, owner_id, rate, size, description, address, orig_image_url, small_image_url}}
+        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
     """
-    print("I'm in api/pools")
+    print("I'm in api/books")
     current_user = get_jwt_identity()
     if current_user:
         try:
@@ -276,113 +296,268 @@ def create_pool():
             if(file):
                 [orig_url, small_url] = upload_to_aws(file)
 
-            pool = Pool(
-                owner_username=current_user,
-                rate=form['rate'],
-                size=form['size'],
-                description=form['description'],
-                city=form['city'],
+            book = Book(
+                owner_uid=current_user,
+                title=form['title'],
+                author=form['author'],
+                isbn=form['isbn'],
+                genre=form['genre'],
+                condition=form['condition'],
+                price=form['price'],
                 orig_image_url=orig_url,
                 small_image_url=small_url
             )
 
-            db.session.add(pool)
+            db.session.add(book)
             db.session.commit()
 
-            return (jsonify(pool=pool.serialize()), 201)
+            return (jsonify(book=book.serialize()), 201)
         except Exception as error:
             print("Error", error)
-            return (jsonify({"error": "Failed to add pool"}), 401)
+            return (jsonify({"error": "Failed to add book"}), 401)
 
 
-@app.patch('/api/pools/<int:pool_id>')
+@app.patch('/api/books/<int:book_uid>')
 @jwt_required()
-def update_pool(pool_id):
-    """ update pool information
+def update_book(book_uid):
+    """ Update book information
 
     Returns JSON like:
-    {pool: owner_username, rate, size, description, address}
+        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
 
-    Authorization: must be owner of pool
+    Authorization: must be owner of book
     """
 
     current_user = get_jwt_identity()
-    pool = Pool.query.get_or_404(pool_id)
-    print("pool owner", pool.owner_username)
-    if current_user == pool.owner_username:
+    book = Book.query.get_or_404(book_uid)
+    print("book owner", book.owner_username)
+    if current_user == book.owner_username:
         data = request.json
 
-        pool.rate = data['rate'],
-        pool.size = data['size'],
-        pool.description = data['description'],
-        pool.address = data['address']
+        book.orig_image_url = data['orig_image_url'],
+        book.small_image_url = data['small_image_url'],
+        book.title = data['title'],
+        book.author = data['author'],
+        book.isbn = data['isbn'],
+        book.genre = data['genre'],
+        book.condition = data['condition'],
+        book.price = data['price'],
 
-        db.session.add(pool)
+        db.session.add(book)
         db.session.commit()
 
-        return (jsonify(pool=pool.serialize()), 200)
+        return (jsonify(book=book.serialize()), 200)
 
     return (jsonify({"error": "not authorized"}), 401)
 
-@app.delete('/api/pools/<int:pool_id>')
+@app.delete('/api/books/<int:book_uid>')
 @jwt_required()
-def delete_pool(pool_id):
-    """ update pool information
+def delete_book(book_uid):
+    """ update book information
 
     Returns JSON like:
-    {pool: owner_username, rate, size, description, address}
+    {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
 
-    Authorization: must be owner of pool
+    Authorization: must be owner of book
     """
 
     current_user = get_jwt_identity()
-    pool = Pool.query.get_or_404(pool_id)
-    if current_user == pool.owner_username:
+    book = Book.query.get_or_404(book_uid)
+    if current_user == book.owner_uid:
 
-        db.session.delete(pool)
+        db.session.delete(book)
         db.session.commit()
 
-        return (jsonify("Pool successfully deleted"), 200)
+        return (jsonify("Book successfully deleted"), 200)
 
     return (jsonify({"error": "not authorized"}), 401)
 
-@app.post("/api/pools/<int:pool_id>/images")
+@app.post("/api/books/<int:book_uid>/images")
 @jwt_required()
-def add_pool_image(pool_id):
-    """Add pool image, and return data about pool image.
+def add_book_image(book_uid):
+    """Add book image, and return data about book image.
 
     Returns JSON like:
-        {pool_image: {id, pool_owner, image_url }}
+        {book_image: {id, book_owner, image_url }}
     """
     # TODO: if we get an array of files, then we could do a list comprehension where
     # we use the helper function and add that to the table for each one in the comprehension
 
     current_user = get_jwt_identity()
-    pool = Pool.query.get_or_404(pool_id)
-    if current_user == pool.owner_username:
+    book = Book.query.get_or_404(book_uid)
+    if current_user == book.owner_username:
         file = request.files['file']
         url = upload_to_aws(file) # TODO: refactor to account for [orig_size_img, small_size_img]
 
-        pool_image = PoolImage(
-            pool_owner=current_user,
+        book_image = BookImage(
+            book_owner=current_user,
             image_url=url
         )
 
-        db.session.add(pool_image)
+        db.session.add(book_image)
         db.session.commit()
 
-        return (jsonify(pool_image=pool_image.serialize()), 201)
+        return (jsonify(book_image=book_image.serialize()), 201)
 
     return (jsonify({"error": "not authorized"}), 401)
 
-################################################################################
-#######################  MESSAGES ENDPOINTS START  #############################
+#endregion
 
+
+#region RESERVATIONS ENDPOINTS START
+
+@app.post("/api/reservations/<int:book_uid>")
+@jwt_required()
+def create_reservation(book_uid):
+    """ Creates a reservation for the pool you looking at if you are logged in
+
+    Returns JSON like:
+        {reservation: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}
+    """
+
+    current_user = get_jwt_identity()
+
+    if current_user:
+
+        data=request.json
+
+        reservation = Reservation(
+            renter_uid=current_user,
+            book_uid=book_uid,
+            reservation_date_created=data['reservation_date_created'],
+            start_date=data['start_date'],
+            end_date=data['end_date'],
+            reservation_uid=data['reservation_uid'],
+            status=data['status'],
+            rental_period=data['rental_period'],
+            total=data['total']
+        )
+
+        db.session.add(reservation)
+        db.session.commit()
+
+        return (jsonify(reservation=reservation.serialize()), 201)
+
+    return (jsonify({"error": "not authorized"}), 401)
+
+
+@app.get("/api/reservations/<int:book_uid>")
+@jwt_required()
+def get_reservations_for_book(book_uid):
+    """ Gets all reservations assocaited with book_uid
+
+    Returns JSON like:
+        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+
+    """
+
+    current_user = get_jwt_identity()
+
+    book = Book.query.get_or_404(book_uid)
+    if(book.owner_uid==current_user):
+        reservations = (Reservation.query
+        .filter(book_uid=book_uid)
+        .order_by(Reservation.start_date.desc()))
+
+        serialized_reservations = ([reservation.serialize()
+            for reservation in reservations])
+
+        return (jsonify(reservations=serialized_reservations))
+
+    #TODO: better error handling for more diverse errors
+    return (jsonify({"error": "not authorized"}), 401)
+
+
+@app.get("/api/reservations/<int:user_uid>")
+@jwt_required()
+def get_booked_reservations_for_user_uid(user_uid):
+    """ Gets all reservations created by a user_uid
+
+    Returns JSON like:
+        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+
+    """
+
+    current_user = get_jwt_identity()
+
+    user = User.query.get_or_404(user_uid)
+    if(user.user_uid==current_user):
+        reservations = (Reservation.query
+        .filter(owner_uid=current_user)
+        .order_by(Reservation.start_date.desc()))
+
+        serialized_reservations = ([reservation.serialize()
+            for reservation in reservations])
+
+        return (jsonify(reservations=serialized_reservations))
+
+    #TODO: better error handling for more diverse errors
+    return (jsonify({"error": "not authorized"}), 401)
+
+
+@app.get("/api/reservations/<int:reservation_id>")
+@jwt_required()
+def get_booked_reservation(reservation_id):
+    """ Gets specific reservation """
+
+    current_user = get_jwt_identity()
+
+    reservation = Reservation.get_or_404(reservation_id)
+    book_uid = reservation.book_uid
+    book = Book.get_or_404(book_uid)
+
+    if ((reservation.renter_uid == current_user) or
+        (book.owner_uid == current_user)):
+
+        serialized_reservation = reservation.serialize()
+
+        return (jsonify(reservation=serialized_reservation), 200)
+
+    #TODO: better error handling for more diverse errors
+    return (jsonify({"error": "not authorized"}), 401)
+
+
+# // TODO: delete reservation
+# @app.delete("/api/reservations/<int:reservation_id>")
+# @jwt_required()
+# def delete_booked_reservation(reservation_id):
+#     """ Deletes a specific reservation if either pool owner or reservation booker """
+
+#     current_user = get_jwt_identity()
+
+#     reservation = Reservation.get_or_404(reservation_id)
+#     pool_id = reservation.pool_id
+#     pool = Pool.get_or_404(pool_id)
+
+#     if ((reservation.booked_username == current_user) or
+#         (pool.owner_username == current_user)):
+
+
+#         db.session.delete(reservation)
+#         db.session.commit()
+
+#         return (jsonify("Reservation successfully deleted"), 200)
+
+#     #TODO: better error handling for more diverse errors
+#     return (jsonify({"error": "not authorized"}), 401)
+
+#endregion
+
+
+
+
+
+#region MESSAGES ENDPOINTS START
 
 @app.get("/api/messages")
 @jwt_required()
 def list_messages():
-    """ Gets all messages outgoing and incoming to view """
+    """ Gets all messages outgoing and incoming to view
+
+    Returns JSON like:
+        {messages: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}, ...}
+
+    """
 
     current_user = get_jwt_identity()
     # inbox
@@ -404,17 +579,21 @@ def list_messages():
 @app.post("/api/messages")
 @jwt_required()
 def create_message():
-    """ Creates a message to be sent to listing owner. """
+    """ Creates a message to be sent to listing owner.
+
+    Returns JSON like:
+        {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
+    """
 
     current_user = get_jwt_identity()
 
     data = request.json
     message = Message(
-        sender_username=current_user,
-        recipient_username=data['recipient_username'],
-        title=data['title'],
-        body=data['body'],
-        listing=data['listing'],
+        reservation_uid=data['reservation_uid'],
+        sender_uid=current_user,
+        recipient_uid=data['recipient_uid'],
+        message_text=data['message_text'],
+        timestamp=data['timestamp']
     )
 
     db.session.add(message)
@@ -423,145 +602,25 @@ def create_message():
     return (jsonify(message=message.serialize()), 201)
 
 
-@app.get("/api/messages/<message_id>")
+@app.get("/api/messages/<message_uid>")
 @jwt_required
-def show_message(message_id):
-    """ Show specific message """
+def show_message(message_uid):
+    """ Show specific message
+
+    Returns JSON like:
+        {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
+    """
 
     current_user = get_jwt_identity()
 
-    message = User.query.get_404(message_id)
+    message = User.query.get_404(message_uid)
 
-    if ((message.sender_username == current_user) or
-        (message.recipient_username == current_user)):
+    if ((message.sender_uid == current_user) or
+        (message.recipient_uid == current_user)):
         message = message.serialize()
         return jsonify(message=message)
     else:
         return (jsonify({"error": "not authorized"}), 401)
 
 
-
-################################################################################
-#####################  RESERVATIONS ENDPOINTS START  ###########################
-
-@app.post("/api/reservations/<int:pool_id>")
-@jwt_required()
-def create_reservation(pool_id):
-    """ Creates a reservation for the pool you looking at if you are logged in """
-
-    current_user = get_jwt_identity()
-
-    if current_user:
-
-        data=request.json
-
-        reservation = Reservation(
-            booked_username=current_user,
-            pool_id=pool_id,
-            start_date=data['start_date'],
-            end_date=data['end_date']
-        )
-
-        db.session.add(reservation)
-        db.session.commit()
-
-        return (jsonify(reservation=reservation.serialize()), 201)
-
-    return (jsonify({"error": "not authorized"}), 401)
-
-
-@app.get("/api/reservations/<int:pool_id>")
-@jwt_required()
-def get_reservations_for_pool(pool_id):
-    """ Gets all reservations assocaited with pool_id """
-
-    current_user = get_jwt_identity()
-
-    pool = Pool.query.get_or_404(pool_id)
-    if(pool.owner_username==current_user):
-        reservations = (Reservation.query
-        .filter(pool_id=pool_id)
-        .order_by(Reservation.start_date.desc()))
-
-        serialized_reservations = ([reservation.serialize()
-            for reservation in reservations])
-
-        return (jsonify(reservations=serialized_reservations))
-
-    #TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
-
-
-@app.get("/api/reservations/<username>")
-@jwt_required()
-def get_booked_reservations_for_username(username):
-    """ Gets all reservations created by a username """
-
-    current_user = get_jwt_identity()
-
-    user = User.query.get_or_404(username)
-    if(user.username==current_user):
-        reservations = (Reservation.query
-        .filter(username=username)
-        .order_by(Reservation.start_date.desc()))
-
-        serialized_reservations = ([reservation.serialize()
-            for reservation in reservations])
-
-        return (jsonify(reservations=serialized_reservations))
-
-    #TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
-
-
-@app.get("/api/reservations/<int:reservation_id>")
-@jwt_required()
-def get_booked_reservation(reservation_id):
-    """ Gets specific reservation """
-
-    current_user = get_jwt_identity()
-
-    reservation = Reservation.get_or_404(reservation_id)
-    pool_id = reservation.pool_id
-    pool = Pool.get_or_404(pool_id)
-
-    if ((reservation.booked_username == current_user) or
-        (pool.owner_username == current_user)):
-
-        serialized_reservation = reservation.serialize()
-
-        return (jsonify(reservation=serialized_reservation), 200)
-
-    #TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
-
-
-# TODO: delete reservation
-@app.delete("/api/reservations/<int:reservation_id>")
-@jwt_required()
-def delete_booked_reservation(reservation_id):
-    """ Deletes a specific reservation if either pool owner or reservation booker """
-
-    current_user = get_jwt_identity()
-
-    reservation = Reservation.get_or_404(reservation_id)
-    pool_id = reservation.pool_id
-    pool = Pool.get_or_404(pool_id)
-
-    if ((reservation.booked_username == current_user) or
-        (pool.owner_username == current_user)):
-
-
-        db.session.delete(reservation)
-        db.session.commit()
-
-        return (jsonify("Reservation successfully deleted"), 200)
-
-    #TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
-
-
-
-
-
-########################  MESSAGES ENDPOINTS END  ##############################
+#endregion
