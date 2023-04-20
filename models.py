@@ -145,7 +145,7 @@ class User(db.Model):
 
     @classmethod
     def authenticate(cls, email, password):
-        """Find user with `username` and `password`.
+        """Find user with `email` and `password`.
 
         This is a class method (call it on the class, not an individual user.)
         It searches for a user whose password hash matches this password
@@ -179,9 +179,9 @@ class UserImage(db.Model):
         db.Integer,
         primary_key=True
     )
-    username = db.Column(
-        db.Text,
-        db.ForeignKey("users.username", ondelete="CASCADE"),
+    user_uid = db.Column(
+        db.Integer,
+        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
     image_path = db.Column(
@@ -204,7 +204,7 @@ class Book(db.Model):
     )
 
     owner_uid = db.Column(
-        db.Text,
+        db.Integer,
         db.ForeignKey("users.user_uid"),
         nullable=False,
     )
@@ -282,9 +282,9 @@ class BookImage(db.Model):
         db.Integer,
         primary_key=True
     )
-    book_owner = db.Column(
-        db.Text,
-        db.ForeignKey("users.username", ondelete="CASCADE"),
+    book_owner_uid = db.Column(
+        db.Integer,
+        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
     image_url = db.Column(
@@ -319,12 +319,12 @@ class Reservation(db.Model):
     )
 
     owner_uid = db.Column(
-        db.Text,
+        db.Integer,
         db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
     renter_uid = db.Column(
-        db.Text,
+        db.Integer,
         db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
@@ -397,14 +397,14 @@ class Message(db.Model):
 
     # userid to
     sender_uid = db.Column(
-        db.Text,
+        db.Integer,
         db.ForeignKey('users.user_uid'),
         nullable=False
     )
 
     # userid from
     recipient_uid = db.Column(
-        db.Text,
+        db.Integer,
         db.ForeignKey('users.user_uid'),
         nullable=False
     )
