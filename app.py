@@ -11,7 +11,6 @@ from flask_cors import CORS
 
 from api_helpers import upload_to_aws
 
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -31,14 +30,15 @@ app.config["JWT_SECRET_KEY"] = os.environ['SECRET_KEY']
 jwt = JWTManager(app)
 
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
-app.config["JWT_IDENTITY_CLAIM"] = "username"
+app.config["JWT_IDENTITY_CLAIM"] = "user_uid"
+# app.config["JWT_IDENTITY_CLAIM"] = "username"
 
 
 connect_db(app)
 db.create_all()
 
 
-#region AUTH ENDPOINTS START
+# region AUTH ENDPOINTS START
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
@@ -49,7 +49,8 @@ def login():
     password = data['password']
 
     user = User.authenticate(email, password)
-    token = create_access_token(identity=user.email)
+    token = create_access_token(identity=user.user_uid)
+    # token = create_access_token(identity=user.email)
 
     return jsonify(token=token)
 
@@ -69,7 +70,7 @@ def create_user():
         file = request.files.get('file')
         url = None
         if (file):
-            [url] = upload_to_aws(file) # TODO: refactor to account for [orig_size_img, small_size_img]
+            [url] = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
             # print("url", url)
             # print("request.form.get('text')", request.form.get('text'))
             # print("request.form['text']", request.form['text'])
@@ -78,7 +79,7 @@ def create_user():
             # print("request.forms.items", request.form.items())
 
         user = User.signup(
-            username=form['email'],
+            email=form['email'],
             password=form['password'],
             firstname=form['firstname'],
             lastname=form['lastname'],
@@ -88,13 +89,11 @@ def create_user():
         )
         db.session.commit()
 
-
         # user = User.authenticate(username, password)
         token = create_access_token(identity=user.email)
         print("jsonify token: ", jsonify(token=token))
 
         return jsonify(token=token)
-
 
         # return (jsonify(user=user.serialize()), 201)
 
@@ -102,17 +101,45 @@ def create_user():
         print("Error", error)
         return (jsonify({"error": "Failed to signup"}), 424)
 
-#endregion
+
+# endregion
+
+@app.get("/search")
+def search():
+    """ Searches book properties for matched or similar values.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    # query_string = request.query_string
+
+    search_query = request.args.get('title')
+    print(request.args)
+    # result = session.query(Customers).filter(or_(Customers.id > 2, Customers.name.like('Ra%')))
+
+    # books = Book.query.filter(or_(Book.title.like(f"%cars%")))
+    # Book.query.filter(Book.title.like(f"%%")or )
+    allbooks = Book.query.all()
+    # books = Book.query.filter(Book.title.like(f"%endurance%")).all()
+    search_string_lowered = search_query
+    books = Book.query.filter(Book.title.ilike(f"%{search_string_lowered}%")).all()
+
+    # books = Book.query.filter.or_((Book.title.like(f"%%"), Book.author.like(f"%%")))
+    # books = Book.query.filter(or_(Book.title.like(f"%%"), Book.author.like(f"%%")))
+
+    serialized = [book.serialize() for book in books]
+    return jsonify(books=serialized)
 
 
-#region USERS ENDPOINTS START
+# region USERS ENDPOINTS START
 
 @app.get("/api/users")
 def list_users():
     """Return all users in system.
 
     Returns JSON like:
-        {users: [{user_uid, email, firstname, lastname, image_url,
+        {users: [{user_uid, email, status, firstname, lastname, image_url,
         location, books, reservations}, ...]}
     """
 
@@ -121,6 +148,7 @@ def list_users():
     serialized = [user.serialize() for user in users]
 
     return jsonify(users=serialized)
+
 
 @app.get('/api/users/<int:user_uid>')
 def show_user(user_uid):
@@ -155,9 +183,31 @@ def update_user(user_uid):
         db.session.add(user)
         db.session.commit()
 
-        return (jsonify(user=user.serialize()), 200)
+        return jsonify(user=user.serialize()), 200
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
+
+
+@app.patch('/api/users/toggle_status/<int:user_uid>')
+@jwt_required()
+def toggle_user_status(user_uid):
+    """Delete user. """
+
+    current_user = get_jwt_identity()
+    if current_user == user_uid:
+        user = User.query.get_or_404(user_uid)
+
+        if user.status == "Active":
+            user.status = "Deactivated"
+        else:
+            user.status = "Active"
+
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify(user=user.serialize()), 200
+
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.delete('/api/users/delete/<int:user_uid>')
@@ -173,7 +223,7 @@ def delete_user(user_uid):
         db.session.commit()
 
         return jsonify("User successfully deleted", 200)
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.get('/api/users/<int:user_uid>/books')
@@ -188,10 +238,11 @@ def list_books_of_user(user_uid):
 
     return jsonify(books=serialized)
 
-#endregion
+
+# endregion
 
 
-#region BOOKS ENDPOINTS START
+# region BOOKS ENDPOINTS START
 
 @app.get("/api/books")
 def list_books():
@@ -218,6 +269,7 @@ def show_book_by_id(book_uid):
 
     return jsonify(book=serialized)
 
+
 @app.get('/api/books/zip/<int:zipcode>')
 def show_books_by_zipcode(zipcode):
     """Return books in a specific zipcode.
@@ -228,13 +280,13 @@ def show_books_by_zipcode(zipcode):
 
     users2 = User.query.filter(User.address_zipcode == zipcode)
 
+    # TODO: optimize to not have nested loops if possible
     serialized = []
     for user in users2.all():
         books = user.owned_books
         for book in books:
             print(book.serialize())
             serialized.append(book.serialize())
-
 
     return jsonify(books=serialized)
 
@@ -251,6 +303,7 @@ def show_books_by_city(city):
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)
+
 
 # @app.post("/api/pools")
 # @jwt_required()
@@ -295,13 +348,13 @@ def create_book():
     current_user = get_jwt_identity()
     if current_user:
         try:
-            form=request.form
+            form = request.form
             print("current_user", current_user)
             print("form", form)
             file = request.files.get('file')
             print("file", file)
-            orig_url=None
-            if(file):
+            orig_url = None
+            if (file):
                 [orig_url, small_url] = upload_to_aws(file)
 
             book = Book(
@@ -358,6 +411,7 @@ def update_book(book_uid):
 
     return (jsonify({"error": "not authorized"}), 401)
 
+
 @app.delete('/api/books/<int:book_uid>')
 @jwt_required()
 def delete_book(book_uid):
@@ -372,13 +426,13 @@ def delete_book(book_uid):
     current_user = get_jwt_identity()
     book = Book.query.get_or_404(book_uid)
     if current_user == book.owner_uid:
-
         db.session.delete(book)
         db.session.commit()
 
         return (jsonify("Book successfully deleted"), 200)
 
     return (jsonify({"error": "not authorized"}), 401)
+
 
 @app.post("/api/books/<int:book_uid>/images")
 @jwt_required()
@@ -395,7 +449,7 @@ def add_book_image(book_uid):
     book = Book.query.get_or_404(book_uid)
     if current_user == book.owner_username:
         file = request.files['file']
-        url = upload_to_aws(file) # TODO: refactor to account for [orig_size_img, small_size_img]
+        url = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
 
         book_image = BookImage(
             book_owner=current_user,
@@ -409,10 +463,11 @@ def add_book_image(book_uid):
 
     return (jsonify({"error": "not authorized"}), 401)
 
-#endregion
+
+# endregion
 
 
-#region RESERVATIONS ENDPOINTS START
+# region RESERVATIONS ENDPOINTS START
 
 @app.get("/api/reservations")
 def list_reservations():
@@ -427,7 +482,6 @@ def list_reservations():
     return jsonify(reservations=serialized)
 
 
-
 @app.post("/api/reservations/<int:book_uid>")
 @jwt_required()
 def create_reservation(book_uid):
@@ -440,8 +494,7 @@ def create_reservation(book_uid):
     current_user = get_jwt_identity()
 
     if current_user:
-
-        data=request.json
+        data = request.json
 
         reservation = Reservation(
             renter_uid=current_user,
@@ -476,17 +529,17 @@ def get_reservations_for_book(book_uid):
     current_user = get_jwt_identity()
 
     book = Book.query.get_or_404(book_uid)
-    if(book.owner_uid==current_user):
+    if (book.owner_uid == current_user):
         reservations = (Reservation.query
-        .filter(book_uid=book_uid)
-        .order_by(Reservation.start_date.desc()))
+                        .filter(book_uid=book_uid)
+                        .order_by(Reservation.start_date.desc()))
 
         serialized_reservations = ([reservation.serialize()
-            for reservation in reservations])
+                                    for reservation in reservations])
 
         return (jsonify(reservations=serialized_reservations))
 
-    #TODO: better error handling for more diverse errors
+    # TODO: better error handling for more diverse errors
     return (jsonify({"error": "not authorized"}), 401)
 
 
@@ -503,17 +556,17 @@ def get_booked_reservations_for_user_uid(user_uid):
     current_user = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if(user.user_uid==current_user):
+    if (user.user_uid == current_user):
         reservations = (Reservation.query
-        .filter(owner_uid=current_user)
-        .order_by(Reservation.start_date.desc()))
+                        .filter(owner_uid=current_user)
+                        .order_by(Reservation.start_date.desc()))
 
         serialized_reservations = ([reservation.serialize()
-            for reservation in reservations])
+                                    for reservation in reservations])
 
         return (jsonify(reservations=serialized_reservations))
 
-    #TODO: better error handling for more diverse errors
+    # TODO: better error handling for more diverse errors
     return (jsonify({"error": "not authorized"}), 401)
 
 
@@ -529,13 +582,12 @@ def get_booked_reservation(reservation_id):
     book = Book.get_or_404(book_uid)
 
     if ((reservation.renter_uid == current_user) or
-        (book.owner_uid == current_user)):
-
+            (book.owner_uid == current_user)):
         serialized_reservation = reservation.serialize()
 
         return (jsonify(reservation=serialized_reservation), 200)
 
-    #TODO: better error handling for more diverse errors
+    # TODO: better error handling for more diverse errors
     return (jsonify({"error": "not authorized"}), 401)
 
 
@@ -563,12 +615,10 @@ def get_booked_reservation(reservation_id):
 #     #TODO: better error handling for more diverse errors
 #     return (jsonify({"error": "not authorized"}), 401)
 
-#endregion
+# endregion
 
 
-
-
-#region MESSAGES ENDPOINTS START
+# region MESSAGES ENDPOINTS START
 
 @app.get("/api/messages")
 @jwt_required()
@@ -593,7 +643,7 @@ def list_messages():
                        .order_by(Message.timestamp.desc()))
     serialized_outbox = [message.serialize() for message in messages_outbox]
 
-    response = {"messages" : {"inbox": serialized_inbox, "outbox": serialized_outbox}}
+    response = {"messages": {"inbox": serialized_inbox, "outbox": serialized_outbox}}
     return response
 
 
@@ -637,11 +687,10 @@ def show_message(message_uid):
     message = User.query.get_404(message_uid)
 
     if ((message.sender_uid == current_user) or
-        (message.recipient_uid == current_user)):
+            (message.recipient_uid == current_user)):
         message = message.serialize()
         return jsonify(message=message)
     else:
         return (jsonify({"error": "not authorized"}), 401)
 
-
-#endregion
+# endregion

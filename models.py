@@ -14,7 +14,7 @@ DEFAULT_USER_IMAGE_URL = "testimage.jpg"
 DEFAULT_BOOK_IMAGE_URL = ""
 
 
-#region Users
+# region Users
 class User(db.Model):
     """User in the system."""
 
@@ -23,6 +23,12 @@ class User(db.Model):
     user_uid = db.Column(
         db.Integer,
         primary_key=True
+    )
+
+    status = db.Column(
+        db.Text,
+        default="Active",
+        nullable=False
     )
 
     email = db.Column(
@@ -79,7 +85,6 @@ class User(db.Model):
         default=5.0
     )
 
-
     # TODO: owned_books_for_rent
 
     # TODO: others_books_rented
@@ -98,16 +103,16 @@ class User(db.Model):
     #     backref='owner'
     # )
 
-
     owned_books = db.relationship('Book', backref='user')
-    # reservations = db.relationship('Reservation', backref='user') # TODO: need to figure this out.
 
+    # reservations = db.relationship('Reservation', backref='user') # TODO: need to figure this out.
 
     def serialize(self):
         """ returns self """
         return {
 
             "user_uid": self.user_uid,
+            "status": self.status,
             "email": self.email,
             "firstname": self.firstname,
             "lastname": self.lastname,
@@ -119,13 +124,13 @@ class User(db.Model):
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating
 
-
             # "owned_books" : self.owned_books
             # "reserved_books" : self.reserved_books,
         }
 
     @classmethod
-    def signup(cls, email, password, firstname, lastname, address, preferred_trade_location, image_url=DEFAULT_USER_IMAGE_URL):
+    def signup(cls, email, password, firstname, lastname, address, preferred_trade_location,
+               image_url=DEFAULT_USER_IMAGE_URL):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -169,10 +174,12 @@ class User(db.Model):
 
     def __repr__(self):
         return f"<User #{self.email}"
-#endregion
 
 
-#region userimage
+# endregion
+
+
+# region userimage
 class UserImage(db.Model):
     """ Connection from the user to their profile images. """
 
@@ -191,11 +198,12 @@ class UserImage(db.Model):
         db.Text,
         nullable=False
     )
-#endregion
 
 
+# endregion
 
-#region Books
+
+# region Books
 class Book(db.Model):
     """ Book in the system """
 
@@ -249,7 +257,6 @@ class Book(db.Model):
         nullable=False  # select from $1-$10 / week
     )
 
-
     reservations = db.relationship('Reservation', backref='book')
 
     def serialize(self):
@@ -267,10 +274,11 @@ class Book(db.Model):
             "price": self.price
         }
 
-#endregion
+
+# endregion
 
 
-#region bookimage
+# region bookimage
 class BookImage(db.Model):
     """ One to many table connecting a book to many image paths """
 
@@ -297,10 +305,12 @@ class BookImage(db.Model):
             "book_owner": self.book_owner,
             "image_url": self.image_url,
         }
-#endregion
 
 
-#region reservations
+# endregion
+
+
+# region reservations
 class Reservation(db.Model):
     """ Connection of a User and Book that they reserve """
 
@@ -362,28 +372,27 @@ class Reservation(db.Model):
         nullable=False
     )
 
-
-
     def serialize(self):
         """ returns self """
         return {
-            "reservation_uid" : self.reservation_uid,
-            "book_uid" : self.book_uid,
-            "owner_uid" : self.owner_uid,
-            "renter_uid" : self.renter_uid,
-            "reservation_date_created" : self.reservation_date_created,
-            "start_date" : self.start_date,
-            "end_date" : self.end_date,
-            "status" : self.status,
-            "rental_period_method" : self.rental_period_method,
-            "rental_period_duration" : self.rental_period_duration,
-            "total" : self.total
+            "reservation_uid": self.reservation_uid,
+            "book_uid": self.book_uid,
+            "owner_uid": self.owner_uid,
+            "renter_uid": self.renter_uid,
+            "reservation_date_created": self.reservation_date_created,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "status": self.status,
+            "rental_period_method": self.rental_period_method,
+            "rental_period_duration": self.rental_period_duration,
+            "total": self.total
         }
 
-#endregion
+
+# endregion
 
 
-#region Messages
+# region Messages
 
 class Message(db.Model):
     "Messages between users in the system"
@@ -440,8 +449,8 @@ class Message(db.Model):
             "timestamp": self.timestamp
         }
 
-#endregion
 
+# endregion
 
 
 # db
