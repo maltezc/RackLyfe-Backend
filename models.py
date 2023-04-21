@@ -66,7 +66,7 @@ class User(db.Model):
     )
 
     address_zipcode = db.Column(
-        db.Text,
+        db.Integer,
         nullable=False
     )
 
@@ -100,7 +100,7 @@ class User(db.Model):
 
 
     owned_books = db.relationship('Book', backref='user')
-    reservations = db.relationship('Reservation', backref='user')
+    # reservations = db.relationship('Reservation', backref='user') # TODO: need to figure this out.
 
 
     def serialize(self):
@@ -112,7 +112,10 @@ class User(db.Model):
             "firstname": self.firstname,
             "lastname": self.lastname,
             "image_url": self.image_url,
-            "address": self.address,
+            "address_street": self.address_street,
+            "address_city": self.address_city,
+            "address_state": self.address_state,
+            "address_zipcode": self.address_zipcode,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating
 
@@ -214,11 +217,6 @@ class Book(db.Model):
         nullable=False,
     )
 
-    small_image_url = db.Column(
-        db.Text,
-        nullable=False,
-    )
-
     title = db.Column(
         db.Text,
         nullable=False
@@ -236,7 +234,7 @@ class Book(db.Model):
 
     genre = db.Column(
         db.Text,
-        nullable=False
+        # nullable=False
     )
 
     condition = db.Column(
@@ -261,7 +259,6 @@ class Book(db.Model):
             "book_uid": self.book_uid,
             "owner_uid": self.owner_uid,
             "orig_image_url": self.orig_image_url,
-            "small_image_url": self.small_image_url,
             "title": self.title,
             "author": self.author,
             "isbn": self.isbn,
@@ -269,6 +266,7 @@ class Book(db.Model):
             "condition": self.condition,
             "price": self.price
         }
+
 #endregion
 
 
@@ -349,13 +347,19 @@ class Reservation(db.Model):
         default="Booked"
     )
 
-    rental_period = db.Column(
+    rental_period_method = db.Column(
         db.Text,
-        default="Week"
+        default="Days"
+    )
+
+    rental_period_duration = db.Column(
+        db.Integer,
+        nullable=False
     )
 
     total = db.Column(
         db.Integer,
+        nullable=False
     )
 
 
@@ -371,7 +375,8 @@ class Reservation(db.Model):
             "start_date" : self.start_date,
             "end_date" : self.end_date,
             "status" : self.status,
-            "rental_period" : self.rental_period,
+            "rental_period_method" : self.rental_period_method,
+            "rental_period_duration" : self.rental_period_duration,
             "total" : self.total
         }
 
@@ -379,6 +384,7 @@ class Reservation(db.Model):
 
 
 #region Messages
+
 class Message(db.Model):
     "Messages between users in the system"
 
@@ -412,7 +418,7 @@ class Message(db.Model):
     # text
     message_text = db.Column(
         db.Text,
-        # nullable=False,
+        nullable=False,
     )
 
     # timestamp
@@ -433,6 +439,7 @@ class Message(db.Model):
             "text": self.text,
             "timestamp": self.timestamp
         }
+
 #endregion
 
 

@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from models import db, connect_db, User, Message, Book, Reservation, BookImage
-# from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
@@ -115,6 +115,7 @@ def list_users():
         {users: [{user_uid, email, firstname, lastname, image_url,
         location, books, reservations}, ...]}
     """
+
     users = User.query.all()
 
     serialized = [user.serialize() for user in users]
@@ -175,8 +176,8 @@ def delete_user(user_uid):
     return (jsonify({"error": "not authorized"}), 401)
 
 
-@app.get('/api/users/<user_uid>/books')
-def list_pools_of_user(user_uid):
+@app.get('/api/users/<int:user_uid>/books')
+def list_books_of_user(user_uid):
     """Show books of logged in user.
 
     Returns JSON like:
@@ -206,7 +207,7 @@ def list_books():
 
 
 @app.get('/api/books/<int:book_uid>')
-def show_pool_by_id(book_uid):
+def show_book_by_id(book_uid):
     """Return information on a specific book.
 
     Returns JSON like:
@@ -217,7 +218,7 @@ def show_pool_by_id(book_uid):
 
     return jsonify(book=serialized)
 
-@app.get('/api/books/<int:zipcode>')
+@app.get('/api/books/zip/<int:zipcode>')
 def show_books_by_zipcode(zipcode):
     """Return books in a specific zipcode.
 
@@ -225,8 +226,15 @@ def show_books_by_zipcode(zipcode):
         {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
-    books = Book.query.filter(User.address_zipcode == zipcode)
-    serialized = [book.serialize() for book in books]
+    users2 = User.query.filter(User.address_zipcode == zipcode)
+
+    serialized = []
+    for user in users2.all():
+        books = user.owned_books
+        for book in books:
+            print(book.serialize())
+            serialized.append(book.serialize())
+
 
     return jsonify(books=serialized)
 
@@ -406,6 +414,20 @@ def add_book_image(book_uid):
 
 #region RESERVATIONS ENDPOINTS START
 
+@app.get("/api/reservations")
+def list_reservations():
+    """Return all reservations in system.
+
+    Returns JSON like:
+       {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+    """
+    reservations = Reservation.query.all()
+
+    serialized = [reservation.serialize() for reservation in reservations]
+    return jsonify(reservations=serialized)
+
+
+
 @app.post("/api/reservations/<int:book_uid>")
 @jwt_required()
 def create_reservation(book_uid):
@@ -542,7 +564,6 @@ def get_booked_reservation(reservation_id):
 #     return (jsonify({"error": "not authorized"}), 401)
 
 #endregion
-
 
 
 
