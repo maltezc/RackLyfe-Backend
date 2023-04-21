@@ -114,16 +114,15 @@ def search():
 
     # query_string = request.query_string
 
-    search_query = request.args.get('title')
-    print(request.args)
-    # result = session.query(Customers).filter(or_(Customers.id > 2, Customers.name.like('Ra%')))
+    title = request.args.get('title')
+    author = request.args.get('author')
+    isbn = request.args.get('isbn')
 
-    # books = Book.query.filter(or_(Book.title.like(f"%cars%")))
-    # Book.query.filter(Book.title.like(f"%%")or )
-    allbooks = Book.query.all()
-    # books = Book.query.filter(Book.title.like(f"%endurance%")).all()
-    search_string_lowered = search_query
-    books = Book.query.filter(Book.title.ilike(f"%{search_string_lowered}%")).all()
+    titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
+    authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
+    isbn = Book.query.filter(Book.isbn.ilike(f"%{isbn}%")).all()
+
+    books = titles + authors + isbn
 
     # books = Book.query.filter.or_((Book.title.like(f"%%"), Book.author.like(f"%%")))
     # books = Book.query.filter(or_(Book.title.like(f"%%"), Book.author.like(f"%%")))
