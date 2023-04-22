@@ -117,12 +117,38 @@ def search():
     title = request.args.get('title')
     author = request.args.get('author')
     isbn = request.args.get('isbn')
+    zipcode = request.args.get('zipcode')
 
-    titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
-    authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
-    isbn = Book.query.filter(Book.isbn.ilike(f"%{isbn}%")).all()
+    request.args.keys()
+    # if len(key) > 0:
+    # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
+    # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
 
-    books = titles + authors + isbn
+
+    test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+
+
+    titles = []
+    if title != "":
+        titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
+
+    authors = []
+    if author != "":
+        authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
+
+    isbn = []
+    if isbn != "":
+        isbn = Book.query.filter(Book.isbn.ilike(f"%{isbn}%")).all()
+
+    zipcode_books = []
+    if zipcode != "":
+        zipcode_users = User.query.filter(User.address_zipcode == zipcode).all()
+
+        for user in zipcode_users:
+            for book in user.owned_books:
+                zipcode_books.append(book)
+
+    books = titles + authors + isbn + zipcode_books
 
     # books = Book.query.filter.or_((Book.title.like(f"%%"), Book.author.like(f"%%")))
     # books = Book.query.filter(or_(Book.title.like(f"%%"), Book.author.like(f"%%")))
@@ -187,10 +213,10 @@ def update_user(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.patch('/api/users/toggle_status/<int:user_uid>')
+@app.patch('/api/users/<int:user_uid>/toggle_status')
 @jwt_required()
 def toggle_user_status(user_uid):
-    """Delete user. """
+    """ Toggles_user's activity_status """
 
     current_user = get_jwt_identity()
     if current_user == user_uid:
@@ -409,6 +435,32 @@ def update_book(book_uid):
         return (jsonify(book=book.serialize()), 200)
 
     return (jsonify({"error": "not authorized"}), 401)
+
+
+@app.patch('/api/users/<int:user_uid>/books/<int:book_uid>/toggle_status')
+@jwt_required()
+def toggle_book_status(user_uid, book_uid):
+    """ Toggles book availability status. """
+
+    current_user = get_jwt_identity()
+
+    # book_owner_uid = book.owner_uid
+
+    if current_user == user_uid:
+        # user = User.query.get_or_404(book_uid)
+        book = Book.query.get_or_404(book_uid)
+
+        if book.status == "Available":
+            book.status = "Checked Out"
+        else:
+            book.status = "Available"
+
+        db.session.add(book)
+        db.session.commit()
+
+        return jsonify(book=book.serialize()), 200
+
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.delete('/api/books/<int:book_uid>')

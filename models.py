@@ -257,6 +257,12 @@ class Book(db.Model):
         nullable=False  # select from $1-$10 / week
     )
 
+    status = db.Column(
+        db.Text,
+        default="Available",
+        nullable=False
+    )
+
     reservations = db.relationship('Reservation', backref='book')
 
     def serialize(self):
@@ -271,7 +277,8 @@ class Book(db.Model):
             "isbn": self.isbn,
             "genre": self.genre,
             "condition": self.condition,
-            "price": self.price
+            "price": self.price,
+            "status": self.status
         }
 
 

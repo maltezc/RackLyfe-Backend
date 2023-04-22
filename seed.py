@@ -64,7 +64,9 @@ book1 = Book(
     isbn="9780756405892",
     genre="",
     condition="Like New",
-    price="400"
+    price="400",
+    status="Available"
+
 )
 
 book2 = Book(
@@ -76,7 +78,8 @@ book2 = Book(
     isbn="9780553900347",
     genre="",
     condition="Used",
-    price="300"
+    price="300",
+    status="Available"
 )
 
 book3 = Book(
@@ -88,11 +91,24 @@ book3 = Book(
     isbn="9780753809877",
     genre="",
     condition="Fair",
-    price="200"
+    price="200",
+    status="Available"
+)
+
+book4 = Book(
+    owner_uid=1,
+    orig_image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0pxFjDUW9HplCcIzSmlQs0B159ow&w=1280",
+    title="Harry Potter and the Sorcerer's Stone",
+    author="J.K. Rowling, Olly Moss ",
+    isbn="9781781100486",
+    genre="",
+    condition="Fair",
+    price="900",
+    status="Checked Out"
 )
 
 
-db.session.add_all([book1, book2, book3])
+db.session.add_all([book1, book2, book3, book4])
 db.session.commit()
 #endregion
 
