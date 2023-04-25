@@ -10,6 +10,9 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
 from api_helpers import upload_to_aws
+from util_filters import check_for_title
+
+
 
 load_dotenv()
 
@@ -99,7 +102,7 @@ def create_user():
 
     except Exception as error:
         print("Error", error)
-        return (jsonify({"error": "Failed to signup"}), 424)
+        return jsonify({"error": "Failed to signup"}), 424
 
 
 # endregion
@@ -114,10 +117,14 @@ def search():
 
     # query_string = request.query_string
 
+    # endurance
+    # 94108
+
     title = request.args.get('title')
     author = request.args.get('author')
     isbn = request.args.get('isbn')
-    zipcode = request.args.get('zipcode')
+    zipcode = request.args.get('zipcode') # mandatory
+    # TODO: city
 
     request.args.keys()
     # if len(key) > 0:
@@ -125,35 +132,52 @@ def search():
     # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
 
 
-    test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = filter book by mandatory field
+    # if author is not none, qs = qs.filter(author)
 
-
-    titles = []
-    if title != "":
-        titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
-
-    authors = []
-    if author != "":
-        authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
-
-    isbn = []
-    if isbn != "":
-        isbn = Book.query.filter(Book.isbn.ilike(f"%{isbn}%")).all()
-
-    zipcode_books = []
+    qs_books = []
     if zipcode != "":
-        zipcode_users = User.query.filter(User.address_zipcode == zipcode).all()
-
+        zipcode_users = User.query.all()
+        # zipcode_users = User.query.filter(User.address.zipcode == zipcode).all()
+        # TODO: figure out how to joing tables with addresses to figure out users in the area and then filter for books of the correct title
         for user in zipcode_users:
             for book in user.owned_books:
-                zipcode_books.append(book)
+                print(book)
 
-    books = titles + authors + isbn + zipcode_books
+            new_books = check_for_title(title, user.owned_books)
+
+            print(new_books)
+                # if title is not None:
+                #     if title in book.title:
+                #
+                #         qs_books.append(book)
+
+    # testq = Book.query.filter(Book.title.ilike(f"%{title}%")).filter(Book.author.ilike(f"%{author}%")).all()
+    #expression for item in iterable if condition
+    # for book in testq:
+        # get owner Uid
+        # ping db again to see filter for uid's location to match
+        # books_nearby_qs
+
+    if title is not None:
+        # titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
+        qs_books = qs_books.filter(Book.title.ilike(f"%{title}%")).all()
+
+
+    if author is not None:
+        qs_books = qs_books.filter(Book.author.ilike(f"%{author}%"))
+        # authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
+        # qs = qs.filter(Book.author.ilike(f"%{author}%"))
+
+    if isbn is not None:
+        qs_books = qs_books.filter(Book.isbn.ilike(f"%{isbn}%"))
 
     # books = Book.query.filter.or_((Book.title.like(f"%%"), Book.author.like(f"%%")))
     # books = Book.query.filter(or_(Book.title.like(f"%%"), Book.author.like(f"%%")))
 
-    serialized = [book.serialize() for book in books]
+    serialized = [book.serialize() for book in qs_books]
     return jsonify(books=serialized)
 
 

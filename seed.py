@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from app import db
-from models import User, UserImage, Book, BookImage, Reservation, Message
+from models import User, UserImage, Address, Book, BookImage, Reservation, Message
 
 db.drop_all()
 db.create_all()
@@ -14,10 +14,15 @@ user1 = User(
     firstname="firstname1",
     lastname="lastname1",
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
-    address_street="164 Glenwood",
-    address_city="Hercules",
-    address_state="California",
-    address_zipcode=94547
+
+)
+
+address1 = Address(
+    user_uid=1,
+    street="164 Glenwood",
+    city="Hercules",
+    state="California",
+    zipcode=94547
 )
 
 user2 = User(
@@ -27,10 +32,15 @@ user2 = User(
     firstname="firstname2",
     lastname="lastname2",
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
-    address_street="100 Finch Court",
-    address_city="Hercules",
-    address_state="California",
-    address_zipcode=94547
+
+)
+
+address2 = Address(
+    user_uid=2,
+    street="100 Finch Court",
+    city="Hercules",
+    state="California",
+    zipcode=94547
 )
 
 user3 = User(
@@ -40,14 +50,18 @@ user3 = User(
     firstname="firstname3",
     lastname="lastname3",
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
-    address_street="678 Alfred Nobel Dr",
-    address_city="Hercules",
-    address_state="California",
-    address_zipcode=94108
+)
+
+address3 = Address(
+    user_uid=3,
+    street="678 Alfred Nobel Dr",
+    city="Hercules",
+    state="California",
+    zipcode=94108
 )
 
 
-db.session.add_all([user1, user2, user3])
+db.session.add_all([user1, address1, user2, address2, user3, address3])
 db.session.commit()
 
 # endregion
@@ -56,8 +70,8 @@ db.session.commit()
 # region pools---------------------------------------------
 
 book1 = Book(
-
     owner_uid=1,
+    # book_address=1,
     orig_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
     author="Patrick Rothfuss",
@@ -70,8 +84,8 @@ book1 = Book(
 )
 
 book2 = Book(
-
     owner_uid=2,
+    # book_address=2,
     orig_image_url="https://books.google.com/books/content?id=IwywDY4P6gsC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U1MW8ShmkaEJSng6powPa2vADQ4Kw&w=1280",
     title="Foundation",
     author="Isaac Asimov",
@@ -83,8 +97,8 @@ book2 = Book(
 )
 
 book3 = Book(
-
     owner_uid=3,
+    # book_address=3,
     orig_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
@@ -97,6 +111,7 @@ book3 = Book(
 
 book4 = Book(
     owner_uid=1,
+    # book_address=1,
     orig_image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0pxFjDUW9HplCcIzSmlQs0B159ow&w=1280",
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
@@ -113,10 +128,8 @@ db.session.commit()
 #endregion
 
 
-
 # region reservations
 reservation1 = Reservation(
-
     reservation_uid="1",
     book_uid="1",
     owner_uid="1",
@@ -130,7 +143,6 @@ reservation1 = Reservation(
 )
 
 reservation2 = Reservation(
-
     reservation_uid="2",
     book_uid="2",
     owner_uid="2",
@@ -158,9 +170,9 @@ reservation3 = Reservation(
 )
 
 
-
 db.session.add_all([reservation1, reservation2, reservation3])
 db.session.commit()
+
 #endregion
 
 

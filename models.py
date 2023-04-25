@@ -56,26 +56,6 @@ class User(db.Model):
         db.Text,
     )
 
-    address_street = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    address_city = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    address_state = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    address_zipcode = db.Column(
-        db.Integer,
-        nullable=False
-    )
-
     preferred_trade_location = db.Column(
         db.Text
     )
@@ -103,6 +83,9 @@ class User(db.Model):
     #     backref='owner'
     # )
 
+    # address = db.relationship('Address', back_populates="user")
+    address = db.relationship('Address', back_populates="owner", uselist=False)
+
     owned_books = db.relationship('Book', backref='user')
 
     # reservations = db.relationship('Reservation', backref='user') # TODO: need to figure this out.
@@ -117,10 +100,6 @@ class User(db.Model):
             "firstname": self.firstname,
             "lastname": self.lastname,
             "image_url": self.image_url,
-            "address_street": self.address_street,
-            "address_city": self.address_city,
-            "address_state": self.address_state,
-            "address_zipcode": self.address_zipcode,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating
 
@@ -173,7 +152,7 @@ class User(db.Model):
         return False
 
     def __repr__(self):
-        return f"<User #{self.email}"
+        return f"< User #{self.user_uid}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname} >"
 
 
 # endregion
@@ -198,6 +177,56 @@ class UserImage(db.Model):
         db.Text,
         nullable=False
     )
+# endregion
+
+
+# region Address
+class Address(db.Model):
+    """ Address in the system. """
+
+    __tablename__ = 'addresses'
+
+    address_uid = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    user_uid = db.Column(
+        db.Integer,
+        db.ForeignKey("users.user_uid"),
+        nullable=False,
+    )
+
+    street = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    apt_number = db.Column(
+        db.Integer
+    )
+
+    city = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    state = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    zipcode = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    owner = db.relationship('User', back_populates="address", uselist=False)
+    # owner = db.relationship('User', backref="address")
+
+    def __repr__(self):
+        return f"< Address #{self.address_uid}, UserId #{self.user_uid}, Street: {self.street}, " \
+               f"Apt#: {self.apt_number}, City: {self.city}, State: {self.state}, Zipcode: {self.zipcode} >"
 
 
 # endregion
@@ -219,6 +248,12 @@ class Book(db.Model):
         db.ForeignKey("users.user_uid"),
         nullable=False,
     )
+
+    # book_address = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("users.address"),
+    #     nullable=False,
+    # )
 
     orig_image_url = db.Column(
         db.Text,
@@ -264,6 +299,7 @@ class Book(db.Model):
     )
 
     reservations = db.relationship('Reservation', backref='book')
+    # owner = db.relationship('User', backref='book')
 
     def serialize(self):
         """ returns self """
@@ -282,6 +318,10 @@ class Book(db.Model):
         }
 
 
+    def __repr__(self):
+        return f"< Book #{self.book_uid}, OwnerId: {self.owner_uid}, Orig_Image: {self.orig_image_url}, " \
+               f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
+               f"Condition: {self.condition}, Price: {self.price}, Status: {self.status} >"
 # endregion
 
 
@@ -395,6 +435,11 @@ class Reservation(db.Model):
             "total": self.total
         }
 
+    def __repr__(self):
+        return f"< Reservation # {self.reservation_uid}, BookId: {self.book_uid}, OwnerId: {self.owner_uid}, " \
+               f"RenderId: {self.renter_uid}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
+               f"EndDate: {self.end_date}, Status: {self.status}, RentalPeriodMethod: {self.rental_period_method}," \
+               f" Rental Period Duration: {self.rental_period_duration}, Rental Period Total: {self.total}>"
 
 # endregion
 
