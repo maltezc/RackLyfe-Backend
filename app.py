@@ -1,8 +1,10 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Message, Book, Reservation, BookImage
+from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
+
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
@@ -10,7 +12,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
 from api_helpers import upload_to_aws
-from util_filters import check_for_title
+from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city
 
 
 
@@ -136,6 +138,22 @@ def search():
     # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
     # qs = filter book by mandatory field
     # if author is not none, qs = qs.filter(author)
+
+    city_users = get_all_users_in_city("Hercules")
+    state_users = get_all_users_in_state("CA")
+    zipcode_users = get_all_users_in_zipcode("94547")
+    users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
+    books = Book.query.join(User).join(Address).join(City).filter(City.city_name == "Hercules").all()
+    all_books = Book.query.all()
+    # books = get_all_books_in_city("Hercules")
+    # users = (
+    #     User.query.all()
+    #     .join(Address)
+    #     .join(ZipCode)
+    #     .options(joinedload(User.address).joinedload(Address.zipcode))
+    #     .filter(ZipCode.code == zipcode)
+    #     .all()
+    # )
 
     qs_books = []
     if zipcode != "":

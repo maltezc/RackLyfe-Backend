@@ -98,6 +98,8 @@ class User(db.Model):
 
     def serialize(self):
         """ returns self """
+        # TODO: check out marshmellow suggested by David for serializing:
+        #  https://flask-marshmallow.readthedocs.io/en/latest/
         return {
 
             "user_uid": self.user_uid,
@@ -220,30 +222,24 @@ class Address(db.Model):
         db.Integer,
         db.ForeignKey('cities.id')
     )
-    # city = db.relationship('City', back_populates="addresses", uselist=False)
-
-    state_uid = db.Column(
-        db.Integer, db.
-        ForeignKey('states.id')
-    )
-    # state = db.relationship('State', back_populates="addresses", uselist=False)
+    city = db.relationship('City', back_populates="addresses", uselist=False)
 
     zipcode_uid = db.Column(
         db.Integer, db.
         ForeignKey('zip_codes.id')
     )
-
-
+    zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
     def __repr__(self):
-        return f"< Address #{self.address_uid}, UserId #{self.user_uid}, Street: {self.street}, " \
-               f"Apt#: {self.apt_number}, City: {self.city}, State: {self.state}, Zipcode: {self.zipcode} >"
+        return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
+               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid} >"
+        # return f"< Address #{self.address_uid}, UserId #{self.user_uid}, Street: {self.street}, " \
 
 
 # endregion
 
 
-# region Description
+# region Cities
 class City(db.Model):
     """ Model for City """
 
@@ -254,21 +250,23 @@ class City(db.Model):
         primary_key=True,
     )
 
-    # address_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('addresses.address_uid'),
-    #     nullable=False
-    # )
-    # address = db.relationship("Address", back_populates="cities", uselist=False)
+    addresses = db.relationship("Address", back_populates="city")
 
     city_name = db.Column(
         db.Text,
         nullable=False
     )
 
+    state_uid = db.Column(
+        db.Integer, db.
+        ForeignKey('states.id')
+    )
+    state = db.relationship('State', back_populates="cities")
+
     def __repr__(self):
-        return f"< City# {self.id}, AddressUid {self.address_uid}, City Name: {self.city_name} >"
+        return f"< City # {self.id}, City Name: {self.city_name}, StateUid: {self.state_uid} >"
 # endregion
+
 
 
 class State(db.Model):
@@ -281,12 +279,6 @@ class State(db.Model):
         primary_key=True
     )
 
-    # address_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('addresses.address_uid'),
-    #     nullable=False
-    # )
-
     state_abbreviation = db.Column(
         db.String(2),
         unique=True
@@ -297,10 +289,10 @@ class State(db.Model):
         unique=True
     )
 
-    # address = db.relationship('Address', back_populates='state', uselist=False)
+    cities = db.relationship('City', back_populates='state')
 
     def __repr__(self):
-        return f"< State # {self.id}, State Abbreviation: {self.state_abbrevation}, State name: {self.state_name}>"
+        return f"< State # {self.id}, State Abbreviation: {self.state_abbreviation}, State name: {self.state_name}>"
 
 
 class ZipCode(db.Model):
@@ -317,7 +309,7 @@ class ZipCode(db.Model):
         unique=True
     )
 
-    # address = db.relationship('Address', back_populates='zip_code', uselist=False)
+    addresses = db.relationship('Address', back_populates='zipcode')
 
     def __repr__(self):
         return f"< Zipcode # {self.id}, Code {self.code} >"

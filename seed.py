@@ -8,6 +8,8 @@ db.create_all()
 # db.Table("User").drop()
 
 # region create dummy users----------------------------------------
+
+
 # `$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q` <--- equals 'password'
 user1 = User(
     email="test1@email.com",
@@ -20,64 +22,83 @@ user1 = User(
 )
 
 address1 = Address(
-    # user_uid=1,
     street_address="164 Glenwood",
-    # city_uid=1,
-    # state_uid=1,
-    # zipcode_uid=1
+    city_uid=1,
+    zipcode_uid=1
 )
 
 city1 = City(
-    city_name="Hercules"
+    id=1,
+    city_name="Hercules",
+    state_uid=1,
 )
 
 state1 = State(
+    id=1,
     state_abbreviation="CA",
     state_name="California",
 )
 
 zipcode1 = ZipCode(
+    id=1,
     code=94547
 )
 
-# user2 = User(
-#     email="test2@email.com",
-#     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-#     status="active",
-#     firstname="firstname2",
-#     lastname="lastname2",
-#     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
-#
-# )
-#
-# address2 = Address(
-#     user_uid=2,
-#     street_address="100 Finch Court",
-#     city_id=1,
-#     state_id=1,
-#     zipcode_id=1
-# )
-#
-# user3 = User(
-#     email="test3@email.com",
-#     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-#     status="active",
-#     firstname="firstname3",
-#     lastname="lastname3",
-#     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
-# )
-#
-# address3 = Address(
-#     user_uid=3,
-#     street_address="678 Alfred Nobel Dr",
-#     city="Hercules",
-#     state="California",
-#     zipcode=94108
-# )
+user2 = User(
+    email="test2@email.com",
+    password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
+    status="active",
+    firstname="firstname2",
+    lastname="lastname2",
+    address_id=2,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
 
+)
 
-db.session.add_all([user1, address1, city1, state1, zipcode1])
-# db.session.add_all([user1, address1, user2, address2, user3, address3])
+address2 = Address(
+    address_uid=2,
+    street_address="100 Finch Court",
+    city_uid=1,
+    zipcode_uid=1
+)
+
+user3 = User(
+    email="test3@email.com",
+    password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
+    status="active",
+    firstname="firstname3",
+    lastname="lastname3",
+    address_id=3,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
+)
+
+address3 = Address(
+    address_uid=3,
+    street_address="655 E Drachman St",
+    city_uid=2,
+    zipcode_uid=2
+)
+
+city2 = City(
+    id=2,
+    city_name="Tucson",
+    state_uid=2,
+)
+
+state2 = State(
+    id=2,
+    state_abbreviation="AZ",
+    state_name="Arizona",
+)
+
+zipcode2 = ZipCode(
+    id=2,
+    code=85705
+)
+
+db.session.add_all([user1, address1, city1, state1, zipcode1, user2, address2])
+db.session.add_all([user3, address3, city2, state2, zipcode2])
+
 db.session.commit()
 
 # endregion
@@ -96,7 +117,6 @@ book1 = Book(
     condition="Like New",
     price="400",
     status="Available"
-
 )
 
 # book2 = Book(
@@ -139,9 +159,10 @@ book1 = Book(
 # )
 
 
+db.session.add_all([book1])
 # db.session.add_all([book1, book2, book3, book4])
-# db.session.commit()
-#endregion
+db.session.commit()
+# endregion
 
 
 # region reservations
@@ -189,11 +210,10 @@ book1 = Book(
 # db.session.add_all([reservation1, reservation2, reservation3])
 # db.session.commit()
 
-#endregion
+# endregion
 
 
-
-#region messages
+# region messages
 
 # message1 = Message(
 #     message_uid=1,
@@ -212,11 +232,6 @@ book1 = Book(
 #     message_text="hola",
 #     timestamp="Wed, 02 Feb 2023 12:01:00 GMT"
 # )
-
-
-
-
-
 
 
 # message1 = Message(
