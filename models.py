@@ -52,6 +52,13 @@ class User(db.Model):
         nullable=False,
     )
 
+    address_id = db.Column(
+        db.Integer,
+        db.ForeignKey('addresses.address_uid')
+    )
+
+    address = db.relationship('Address', uselist=False, back_populates='user')
+
     image_url = db.Column(
         db.Text,
     )
@@ -83,8 +90,7 @@ class User(db.Model):
     #     backref='owner'
     # )
 
-    # address = db.relationship('Address', back_populates="user")
-    address = db.relationship('Address', back_populates="owner", uselist=False)
+    # address = db.relationship('Address', back_populates="owner", uselist=False)
 
     owned_books = db.relationship('Book', backref='user')
 
@@ -177,6 +183,8 @@ class UserImage(db.Model):
         db.Text,
         nullable=False
     )
+
+
 # endregion
 
 
@@ -191,13 +199,15 @@ class Address(db.Model):
         primary_key=True,
     )
 
-    user_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("users.user_uid"),
-        nullable=False,
-    )
+    # user_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+    #     nullable=False,
+    # )
 
-    street = db.Column(
+    user = db.relationship('User', back_populates="address", uselist=False)
+
+    street_address = db.Column(
         db.Text,
         nullable=False
     )
@@ -206,23 +216,24 @@ class Address(db.Model):
         db.Integer
     )
 
-    city = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    state = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    zipcode = db.Column(
+    city_uid = db.Column(
         db.Integer,
-        nullable=False
+        db.ForeignKey('cities.id')
+    )
+    # city = db.relationship('City', back_populates="addresses", uselist=False)
+
+    state_uid = db.Column(
+        db.Integer, db.
+        ForeignKey('states.id')
+    )
+    # state = db.relationship('State', back_populates="addresses", uselist=False)
+
+    zipcode_uid = db.Column(
+        db.Integer, db.
+        ForeignKey('zip_codes.id')
     )
 
-    owner = db.relationship('User', back_populates="address", uselist=False)
-    # owner = db.relationship('User', backref="address")
+
 
     def __repr__(self):
         return f"< Address #{self.address_uid}, UserId #{self.user_uid}, Street: {self.street}, " \
@@ -230,6 +241,86 @@ class Address(db.Model):
 
 
 # endregion
+
+
+# region Description
+class City(db.Model):
+    """ Model for City """
+
+    __tablename__ = 'cities'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    # address_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey('addresses.address_uid'),
+    #     nullable=False
+    # )
+    # address = db.relationship("Address", back_populates="cities", uselist=False)
+
+    city_name = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    def __repr__(self):
+        return f"< City# {self.id}, AddressUid {self.address_uid}, City Name: {self.city_name} >"
+# endregion
+
+
+class State(db.Model):
+    """ A State for the address """
+
+    __tablename__ = 'states'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    # address_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey('addresses.address_uid'),
+    #     nullable=False
+    # )
+
+    state_abbreviation = db.Column(
+        db.String(2),
+        unique=True
+    )
+
+    state_name = db.Column(
+        db.String(15),
+        unique=True
+    )
+
+    # address = db.relationship('Address', back_populates='state', uselist=False)
+
+    def __repr__(self):
+        return f"< State # {self.id}, State Abbreviation: {self.state_abbrevation}, State name: {self.state_name}>"
+
+
+class ZipCode(db.Model):
+    """ A zipcode for every city """
+    __tablename__ = 'zip_codes'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    code = db.Column(
+        db.String(5),
+        unique=True
+    )
+
+    # address = db.relationship('Address', back_populates='zip_code', uselist=False)
+
+    def __repr__(self):
+        return f"< Zipcode # {self.id}, Code {self.code} >"
 
 
 # region Books
@@ -299,6 +390,7 @@ class Book(db.Model):
     )
 
     reservations = db.relationship('Reservation', backref='book')
+
     # owner = db.relationship('User', backref='book')
 
     def serialize(self):
@@ -317,11 +409,12 @@ class Book(db.Model):
             "status": self.status
         }
 
-
     def __repr__(self):
         return f"< Book #{self.book_uid}, OwnerId: {self.owner_uid}, Orig_Image: {self.orig_image_url}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
                f"Condition: {self.condition}, Price: {self.price}, Status: {self.status} >"
+
+
 # endregion
 
 
@@ -440,6 +533,7 @@ class Reservation(db.Model):
                f"RenderId: {self.renter_uid}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
                f"EndDate: {self.end_date}, Status: {self.status}, RentalPeriodMethod: {self.rental_period_method}," \
                f" Rental Period Duration: {self.rental_period_duration}, Rental Period Total: {self.total}>"
+
 
 # endregion
 

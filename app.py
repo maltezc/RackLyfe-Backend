@@ -141,6 +141,11 @@ def search():
     if zipcode != "":
         zipcode_users = User.query.all()
         # zipcode_users = User.query.filter(User.address.zipcode == zipcode).all()
+
+        # reference
+        # results = session.query(Customer.name, Order.total).join(Order, Customer.id == Order.customer_id).all()
+        results = User.query().all().join()
+
         # TODO: figure out how to joing tables with addresses to figure out users in the area and then filter for books of the correct title
         for user in zipcode_users:
             for book in user.owned_books:
