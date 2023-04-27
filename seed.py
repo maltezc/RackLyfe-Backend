@@ -1,6 +1,6 @@
 # noinspection PyUnresolvedReferences
 from app import db
-from models import User, UserImage, Address, City, State, ZipCode, Book, BookImage, Reservation, Message
+from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
 
 db.drop_all()
@@ -26,7 +26,12 @@ address1 = Address(
     street_address="164 Glenwood",
     city_uid=1,
     zipcode_uid=1,
-    point='POINT(-122.28195023589687, 38.006370860286694)'
+    latlong_uid=1
+)
+
+latlong1 = Location(
+    id=1,
+    point='POINT(-122.28195023589687 38.006370860286694)'
 )
 
 city1 = City(
@@ -54,15 +59,20 @@ user2 = User(
     lastname="lastname2",
     address_id=2,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
-
 )
+
 
 address2 = Address(
     address_uid=2,
     street_address="100 Finch Court",
     city_uid=1,
     zipcode_uid=1,
-    point='POINT(-122.25801, 37.999126)'
+    latlong_uid=2
+)
+
+latlong2 = Location(
+    id=2,
+    point='POINT(-122.25801 37.999126)'
 )
 
 user3 = User(
@@ -80,8 +90,12 @@ address3 = Address(
     street_address="655 E Drachman St",
     city_uid=2,
     zipcode_uid=2,
-    point='POINT(-110.961431, 32.239627)'
+    latlong_uid=3
+)
 
+latlong3 = Location(
+    id=3,
+    point='POINT(-110.961431 32.239627)'
 )
 
 city2 = City(
@@ -101,8 +115,8 @@ zipcode2 = ZipCode(
     code=85705
 )
 
-db.session.add_all([user1, address1, city1, state1, zipcode1, user2, address2])
-db.session.add_all([user3, address3, city2, state2, zipcode2])
+db.session.add_all([user1, address1, latlong1, city1, state1, zipcode1, user2, address2, latlong2])
+db.session.add_all([user3, address3, latlong3, city2, state2, zipcode2])
 
 db.session.commit()
 

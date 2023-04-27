@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -13,7 +14,7 @@ from flask_cors import CORS
 
 from api_helpers import upload_to_aws
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
-    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search
+    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
 load_dotenv()
 
@@ -152,6 +153,27 @@ def search():
 
     serialized = [book.serialize() for book in searched_books]
     return jsonify(books=serialized)
+
+
+@app.get("/api/search/books_nearby")
+def list_nearby_books():
+    """ Shows all books nearby """
+
+    title = request.args.get('title')
+    author = request.args.get('author')
+
+    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
+
+    return books
+
+
+@app.get("/api/search/nearby")
+def list_nearby():
+    """ Shows all points nearby """
+
+    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
+
+    return locations
 
 
 # region USERS ENDPOINTS START
