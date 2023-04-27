@@ -35,6 +35,8 @@ def get_all_users_in_zipcode(zipcode):
         .filter(ZipCode.code == zipcode) \
         .all()
     return users
+
+
 # endregion
 
 
@@ -51,26 +53,52 @@ def get_all_books_in_city(city):
     return books
 
 
-# def get_all_users_in_state(state):
-#     """ Gets all users of a city"""
-#
-#     users = User.query \
-#         .join(Address) \
-#         .join(City) \
-#         .join(State) \
-#         .filter(State.state_abbreviation == state) \
-#         .all()
-#     return users
-#
-#
-# def get_all_users_in_zipcode(zipcode):
-#     """ Gets all users of a city"""
-#
-#     users = User.query \
-#         .join(Address) \
-#         .join(City) \
-#         .join(ZipCode) \
-#         .filter(ZipCode.code == zipcode) \
-#         .all()
-#     return users
+def get_all_books_in_state(state):
+    """ Gets all books of a city"""
+
+    books = Book.query \
+        .join(User) \
+        .join(Address) \
+        .join(City) \
+        .join(State) \
+        .filter(State.state_abbreviation == state) \
+        .all()
+    return books
+
+
+def get_all_books_in_zipcode(code):
+    """ Gets all books of a Zipcode"""
+
+    books = Book.query \
+        .join(User) \
+        .join(Address) \
+        .join(ZipCode) \
+        .filter(ZipCode.code == code) \
+        .all()
+    return books
+
+
+def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
+    """ Performs basic search based off the information provided """
+
+    books = Book.query
+    if logged_in_user_uid is not None:
+        books = books.join(User).filter(User.user_uid != logged_in_user_uid)
+    if book_title is not None:
+        books = books.filter(Book.title.ilike(f"%{book_title}%"))
+    if book_author is not None:
+        books = books.filter(Book.author.ilike(f"%{book_author}%"))
+    if city is not None or state is not None or zipcode is not None:
+        books = books.join(Address)
+        if zipcode is not None:
+            books = books.join(ZipCode).filter(ZipCode.code.ilike(f"%{zipcode}%"))
+        if city is not None:
+            books = books.join(City).filter(City.city_name.ilike(f"%{city}%"))
+        if city is not None and state is not None:
+            books = books.join(State).filter(State.state_abbreviation == state)
+        elif state is not None:
+            books = books.join(City).join(State).filter(State.state_abbreviation == state)
+
+    return books.all()
+
 # endregion

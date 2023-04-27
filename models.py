@@ -4,6 +4,8 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2 import Geography, Geometry
+
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -201,12 +203,6 @@ class Address(db.Model):
         primary_key=True,
     )
 
-    # user_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    #     nullable=False,
-    # )
-
     user = db.relationship('User', back_populates="address", uselist=False)
 
     street_address = db.Column(
@@ -229,6 +225,11 @@ class Address(db.Model):
         ForeignKey('zip_codes.id')
     )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
+
+    point = db.Column(
+        Geometry(geometry_type='POINT', srid=4326),
+        # nullable=False
+    )
 
     def __repr__(self):
         return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
