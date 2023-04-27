@@ -129,7 +129,7 @@ def search():
     city = request.args.get('city')
     state = request.args.get('state')
     zipcode = request.args.get('zipcode')  # mandatory
-    # TODO: city
+
 
     request.args.keys()
     # if len(key) > 0:
@@ -157,14 +157,20 @@ def search():
 
 @app.get("/api/search/books_nearby")
 def list_nearby_books():
-    """ Shows all books nearby """
+    """ Shows all books nearby
+
+    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
+    condition, price, reservations},...}
+    """
 
     title = request.args.get('title')
     author = request.args.get('author')
 
     books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
 
-    return books
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
 
 
 @app.get("/api/search/nearby")
@@ -314,40 +320,52 @@ def show_book_by_id(book_uid):
     return jsonify(book=serialized)
 
 
-@app.get('/api/books/zip/<int:zipcode>')
-def show_books_by_zipcode(zipcode):
-    """Return books in a specific zipcode.
-
-    Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
-    """
-
-    users2 = User.query.filter(User.address_zipcode == zipcode)
-
-    # TODO: optimize to not have nested loops if possible
-    serialized = []
-    for user in users2.all():
-        books = user.owned_books
-        for book in books:
-            print(book.serialize())
-            serialized.append(book.serialize())
-
-    return jsonify(books=serialized)
-
-
-@app.get('/api/books/<city>')
-def show_books_by_city(city):
+@app.get('/api/search/books/city')
+def show_books_by_city():
     """Return books in a specific city.
 
     Returns JSON like:
         {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
-    books = Book.query.filter(User.address_city == city)
-    serialized = [book.serialize() for book in books]
+    city = request.args.get('city')  # mandatory
 
+    books = get_all_books_in_city(city)
+
+    serialized = [book.serialize() for book in books]
     return jsonify(books=serialized)
 
+
+@app.get('/api/search/books/state')
+def show_books_by_state():
+    """Return books in a specific state.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    state = request.args.get('state')  # mandatory
+
+    books = get_all_books_in_state(state)
+
+    serialized = [book.serialize() for book in books]
+    return jsonify(books=serialized)
+
+
+@app.get('/api/search/books/zipcode')
+def search_books_by_zipcode():
+    """Return books in a specific zipcode.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    zipcode = request.args.get('zipcode')  # mandatory
+
+    books = get_all_books_in_zipcode(zipcode)
+
+    serialized = [book.serialize() for book in books]
+    return jsonify(books=serialized)
 
 # @app.post("/api/pools")
 # @jwt_required()
