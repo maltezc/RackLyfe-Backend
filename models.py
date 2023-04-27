@@ -4,6 +4,7 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from geoalchemy2 import Geography, Geometry
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -201,12 +202,6 @@ class Address(db.Model):
         primary_key=True,
     )
 
-    # user_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    #     nullable=False,
-    # )
-
     user = db.relationship('User', back_populates="address", uselist=False)
 
     street_address = db.Column(
@@ -230,13 +225,31 @@ class Address(db.Model):
     )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
+    latlong_uid = db.Column(
+        db.Integer, db.
+        ForeignKey('locations.id')
+    )
+    latlong = db.relationship('Location', uselist=False)
+
     def __repr__(self):
         return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
-               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid} >"
-        # return f"< Address #{self.address_uid}, UserId #{self.user_uid}, Street: {self.street}, " \
+               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid}, Location: {self.latlong} >"
 
 
 # endregion
+
+class Location(db.Model):
+    __tablename__ = 'locations'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    point = db.Column(
+        Geometry(geometry_type='POINT', srid=4326),
+        # nullable=False
+    )
 
 
 # region Cities
@@ -265,8 +278,9 @@ class City(db.Model):
 
     def __repr__(self):
         return f"< City # {self.id}, City Name: {self.city_name}, StateUid: {self.state_uid} >"
-# endregion
 
+
+# endregion
 
 
 class State(db.Model):

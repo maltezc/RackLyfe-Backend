@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify
 from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
@@ -12,9 +13,8 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
 from api_helpers import upload_to_aws
-from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city
-
-
+from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
+    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
 load_dotenv()
 
@@ -122,17 +122,19 @@ def search():
     # endurance
     # 94108
 
+    # logged_in_user_uid, book_title, book_author, city, state, zipcode
     title = request.args.get('title')
     author = request.args.get('author')
     isbn = request.args.get('isbn')
-    zipcode = request.args.get('zipcode') # mandatory
-    # TODO: city
+    city = request.args.get('city')
+    state = request.args.get('state')
+    zipcode = request.args.get('zipcode')  # mandatory
+
 
     request.args.keys()
     # if len(key) > 0:
     # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
     # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
-
 
     # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
     # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
@@ -143,65 +145,41 @@ def search():
     state_users = get_all_users_in_state("CA")
     zipcode_users = get_all_users_in_zipcode("94547")
     users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
-    books = Book.query.join(User).join(Address).join(City).filter(City.city_name == "Hercules").all()
+    city_books = get_all_books_in_city("Hercules")
+    state_books = get_all_books_in_state("CA")
+    zipcode_books = get_all_books_in_zipcode("94547")
     all_books = Book.query.all()
-    # books = get_all_books_in_city("Hercules")
-    # users = (
-    #     User.query.all()
-    #     .join(Address)
-    #     .join(ZipCode)
-    #     .options(joinedload(User.address).joinedload(Address.zipcode))
-    #     .filter(ZipCode.code == zipcode)
-    #     .all()
-    # )
+    searched_books = basic_book_search(1, title, author, city, state, zipcode)
 
-    qs_books = []
-    if zipcode != "":
-        zipcode_users = User.query.all()
-        # zipcode_users = User.query.filter(User.address.zipcode == zipcode).all()
-
-        # reference
-        # results = session.query(Customer.name, Order.total).join(Order, Customer.id == Order.customer_id).all()
-        results = User.query().all().join()
-
-        # TODO: figure out how to joing tables with addresses to figure out users in the area and then filter for books of the correct title
-        for user in zipcode_users:
-            for book in user.owned_books:
-                print(book)
-
-            new_books = check_for_title(title, user.owned_books)
-
-            print(new_books)
-                # if title is not None:
-                #     if title in book.title:
-                #
-                #         qs_books.append(book)
-
-    # testq = Book.query.filter(Book.title.ilike(f"%{title}%")).filter(Book.author.ilike(f"%{author}%")).all()
-    #expression for item in iterable if condition
-    # for book in testq:
-        # get owner Uid
-        # ping db again to see filter for uid's location to match
-        # books_nearby_qs
-
-    if title is not None:
-        # titles = Book.query.filter(Book.title.ilike(f"%{title}%")).all()
-        qs_books = qs_books.filter(Book.title.ilike(f"%{title}%")).all()
-
-
-    if author is not None:
-        qs_books = qs_books.filter(Book.author.ilike(f"%{author}%"))
-        # authors = Book.query.filter(Book.author.ilike(f"%{author}%")).all()
-        # qs = qs.filter(Book.author.ilike(f"%{author}%"))
-
-    if isbn is not None:
-        qs_books = qs_books.filter(Book.isbn.ilike(f"%{isbn}%"))
-
-    # books = Book.query.filter.or_((Book.title.like(f"%%"), Book.author.like(f"%%")))
-    # books = Book.query.filter(or_(Book.title.like(f"%%"), Book.author.like(f"%%")))
-
-    serialized = [book.serialize() for book in qs_books]
+    serialized = [book.serialize() for book in searched_books]
     return jsonify(books=serialized)
+
+
+@app.get("/api/search/books_nearby")
+def list_nearby_books():
+    """ Shows all books nearby
+
+    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
+    condition, price, reservations},...}
+    """
+
+    title = request.args.get('title')
+    author = request.args.get('author')
+
+    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
+
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
+
+
+@app.get("/api/search/nearby")
+def list_nearby():
+    """ Shows all points nearby """
+
+    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
+
+    return locations
 
 
 # region USERS ENDPOINTS START
@@ -342,40 +320,52 @@ def show_book_by_id(book_uid):
     return jsonify(book=serialized)
 
 
-@app.get('/api/books/zip/<int:zipcode>')
-def show_books_by_zipcode(zipcode):
-    """Return books in a specific zipcode.
-
-    Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
-    """
-
-    users2 = User.query.filter(User.address_zipcode == zipcode)
-
-    # TODO: optimize to not have nested loops if possible
-    serialized = []
-    for user in users2.all():
-        books = user.owned_books
-        for book in books:
-            print(book.serialize())
-            serialized.append(book.serialize())
-
-    return jsonify(books=serialized)
-
-
-@app.get('/api/books/<city>')
-def show_books_by_city(city):
+@app.get('/api/search/books/city')
+def show_books_by_city():
     """Return books in a specific city.
 
     Returns JSON like:
         {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
-    books = Book.query.filter(User.address_city == city)
-    serialized = [book.serialize() for book in books]
+    city = request.args.get('city')  # mandatory
 
+    books = get_all_books_in_city(city)
+
+    serialized = [book.serialize() for book in books]
     return jsonify(books=serialized)
 
+
+@app.get('/api/search/books/state')
+def show_books_by_state():
+    """Return books in a specific state.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    state = request.args.get('state')  # mandatory
+
+    books = get_all_books_in_state(state)
+
+    serialized = [book.serialize() for book in books]
+    return jsonify(books=serialized)
+
+
+@app.get('/api/search/books/zipcode')
+def search_books_by_zipcode():
+    """Return books in a specific zipcode.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    zipcode = request.args.get('zipcode')  # mandatory
+
+    books = get_all_books_in_zipcode(zipcode)
+
+    serialized = [book.serialize() for book in books]
+    return jsonify(books=serialized)
 
 # @app.post("/api/pools")
 # @jwt_required()
