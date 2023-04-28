@@ -43,4 +43,8 @@ aws_secret_access_key=your_aws_secret_key
 
 ### Useful links: 
 #### GeoAlchemy
-- https://geoalchemy-2.readthedocs.io/en/latest/orm_tutorial.html
+- [GeoAlchemy Docs](https://geoalchemy-2.readthedocs.io/en/latest/orm_tutorial.html) 
+
+#### PostGIS 
+- [adding postGIS extension to sql](https://stackoverflow.com/questions/6850500/postgis-installation-type-geometry-does-not-exist)
+- had to install PostGIS via homebrew
