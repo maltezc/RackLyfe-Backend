@@ -39,3 +39,8 @@ aws_secret_access_key=your_aws_secret_key
 │   └── seed.py
 
 <br/>
+
+
+### Useful links: 
+#### GeoAlchemy
+- https://geoalchemy-2.readthedocs.io/en/latest/orm_tutorial.html

@@ -116,6 +116,7 @@ def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, 
 def books_within_radius(latitude, longitude, radius, logged_in_user_uid, book_title, book_author):
     """ Returns books within a specified radius"""
 
+
     # convert radius to meters
     radius_m = int(radius) * 1000
 

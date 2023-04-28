@@ -130,7 +130,6 @@ def search():
     state = request.args.get('state')
     zipcode = request.args.get('zipcode')  # mandatory
 
-
     request.args.keys()
     # if len(key) > 0:
     # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
@@ -367,6 +366,7 @@ def search_books_by_zipcode():
     serialized = [book.serialize() for book in books]
     return jsonify(books=serialized)
 
+
 # @app.post("/api/pools")
 # @jwt_required()
 # def create_pool():
@@ -406,6 +406,10 @@ def create_book():
     Returns JSON like:
         {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
     """
+    # TODO: try posting a book object to the db first. if successful, post book image to aws, if successful,
+    #  switch url for book from dummy_url to aws_url.
+    # https://www.geeksforgeeks.org/try-except-else-and-finally-in-python/
+
     print("I'm in api/books")
     current_user = get_jwt_identity()
     if current_user:
