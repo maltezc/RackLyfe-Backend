@@ -407,14 +407,41 @@ def create_book():
         {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
     """
     # TODO: try posting a book object to the db first. if successful, post book image to aws, if successful,
-    #  switch url for book from dummy_url to aws_url.
+    #  switch url for book from dummy_url to aws_url. if anything fails delete the book and the book image.
     # https://www.geeksforgeeks.org/try-except-else-and-finally-in-python/
 
     print("I'm in api/books")
     current_user = get_jwt_identity()
     if current_user:
+        form = request.form
+
         try:
-            form = request.form
+            title = request.form.get("title")
+            author = request.form.get("author")
+            isbn = int(request.form.get("isbn"))
+            condition = request.form.get("condition")
+            rate_price = int(request.form.get("rate_price"))
+            rate_schedule = request.form.get("rate_schedule")
+
+            # post book to db
+            book = Book(
+                owner_uid=current_user,
+                title=title,
+                author=author,
+                isbn=isbn,
+                condition=condition,
+                rate_price=rate_price,
+                rate_schedule=rate_schedule,
+            )
+
+            db.session.add(book)
+            db.session.commit()
+
+            # post image to aws
+
+            # if successful set book image url to aws_url
+
+
             print("current_user", current_user)
             print("form", form)
             file = request.files.get('file')
@@ -521,9 +548,9 @@ def delete_book(book_uid):
         db.session.delete(book)
         db.session.commit()
 
-        return (jsonify("Book successfully deleted"), 200)
+        return jsonify("Book successfully deleted"), 200
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.post("/api/books/<int:book_uid>/images")
@@ -632,7 +659,7 @@ def get_reservations_for_book(book_uid):
         return (jsonify(reservations=serialized_reservations))
 
     # TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.get("/api/reservations/<int:user_uid>")
@@ -762,7 +789,7 @@ def create_message():
     db.session.add(message)
     db.session.commit()
 
-    return (jsonify(message=message.serialize()), 201)
+    return jsonify(message=message.serialize()), 201
 
 
 @app.get("/api/messages/<message_uid>")
@@ -783,6 +810,6 @@ def show_message(message_uid):
         message = message.serialize()
         return jsonify(message=message)
     else:
-        return (jsonify({"error": "not authorized"}), 401)
+        return jsonify({"error": "not authorized"}), 401
 
 # endregion

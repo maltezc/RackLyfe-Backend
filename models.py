@@ -73,6 +73,12 @@ class User(db.Model):
         default=5.0
     )
 
+    user_profile_image_uid = db.Column(
+        db.Integer,
+        # db.ForeignKey('user_images.id', ondelete="CASCADE")
+    )
+
+
     # TODO: owned_books_for_rent
 
     # TODO: others_books_rented
@@ -179,14 +185,13 @@ class UserImage(db.Model):
     )
     user_uid = db.Column(
         db.Integer,
-        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+        # db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
     image_path = db.Column(
         db.Text,
         nullable=False
     )
-
 
 # endregion
 
@@ -239,6 +244,8 @@ class Address(db.Model):
 # endregion
 
 class Location(db.Model):
+    """ User's geocoded Location point. """
+
     __tablename__ = 'locations'
 
     id = db.Column(
@@ -346,11 +353,17 @@ class Book(db.Model):
         nullable=False,
     )
 
-    # book_address = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.address"),
-    #     nullable=False,
-    # )
+    book_primary_image_uid = db.Column(
+        db.Integer,
+        db.ForeignKey('book_images.id')
+    )
+
+    book_aux_image_uid = db.Column(
+        db.Integer,
+        db.ForeignKey('book_images.id')
+    )
+    images = db.Relationship("BookImage", back_populates="book")
+    # addresses = db.relationship('Address', back_populates='zipcode')
 
     orig_image_url = db.Column(
         db.Text,
@@ -368,7 +381,7 @@ class Book(db.Model):
     )
 
     isbn = db.Column(
-        db.Text,
+        db.BigInteger,
         nullable=False
     )
 
@@ -395,7 +408,7 @@ class Book(db.Model):
         nullable=False
     )
 
-    reservations = db.relationship('Reservation', backref='book')
+    reservations = db.relationship('Reservation', back_populates='book')
 
     # owner = db.relationship('User', backref='book')
 
@@ -439,6 +452,9 @@ class BookImage(db.Model):
         db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
+    book = db.Relationship("Book", back_populates="images")
+    # images = db.Relationship("BookImage", back_populates="book")
+
     image_url = db.Column(
         db.Text,
         nullable=False
@@ -471,6 +487,7 @@ class Reservation(db.Model):
         db.Integer,
         db.ForeignKey("books.book_uid", ondelete="CASCADE"),
     )
+    book = db.relationship('Book', back_populates='reservations')
 
     owner_uid = db.Column(
         db.Integer,
