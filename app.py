@@ -12,7 +12,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-from api_helpers import upload_to_aws
+from api_helpers import upload_to_aws, aws_post_book, aws_upload_image, db_post_book_image
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
@@ -411,11 +411,10 @@ def create_book():
     # https://www.geeksforgeeks.org/try-except-else-and-finally-in-python/
 
     print("I'm in api/books")
-    current_user = get_jwt_identity()
-    if current_user:
-        form = request.form
-
+    current_user_id = get_jwt_identity()
+    if current_user_id:
         try:
+            image = request.form.get("image")
             title = request.form.get("title")
             author = request.form.get("author")
             isbn = int(request.form.get("isbn"))
@@ -423,52 +422,21 @@ def create_book():
             rate_price = int(request.form.get("rate_price"))
             rate_schedule = request.form.get("rate_schedule")
 
-            # post book to db
-            book = Book(
-                owner_uid=current_user,
-                title=title,
-                author=author,
-                isbn=isbn,
-                condition=condition,
-                rate_price=rate_price,
-                rate_schedule=rate_schedule,
-            )
-
-            db.session.add(book)
-            db.session.commit()
-
             # post image to aws
+            image_url = aws_upload_image(image)
 
-            # if successful set book image url to aws_url
+            # post image to database
+            image_element = db_post_book_image(current_user_id, image_url)
 
+            # post book to db
+            book_posted = aws_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
 
-            print("current_user", current_user)
-            print("form", form)
-            file = request.files.get('file')
-            print("file", file)
-            orig_url = None
-            if (file):
-                [orig_url, small_url] = upload_to_aws(file)
+            return [image_url, image_element, book_posted], 201 # TODO: how to serialized all info in this
+            return jsonify(book=book.serialize()), 200
 
-            book = Book(
-                owner_uid=current_user,
-                title=form['title'],
-                author=form['author'],
-                isbn=form['isbn'],
-                genre=form['genre'],
-                condition=form['condition'],
-                price=form['price'],
-                orig_image_url=orig_url,
-                small_image_url=small_url
-            )
-
-            db.session.add(book)
-            db.session.commit()
-
-            return (jsonify(book=book.serialize()), 201)
         except Exception as error:
             print("Error", error)
-            return (jsonify({"error": "Failed to add book"}), 401)
+            return jsonify({"error": f"Failed to add book and book image: {error}", }), 401
 
 
 @app.patch('/api/books/<int:book_uid>')
