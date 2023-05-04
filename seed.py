@@ -126,6 +126,7 @@ db.session.commit()
 
 book1 = Book(
     owner_uid=1,
+    primary_image_uid=1,
     # book_image_uid=1,
     title="The Name of the Wind",
     author="Patrick Rothfuss",
@@ -145,6 +146,7 @@ bookImage1 = BookImage(
 
 book2 = Book(
     owner_uid=2,
+    primary_image_uid=2,
     # book_image_uid=2,
     title="Foundation",
     author="Isaac Asimov",
@@ -164,6 +166,7 @@ bookImage2 = BookImage(
 
 book3 = Book(
     owner_uid=3,
+    primary_image_uid=3,
     # book_image_uid=3,
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
@@ -183,6 +186,7 @@ bookImage3 = BookImage(
 
 book4 = Book(
     owner_uid=1,
+    primary_image_uid=5,
     # book_image_uid=4,
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",

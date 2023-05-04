@@ -260,6 +260,7 @@ class Location(db.Model):
         # nullable=False
     )
 
+
 # endregion
 
 
@@ -343,6 +344,7 @@ class ZipCode(db.Model):
     def __repr__(self):
         return f"< Zipcode # {self.id}, Code {self.code} >"
 
+
 # endregion
 
 
@@ -363,10 +365,10 @@ class Book(db.Model):
         nullable=False,
     )
 
-    # book_image_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('book_images.id')
-    # )
+    primary_image_uid = db.Column(
+        db.Integer,
+        # db.ForeignKey('book_images.id')
+    )
 
     # book_aux_image_uid = db.Column(
     #     db.Integer,
@@ -397,7 +399,6 @@ class Book(db.Model):
 
     genre = db.Column(
         db.Text,
-        # nullable=False
     )
 
     condition = db.Column(
@@ -462,19 +463,7 @@ class BookImage(db.Model):
         db.Integer,
         primary_key=True
     )
-    # book_owner_uid = db.Column(
-    #     db.Integer,
-    # db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    # )
-    # dont need fk in child
 
-
-    # book_id = db.Column(
-    #     db.Integer,
-    #     nullable=False
-    # )
-
-    # book = db.Relationship("Book", back_populates="images", uselist=False)
     book_uid = db.Column(
         db.Integer,
         db.ForeignKey("books.book_uid", ondelete="CASCADE"),
