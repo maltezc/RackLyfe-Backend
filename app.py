@@ -414,8 +414,7 @@ def create_book():
     current_user_id = get_jwt_identity()
     if current_user_id:
         try:
-            # image = request.form.get("image")
-            image = request.files.get("image")
+            images = request.files
             title = request.form.get("title")
             author = request.form.get("author")
             isbn = int(request.form.get("isbn"))
@@ -423,16 +422,19 @@ def create_book():
             rate_price = int(request.form.get("rate_price"))
             rate_schedule = request.form.get("rate_schedule")
 
+            images_posted = []
             # post image to aws
-            image_url = aws_upload_image(image)
 
-            # post image to database
-            image_element = db_add_book_image(current_user_id, image_url)
+            for image in images:
+                image_url = aws_upload_image(images[image])
+                # post image to database
+                image_element = db_add_book_image(current_user_id, image_url)
+                images_posted.append(image_element.serialize())
 
             # post book to db
             book_posted = aws_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
 
-            return jsonify(book=book_posted.serialize(), book_image=image_element.serialize()), 201
+            return jsonify(book=book_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
             print("Error", error)
