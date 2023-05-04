@@ -132,12 +132,13 @@ def aux_make_thumbnail_manual(file):
     img.show()
 
 
-def db_add_book_image(user_id, image_url):
+def db_add_book_image(user_id, book_uid, image_url):
     """ Posts book_image to db while in try block and returns serialized if successful, returns an error if not. """
 
     try:
         book_image = BookImage(
             # book_owner_uid=user_id,
+            book_id=book_uid,
             image_url=image_url,
         )
         db.session.add(book_image)
@@ -149,7 +150,7 @@ def db_add_book_image(user_id, image_url):
         return jsonify({"error": "Failed to add book_image"}), 401
 
 
-def aws_post_book(user_id, title, author, isbn, condition, rate_price, rate_schedule):
+def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_schedule):
     """ Posts book to aws while in try block and returns serialized if successful, returns an error if not.
 
     """

@@ -126,10 +126,7 @@ db.session.commit()
 
 book1 = Book(
     owner_uid=1,
-    book_image_uid=1,
-    # book_address=1,
-    # orig_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-    #                "&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
+    # book_image_uid=1,
     title="The Name of the Wind",
     author="Patrick Rothfuss",
     isbn=9780756405892,
@@ -141,17 +138,14 @@ book1 = Book(
 )
 
 bookImage1 = BookImage(
-    # id=1,
+    book_uid=1,
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
 )
 
 book2 = Book(
     owner_uid=2,
-    book_image_uid=2,
-    # book_address=2,
-    # orig_image_url="https://books.google.com/books/content?id=IwywDY4P6gsC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
-    #                "=ACfU3U1MW8ShmkaEJSng6powPa2vADQ4Kw&w=1280",
+    # book_image_uid=2,
     title="Foundation",
     author="Isaac Asimov",
     isbn=9780553900347,
@@ -163,17 +157,14 @@ book2 = Book(
 )
 
 bookImage2 = BookImage(
-    # id=2,
+    book_uid=2,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
 
 book3 = Book(
     owner_uid=3,
-    book_image_uid=3,
-    # book_address=3,
-    # orig_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-    #                "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+    # book_image_uid=3,
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
     isbn=9780753809877,
@@ -185,16 +176,14 @@ book3 = Book(
 )
 
 bookImage3 = BookImage(
-    # id=3,
+    book_uid=3,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
 
 book4 = Book(
     owner_uid=1,
-    book_image_uid=4,
-    # orig_image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
-    #                "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B159ow&w=1280",
+    # book_image_uid=4,
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
@@ -206,13 +195,17 @@ book4 = Book(
 )
 
 bookImage4 = BookImage(
-    # id=4,
+    book_uid=4,
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
               "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
 )
 
-# db.session.add_all([book1])
-db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4])
+bookImage5 = BookImage(
+    book_uid=4,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
+)
+
+db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4, bookImage5])
 db.session.commit()
 # endregion
 

@@ -12,7 +12,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-from api_helpers import upload_to_aws, aws_post_book, aws_upload_image, db_add_book_image
+from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
@@ -422,17 +422,17 @@ def create_book():
             rate_price = int(request.form.get("rate_price"))
             rate_schedule = request.form.get("rate_schedule")
 
+            # post book to db
+            book_posted = db_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
+
             images_posted = []
             # post image to aws
 
             for image in images:
                 image_url = aws_upload_image(images[image])
                 # post image to database
-                image_element = db_add_book_image(current_user_id, image_url)
+                image_element = db_add_book_image(current_user_id, book_posted.book_uid, image_url)
                 images_posted.append(image_element.serialize())
-
-            # post book to db
-            book_posted = aws_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
 
             return jsonify(book=book_posted.serialize(), images_posted=images_posted), 201
 

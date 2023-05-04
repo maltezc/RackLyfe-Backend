@@ -243,6 +243,8 @@ class Address(db.Model):
 
 # endregion
 
+
+# region Location
 class Location(db.Model):
     """ User's geocoded Location point. """
 
@@ -257,6 +259,8 @@ class Location(db.Model):
         Geometry(geometry_type='POINT', srid=4326),
         # nullable=False
     )
+
+# endregion
 
 
 # region Cities
@@ -339,7 +343,6 @@ class ZipCode(db.Model):
     def __repr__(self):
         return f"< Zipcode # {self.id}, Code {self.code} >"
 
-
 # endregion
 
 
@@ -360,10 +363,10 @@ class Book(db.Model):
         nullable=False,
     )
 
-    book_image_uid = db.Column(
-        db.Integer,
-        db.ForeignKey('book_images.id')
-    )
+    # book_image_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey('book_images.id')
+    # )
 
     # book_aux_image_uid = db.Column(
     #     db.Integer,
@@ -461,11 +464,22 @@ class BookImage(db.Model):
     )
     # book_owner_uid = db.Column(
     #     db.Integer,
-        # db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+    # db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     # )
     # dont need fk in child
 
-    book = db.Relationship("Book", back_populates="images", uselist=False)
+
+    # book_id = db.Column(
+    #     db.Integer,
+    #     nullable=False
+    # )
+
+    # book = db.Relationship("Book", back_populates="images", uselist=False)
+    book_uid = db.Column(
+        db.Integer,
+        db.ForeignKey("books.book_uid", ondelete="CASCADE"),
+    )
+    book = db.relationship('Book', back_populates='images')
 
     image_url = db.Column(
         db.Text,
@@ -476,9 +490,13 @@ class BookImage(db.Model):
         """ returns self """
         return {
             "id": self.id,
+            "book_id": self.book_id,
             # "book_owner": self.book_owner_uid,
             "image_url": self.image_url,
         }
+
+    def __repr__(self):
+        return f"< BookImage #{self.id}, Book_uid: {self.book_uid}, ImageUrl: {self.image_url} >"
 
 
 # endregion
