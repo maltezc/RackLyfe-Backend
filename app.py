@@ -12,7 +12,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-from api_helpers import upload_to_aws, aws_post_book, aws_upload_image, db_post_book_image
+from api_helpers import upload_to_aws, aws_post_book, aws_upload_image, db_add_book_image
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
@@ -414,7 +414,8 @@ def create_book():
     current_user_id = get_jwt_identity()
     if current_user_id:
         try:
-            image = request.form.get("image")
+            # image = request.form.get("image")
+            image = request.files.get("image")
             title = request.form.get("title")
             author = request.form.get("author")
             isbn = int(request.form.get("isbn"))
@@ -426,13 +427,12 @@ def create_book():
             image_url = aws_upload_image(image)
 
             # post image to database
-            image_element = db_post_book_image(current_user_id, image_url)
+            image_element = db_add_book_image(current_user_id, image_url)
 
             # post book to db
             book_posted = aws_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
 
-            return [image_url, image_element, book_posted], 201 # TODO: how to serialized all info in this
-            return jsonify(book=book.serialize()), 200
+            return jsonify(book=book_posted.serialize(), book_image=image_element.serialize()), 201
 
         except Exception as error:
             print("Error", error)
@@ -468,9 +468,9 @@ def update_book(book_uid):
         db.session.add(book)
         db.session.commit()
 
-        return (jsonify(book=book.serialize()), 200)
+        return jsonify(book=book.serialize()), 200
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.patch('/api/users/<int:user_uid>/books/<int:book_uid>/toggle_status')
@@ -480,10 +480,7 @@ def toggle_book_status(user_uid, book_uid):
 
     current_user = get_jwt_identity()
 
-    # book_owner_uid = book.owner_uid
-
     if current_user == user_uid:
-        # user = User.query.get_or_404(book_uid)
         book = Book.query.get_or_404(book_uid)
 
         if book.status == "Available":
@@ -546,9 +543,9 @@ def add_book_image(book_uid):
         db.session.add(book_image)
         db.session.commit()
 
-        return (jsonify(book_image=book_image.serialize()), 201)
+        return jsonify(book_image=book_image.serialize()), 201
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 # endregion

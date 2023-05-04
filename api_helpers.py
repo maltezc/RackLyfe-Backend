@@ -18,13 +18,16 @@ aws_secret_access_key = os.environ['aws_secret_access_key']
 
 s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                   aws_secret_access_key=aws_secret_access_key)
+
 MNB_BUCKET_NAME_IMAGES = 'my-neighbors-bookshelf'
+mnb_bucket_base_url_images = "https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/"
+
+
 BUCKET_NAME_LARGE_IMAGES = 'sharebnb-gmm'
 BUCKET_NAME_SMALL_IMAGES = 'sharebnb-gmm-small-images'
 
 bucket_base_url_large_images = "https://sharebnb-gmm.s3.us-west-1.amazonaws.com/"
 bucket_base_url_small_images = "https://sharebnb-gmm-small-images.s3.us-west-1.amazonaws.com/"
-mnb_bucket_base_url_images = "https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/"
 
 
 def aws_upload_image(file):
@@ -129,19 +132,18 @@ def aux_make_thumbnail_manual(file):
     img.show()
 
 
-def db_post_book_image(user_id, image_url):
-    """Posts book_image to db while in try block and returns serialized if successful, returns an error if not.
-    """
+def db_add_book_image(user_id, image_url):
+    """ Posts book_image to db while in try block and returns serialized if successful, returns an error if not. """
 
     try:
         book_image = BookImage(
-            book_owner_uid=user_id,
+            # book_owner_uid=user_id,
             image_url=image_url,
         )
         db.session.add(book_image)
         db.session.commit()
 
-        return jsonify(book_image=book_image.serialize()), 201
+        return book_image
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to add book_image"}), 401
@@ -166,9 +168,9 @@ def aws_post_book(user_id, title, author, isbn, condition, rate_price, rate_sche
         db.session.add(book)
         db.session.commit()
 
-        return jsonify(book=book.serialize()), 201
+        return book
     except Exception as error:
-        print("Error", error)
+        print("Error, Failed in aws_post_book: ", error)
         return jsonify({"error": "Failed to add book"}), 401
 
 # TODO: write function to re-thumbnail entire AWS bucket
