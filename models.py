@@ -369,9 +369,11 @@ class Book(db.Model):
         nullable=False,
     )
 
-    primary_image_uid = db.Column(
-        db.Integer,
+    primary_image_url = db.Column(
+        db.Text,
+        nullable=False,
     )
+
 
     images = db.Relationship("BookImage", back_populates="book")
 
@@ -482,11 +484,6 @@ class BookImage(db.Model):
         nullable=False
     )
 
-    is_primary_image = db.Column(
-        db.Boolean,
-        default=False,
-        nullable=False
-    )
 
     def serialize(self):
         """ returns self """
