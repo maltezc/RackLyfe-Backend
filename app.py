@@ -434,6 +434,8 @@ def create_book():
                 image_element = db_add_book_image(current_user_id, book_posted.book_uid, image_url)
                 images_posted.append(image_element.serialize())
 
+            # TODO: might have to set primary book image here but then its pinging the db twice for the patch request
+
             return jsonify(book=book_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:

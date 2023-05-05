@@ -4,6 +4,7 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Enum
 from geoalchemy2 import Geography, Geometry
 
 bcrypt = Bcrypt()
@@ -414,8 +415,8 @@ class Book(db.Model):
     )
 
     rate_schedule = db.Column(
-        db.Text,
-        nullable=False  # select from daily, weekly, monthly
+        db.Enum("Daily", "Weekly", "Monthly", name="ValueTypes"),
+        default="Daily"
     )
 
     status = db.Column(
@@ -425,6 +426,8 @@ class Book(db.Model):
     )
 
     reservations = db.relationship('Reservation', back_populates='book')
+
+    # TODO: how to get primary book image?
 
     def serialize(self):
         """ returns self """
@@ -475,17 +478,23 @@ class BookImage(db.Model):
         nullable=False
     )
 
+    is_primary_image = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
     def serialize(self):
         """ returns self """
         return {
             "id": self.id,
             "book_id": self.book_id,
-            # "book_owner": self.book_owner_uid,
             "image_url": self.image_url,
+            "is_primary_image": self.is_primary_image,
         }
 
     def __repr__(self):
-        return f"< BookImage #{self.id}, Book_uid: {self.book_uid}, ImageUrl: {self.image_url} >"
+        return f"< BookImage #{self.id}, Book_uid: {self.book_uid}, ImageUrl: {self.image_url}, IsPrimaryImage: {self.is_primary_image} >"
 
 
 # endregion

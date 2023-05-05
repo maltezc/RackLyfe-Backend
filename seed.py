@@ -127,7 +127,6 @@ db.session.commit()
 book1 = Book(
     owner_uid=1,
     primary_image_uid=1,
-    # book_image_uid=1,
     title="The Name of the Wind",
     author="Patrick Rothfuss",
     isbn=9780756405892,
@@ -142,12 +141,12 @@ bookImage1 = BookImage(
     book_uid=1,
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
+    is_primary_image=True
 )
 
 book2 = Book(
     owner_uid=2,
     primary_image_uid=2,
-    # book_image_uid=2,
     title="Foundation",
     author="Isaac Asimov",
     isbn=9780553900347,
@@ -162,12 +161,12 @@ bookImage2 = BookImage(
     book_uid=2,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+    is_primary_image=True
 )
 
 book3 = Book(
     owner_uid=3,
     primary_image_uid=3,
-    # book_image_uid=3,
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
     isbn=9780753809877,
@@ -182,19 +181,19 @@ bookImage3 = BookImage(
     book_uid=3,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+    is_primary_image=True
 )
 
 book4 = Book(
     owner_uid=1,
     primary_image_uid=5,
-    # book_image_uid=4,
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
     condition="Fair",
-    rate_price="900",
-    rate_schedule="Weekly",
+    rate_price="100",
+    # rate_schedule="Weekly",
     status="Checked Out"
 )
 
@@ -202,11 +201,13 @@ bookImage4 = BookImage(
     book_uid=4,
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
               "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
+    is_primary_image=False
 )
 
 bookImage5 = BookImage(
     book_uid=4,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
+    is_primary_image=True
 )
 
 db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4, bookImage5])
