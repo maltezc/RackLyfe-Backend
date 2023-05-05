@@ -2,6 +2,7 @@
 from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
+from enums import ConditionEnum, StatesEnum
 
 db.drop_all()
 db.create_all()
@@ -19,7 +20,14 @@ user1 = User(
     firstname="firstname1",
     lastname="lastname1",
     address_id=1,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
+    user_image_uid=1,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
+)
+
+user1Image = UserImage(
+    # id=1,
+    user_uid=user1.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
 
 address1 = Address(
@@ -42,7 +50,7 @@ city1 = City(
 
 state1 = State(
     id=1,
-    state_abbreviation="CA",
+    state_abbreviation=StatesEnum.CALIFORNIA.value,
     state_name="California",
 )
 
@@ -58,9 +66,15 @@ user2 = User(
     firstname="firstname2",
     lastname="lastname2",
     address_id=2,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
+    user_image_uid=2,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
 )
 
+user2Image = UserImage(
+    # id=2,
+    user_uid=user2.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
+)
 
 address2 = Address(
     address_uid=2,
@@ -82,7 +96,14 @@ user3 = User(
     firstname="firstname3",
     lastname="lastname3",
     address_id=3,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
+    user_image_uid=3,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
+)
+
+user3Image = UserImage(
+    # id=3,
+    user_uid=user3.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
 
 address3 = Address(
@@ -106,7 +127,7 @@ city2 = City(
 
 state2 = State(
     id=2,
-    state_abbreviation="AZ",
+    state_abbreviation=StatesEnum.ARIZONA.value,
     state_name="Arizona",
 )
 
@@ -115,8 +136,8 @@ zipcode2 = ZipCode(
     code=85705
 )
 
-db.session.add_all([user1, address1, latlong1, city1, state1, zipcode1, user2, address2, latlong2])
-db.session.add_all([user3, address3, latlong3, city2, state2, zipcode2])
+db.session.add_all([user1, user1Image, address1, latlong1, city1, state1, zipcode1, user2, user2Image, address2, latlong2])
+db.session.add_all([user3, user3Image, address3, latlong3, city2, state2, zipcode2])
 
 db.session.commit()
 
@@ -127,67 +148,93 @@ db.session.commit()
 
 book1 = Book(
     owner_uid=1,
-    # book_address=1,
-    orig_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-                   "&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
+    primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
+              "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
     author="Patrick Rothfuss",
-    isbn="9780756405892",
+    isbn=9780756405892,
     genre="",
-    condition="Like New",
-    price="400",
+    condition=ConditionEnum.FAIR.value,
+    rate_price="400",
+    rate_schedule="Weekly",
     status="Available"
+)
+
+bookImage1 = BookImage(
+    book_uid=1,
+    image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
+              "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
+
 )
 
 book2 = Book(
     owner_uid=2,
-    # book_address=2,
-    orig_image_url="https://books.google.com/books/content?id=IwywDY4P6gsC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
-                   "=ACfU3U1MW8ShmkaEJSng6powPa2vADQ4Kw&w=1280",
+    primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
+    "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
     author="Isaac Asimov",
-    isbn="9780553900347",
+    isbn=9780553900347,
     genre="",
-    condition="Used",
-    price="300",
+    condition=ConditionEnum.USED.value,
+    rate_price="300",
+    rate_schedule="Weekly",
     status="Available"
+)
+
+bookImage2 = BookImage(
+    book_uid=2,
+    image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
+              "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
 
 book3 = Book(
     owner_uid=3,
-    # book_address=3,
-    orig_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-                   "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+    primary_image_url=3,
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
-    isbn="9780753809877",
+    isbn=9780753809877,
     genre="",
-    condition="Fair",
-    price="200",
+    condition=ConditionEnum.FAIR.value,
+    rate_price="200",
+    rate_schedule="Weekly",
     status="Available"
+)
+
+bookImage3 = BookImage(
+    book_uid=3,
+    image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
+              "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
 
 book4 = Book(
     owner_uid=1,
-    # book_address=1,
-    orig_image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
-                   "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B159ow&w=1280",
+    primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
-    isbn="9781781100486",
+    isbn=9781781100486,
     genre="",
-    condition="Fair",
-    price="900",
+    condition=ConditionEnum.LIKE_NEW.value,
+    rate_price="100",
+    # rate_schedule="Weekly",
     status="Checked Out"
 )
 
+bookImage4 = BookImage(
+    book_uid=4,
+    image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
+              "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
+)
 
-# db.session.add_all([book1])
-db.session.add_all([book1, book2, book3, book4])
+bookImage5 = BookImage(
+    book_uid=4,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
+)
+
+db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4, bookImage5])
 db.session.commit()
 # endregion
 
-
+# TODO: set this up. check for book1.reservations.book
 # region reservations
 # reservation1 = Reservation(
 #     reservation_uid="1",

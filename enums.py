@@ -1,0 +1,80 @@
+import enum
+from sqlalchemy import Enum
+
+
+class ConditionEnum(enum.Enum):
+	""" Enum for book conditions """
+
+	LIKE_NEW = "Like New"
+	FAIR = "Fair"
+	USED = "Used"
+
+
+class StatesEnum(enum.Enum):
+	""" Enum for states """
+
+	ALABAMA = "AL"
+	KENTUCKY = "KY"
+	OHIO = "OH"
+	ALASKA = "AK"
+	LOUISIANA = "LA"
+	OKLAHOMA = "OK"
+	ARIZONA = "AZ"
+	MAINE = "ME"
+	OREGON = "OR"
+	ARKANSAS = "AR"
+	MARYLAND = "MD"
+	PENNSYLVANIA = "PA"
+	AMERICAN_SAMOA = "AS"
+	MASSACHUSETTS = "MA"
+	PUERTO_RICO = "PR"
+	CALIFORNIA = "CA"
+	MICHIGAN = "MI"
+	RHODE_ISLAND = "RI"
+	COLORADO = "CO"
+	MINNESOTA = "MN"
+	SOUTH_CAROLINA = "SC"
+	CONNECTICUT = "CT"
+	MISSISSIPPI = "MS"
+	SOUTH_DAKOTA = "SD"
+	DELAWARE = "DE"
+	MISSOURI = "MO"
+	TENNESSEE = "TN"
+	DISTRICT_OF_COLUMBIA = "DC"
+	MONTANA = "MT"
+	TEXAS = "TX"
+	FLORIDA = "FL"
+	NEBRASKA = "NE"
+	TRUST_TERRITORIES = "TT"
+	GEORGIA = "GA"
+	NEVADA = "NV"
+	UTAH = "UT"
+	GUAM = "GU"
+	NEW_HAMPSHIRE = "NH"
+	VERMONT = "VT"
+	HAWAII = "HI"
+	NEW_JERSEY = "NJ"
+	VIRGINIA = "VA"
+	IDAHO = "ID"
+	NEW_MEXICO = "NM"
+	VIRGIN_ISLANDS = "VI"
+	ILLINOIS = "IL"
+	NEW_YORK = "NY"
+	WASHINGTON = "WA"
+	INDIANA = "IN"
+	NORTH_CAROLINA = "NC"
+	WEST_VIRGINIA = "WV"
+	IOWA = "IA"
+	NORTH_DAKOTA = "ND"
+	WISCONSIN = "WI"
+	KANSAS = "KS"
+	NORTHERN_MARIANA_ISLANDS = "MP"
+	WYOMING = "WY"
+
+
+
+
+
+
+
+

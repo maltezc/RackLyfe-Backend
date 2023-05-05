@@ -39,3 +39,15 @@ aws_secret_access_key=your_aws_secret_key
 │   └── seed.py
 
 <br/>
+
+
+### Useful links: 
+#### GeoAlchemy
+- [GeoAlchemy Docs](https://geoalchemy-2.readthedocs.io/en/latest/orm_tutorial.html) 
+
+#### PostGIS 
+- [adding postGIS extension to sql](https://stackoverflow.com/questions/6850500/postgis-installation-type-geometry-does-not-exist)
+- had to install PostGIS via homebrew
+
+#### How to use Google Books api 
+- [walk through](https://rachelaemmer.medium.com/how-to-use-the-google-books-api-in-your-application-17a0ed7fa857)

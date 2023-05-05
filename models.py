@@ -11,8 +11,6 @@ db = SQLAlchemy()
 
 # TODO: USER DEFAULT IMAGE URL
 DEFAULT_USER_IMAGE_URL = "testimage.jpg"
-# TODO: Book DEFAULT IMAGE URL
-DEFAULT_BOOK_IMAGE_URL = ""
 
 
 # region Users
@@ -56,6 +54,7 @@ class User(db.Model):
     address_id = db.Column(
         db.Integer,
         db.ForeignKey('addresses.address_uid')
+        
     )
 
     address = db.relationship('Address', uselist=False, back_populates='user')
@@ -72,6 +71,13 @@ class User(db.Model):
         db.Integer,
         default=5.0
     )
+
+    user_image_uid = db.Column(
+        db.Integer,
+        db.ForeignKey('user_images.id')
+    )
+
+    images = db.relationship('UserImage', back_populates='user')
 
     # TODO: owned_books_for_rent
 
@@ -90,8 +96,6 @@ class User(db.Model):
     #     secondary='booker',
     #     backref='owner'
     # )
-
-    # address = db.relationship('Address', back_populates="owner", uselist=False)
 
     owned_books = db.relationship('Book', backref='user')
 
@@ -179,14 +183,14 @@ class UserImage(db.Model):
     )
     user_uid = db.Column(
         db.Integer,
-        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
     )
 
-    image_path = db.Column(
+    user = db.relationship('User', back_populates="images", uselist=False)
+
+    image_url = db.Column(
         db.Text,
         nullable=False
     )
-
 
 # endregion
 
@@ -238,7 +242,11 @@ class Address(db.Model):
 
 # endregion
 
+
+# region Location
 class Location(db.Model):
+    """ User's geocoded Location point. """
+
     __tablename__ = 'locations'
 
     id = db.Column(
@@ -250,6 +258,9 @@ class Location(db.Model):
         Geometry(geometry_type='POINT', srid=4326),
         # nullable=False
     )
+
+
+# endregion
 
 
 # region Cities
@@ -282,7 +293,7 @@ class City(db.Model):
 
 # endregion
 
-
+# region States
 class State(db.Model):
     """ A State for the address """
 
@@ -295,6 +306,11 @@ class State(db.Model):
 
     state_abbreviation = db.Column(
         db.String(2),
+        db.CheckConstraint(
+            "state_abbreviation in ('AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', "
+            "'IL', 'IN','IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', "
+            "'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', "
+            "'WA', 'WV', 'WI', 'WY')"),
         unique=True
     )
 
@@ -308,6 +324,10 @@ class State(db.Model):
     def __repr__(self):
         return f"< State # {self.id}, State Abbreviation: {self.state_abbreviation}, State name: {self.state_name}>"
 
+
+# endregion
+
+# region Zipcodes
 
 class ZipCode(db.Model):
     """ A zipcode for every city """
@@ -329,6 +349,9 @@ class ZipCode(db.Model):
         return f"< Zipcode # {self.id}, Code {self.code} >"
 
 
+# endregion
+
+
 # region Books
 class Book(db.Model):
     """ Book in the system """
@@ -346,16 +369,12 @@ class Book(db.Model):
         nullable=False,
     )
 
-    # book_address = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.address"),
-    #     nullable=False,
-    # )
-
-    orig_image_url = db.Column(
+    primary_image_url = db.Column(
         db.Text,
         nullable=False,
     )
+
+    images = db.Relationship("BookImage", back_populates="book")
 
     title = db.Column(
         db.Text,
@@ -368,25 +387,40 @@ class Book(db.Model):
     )
 
     isbn = db.Column(
-        db.Text,
+        db.BigInteger,
         nullable=False
     )
 
     genre = db.Column(
         db.Text,
-        # nullable=False
     )
+
+    # condition = db.Column(
+    #     db.Text,
+    #     nullable=False
+    #
+    #     # TODO: select form (like new, fair, old af)
+    # )
+
+    # condition = db.Column(
+    #     db.Enum(ConditionEnum),
+    #     default=ConditionEnum.LIKE_NEW,
+    #     nullable=False,
+    # )
 
     condition = db.Column(
         db.Text,
         nullable=False
-
-        # TODO: select form (like new, fair, old af)
     )
 
-    price = db.Column(
+    rate_price = db.Column(
         db.Integer,
         nullable=False  # select from $1-$10 / week
+    )
+
+    rate_schedule = db.Column(
+        db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
+        default="Daily"
     )
 
     status = db.Column(
@@ -395,9 +429,7 @@ class Book(db.Model):
         nullable=False
     )
 
-    reservations = db.relationship('Reservation', backref='book')
-
-    # owner = db.relationship('User', backref='book')
+    reservations = db.relationship('Reservation', back_populates='book')
 
     def serialize(self):
         """ returns self """
@@ -405,26 +437,28 @@ class Book(db.Model):
 
             "book_uid": self.book_uid,
             "owner_uid": self.owner_uid,
-            "orig_image_url": self.orig_image_url,
+            # "orig_image_url": self.orig_image_url,
             "title": self.title,
             "author": self.author,
             "isbn": self.isbn,
             "genre": self.genre,
             "condition": self.condition,
-            "price": self.price,
+            "rate_price": self.rate_price,
+            "rate_schedule": self.rate_schedule,
             "status": self.status
         }
 
     def __repr__(self):
-        return f"< Book #{self.book_uid}, OwnerId: {self.owner_uid}, Orig_Image: {self.orig_image_url}, " \
+        return f"< Book #{self.book_uid}, OwnerId: {self.owner_uid}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
-               f"Condition: {self.condition}, Price: {self.price}, Status: {self.status} >"
+               f"Condition: {self.condition}, Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
 
 
 # endregion
 
 
 # region bookimage
+
 class BookImage(db.Model):
     """ One to many table connecting a book to many image paths """
 
@@ -434,10 +468,12 @@ class BookImage(db.Model):
         db.Integer,
         primary_key=True
     )
-    book_owner_uid = db.Column(
+
+    book_uid = db.Column(
         db.Integer,
-        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+        db.ForeignKey("books.book_uid", ondelete="CASCADE"),
     )
+    book = db.relationship('Book', back_populates='images')
 
     image_url = db.Column(
         db.Text,
@@ -448,9 +484,12 @@ class BookImage(db.Model):
         """ returns self """
         return {
             "id": self.id,
-            "book_owner": self.book_owner,
+            "book_id": self.book_id,
             "image_url": self.image_url,
         }
+
+    def __repr__(self):
+        return f"< BookImage #{self.id}, Book_uid: {self.book_uid}, ImageUrl: {self.image_url}, IsPrimaryImage: {self.is_primary_image} >"
 
 
 # endregion
@@ -471,6 +510,7 @@ class Reservation(db.Model):
         db.Integer,
         db.ForeignKey("books.book_uid", ondelete="CASCADE"),
     )
+    book = db.relationship('Book', back_populates='reservations')
 
     owner_uid = db.Column(
         db.Integer,
