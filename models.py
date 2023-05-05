@@ -1,5 +1,7 @@
 """SQLAlchemy models for ShareBNB."""
 
+
+
 from datetime import datetime
 
 from flask_bcrypt import Bcrypt
@@ -306,6 +308,7 @@ class State(db.Model):
         primary_key=True
     )
 
+
     state_abbreviation = db.Column(
         db.String(2),
         unique=True
@@ -368,18 +371,7 @@ class Book(db.Model):
 
     primary_image_uid = db.Column(
         db.Integer,
-        # db.ForeignKey('book_images.id')
     )
-
-    # book_aux_image_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('book_images.id')
-    # )
-
-    # orig_image_url = db.Column(
-    #     db.Text,
-    #     nullable=False,
-    # )
 
     images = db.Relationship("BookImage", back_populates="book")
 
@@ -402,12 +394,26 @@ class Book(db.Model):
         db.Text,
     )
 
-    condition = db.Column(
-        db.Text,
-        nullable=False
+    # condition = db.Column(
+    #     db.Text,
+    #     nullable=False
+    #
+    #     # TODO: select form (like new, fair, old af)
+    # )
 
-        # TODO: select form (like new, fair, old af)
+
+
+    condition = db.Column(
+        db.Enum(MyEnum),
+        default=MyEnum.new,
+        nullable=False,
     )
+
+
+    # condition = db.Column(
+    #     db.Enum("Like-new", "Fair", "Used", name="ConditionTypes"),
+    #     default="Fair"
+    # )
 
     rate_price = db.Column(
         db.Integer,
@@ -415,7 +421,7 @@ class Book(db.Model):
     )
 
     rate_schedule = db.Column(
-        db.Enum("Daily", "Weekly", "Monthly", name="ValueTypes"),
+        db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
         default="Daily"
     )
 
@@ -426,8 +432,6 @@ class Book(db.Model):
     )
 
     reservations = db.relationship('Reservation', back_populates='book')
-
-    # TODO: how to get primary book image?
 
     def serialize(self):
         """ returns self """
