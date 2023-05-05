@@ -20,7 +20,14 @@ user1 = User(
     firstname="firstname1",
     lastname="lastname1",
     address_id=1,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
+    user_image_uid=1,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
+)
+
+user1Image = UserImage(
+    # id=1,
+    user_uid=user1.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
 
 address1 = Address(
@@ -59,7 +66,14 @@ user2 = User(
     firstname="firstname2",
     lastname="lastname2",
     address_id=2,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
+    user_image_uid=2,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
+)
+
+user2Image = UserImage(
+    # id=2,
+    user_uid=user2.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
 )
 
 address2 = Address(
@@ -82,7 +96,14 @@ user3 = User(
     firstname="firstname3",
     lastname="lastname3",
     address_id=3,
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
+    user_image_uid=3,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
+)
+
+user3Image = UserImage(
+    # id=3,
+    user_uid=user3.user_uid,
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
 
 address3 = Address(
@@ -115,8 +136,8 @@ zipcode2 = ZipCode(
     code=85705
 )
 
-db.session.add_all([user1, address1, latlong1, city1, state1, zipcode1, user2, address2, latlong2])
-db.session.add_all([user3, address3, latlong3, city2, state2, zipcode2])
+db.session.add_all([user1, user1Image, address1, latlong1, city1, state1, zipcode1, user2, user2Image, address2, latlong2])
+db.session.add_all([user3, user3Image, address3, latlong3, city2, state2, zipcode2])
 
 db.session.commit()
 

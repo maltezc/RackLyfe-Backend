@@ -4,8 +4,6 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Enum
-from enums import ConditionEnum, StatesEnum  # BookStatusEnum, ReservationStatusEnum, MessageStatusEnum
 from geoalchemy2 import Geography, Geometry
 
 bcrypt = Bcrypt()
@@ -13,8 +11,6 @@ db = SQLAlchemy()
 
 # TODO: USER DEFAULT IMAGE URL
 DEFAULT_USER_IMAGE_URL = "testimage.jpg"
-# TODO: Book DEFAULT IMAGE URL
-DEFAULT_BOOK_IMAGE_URL = ""
 
 
 # region Users
@@ -58,6 +54,7 @@ class User(db.Model):
     address_id = db.Column(
         db.Integer,
         db.ForeignKey('addresses.address_uid')
+        
     )
 
     address = db.relationship('Address', uselist=False, back_populates='user')
@@ -75,10 +72,12 @@ class User(db.Model):
         default=5.0
     )
 
-    user_profile_image_uid = db.Column(
+    user_image_uid = db.Column(
         db.Integer,
-        # db.ForeignKey('user_images.id', ondelete="CASCADE")
+        db.ForeignKey('user_images.id')
     )
+
+    images = db.relationship('UserImage', back_populates='user')
 
     # TODO: owned_books_for_rent
 
@@ -97,8 +96,6 @@ class User(db.Model):
     #     secondary='booker',
     #     backref='owner'
     # )
-
-    # address = db.relationship('Address', back_populates="owner", uselist=False)
 
     owned_books = db.relationship('Book', backref='user')
 
@@ -186,14 +183,14 @@ class UserImage(db.Model):
     )
     user_uid = db.Column(
         db.Integer,
-
     )
 
-    image_path = db.Column(
+    user = db.relationship('User', back_populates="images", uselist=False)
+
+    image_url = db.Column(
         db.Text,
         nullable=False
     )
-
 
 # endregion
 
@@ -307,10 +304,6 @@ class State(db.Model):
         primary_key=True
     )
 
-    # state_abbreviation = db.Column(
-    #     db.Enum(StatesEnum),
-    #     nullable=False,
-    # )
     state_abbreviation = db.Column(
         db.String(2),
         db.CheckConstraint(
@@ -493,7 +486,6 @@ class BookImage(db.Model):
             "id": self.id,
             "book_id": self.book_id,
             "image_url": self.image_url,
-            "is_primary_image": self.is_primary_image,
         }
 
     def __repr__(self):
