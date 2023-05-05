@@ -2,6 +2,7 @@
 from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
+from enums import ConditionEnum, StatesEnum
 
 db.drop_all()
 db.create_all()
@@ -42,7 +43,7 @@ city1 = City(
 
 state1 = State(
     id=1,
-    state_abbreviation="CA",
+    state_abbreviation=StatesEnum.CALIFORNIA.value,
     state_name="California",
 )
 
@@ -105,7 +106,7 @@ city2 = City(
 
 state2 = State(
     id=2,
-    state_abbreviation="AZ",
+    state_abbreviation=StatesEnum.ARIZONA.value,
     state_name="Arizona",
 )
 
@@ -132,7 +133,7 @@ book1 = Book(
     author="Patrick Rothfuss",
     isbn=9780756405892,
     genre="",
-    # condition="Like New",
+    condition=ConditionEnum.FAIR.value,
     rate_price="400",
     rate_schedule="Weekly",
     status="Available"
@@ -148,12 +149,12 @@ bookImage1 = BookImage(
 book2 = Book(
     owner_uid=2,
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-              "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+    "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
     author="Isaac Asimov",
     isbn=9780553900347,
     genre="",
-    # condition="Used",
+    condition=ConditionEnum.USED.value,
     rate_price="300",
     rate_schedule="Weekly",
     status="Available"
@@ -172,7 +173,7 @@ book3 = Book(
     author="Alfred Lansing",
     isbn=9780753809877,
     genre="",
-    # condition="Fair",
+    condition=ConditionEnum.FAIR.value,
     rate_price="200",
     rate_schedule="Weekly",
     status="Available"
@@ -191,7 +192,7 @@ book4 = Book(
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
-    # condition="Fair",
+    condition=ConditionEnum.LIKE_NEW.value,
     rate_price="100",
     # rate_schedule="Weekly",
     status="Checked Out"

@@ -1,12 +1,11 @@
 """SQLAlchemy models for ShareBNB."""
 
-
-
 from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Enum
+from enums import ConditionEnum, StatesEnum  # BookStatusEnum, ReservationStatusEnum, MessageStatusEnum
 from geoalchemy2 import Geography, Geometry
 
 bcrypt = Bcrypt()
@@ -187,7 +186,7 @@ class UserImage(db.Model):
     )
     user_uid = db.Column(
         db.Integer,
-        # db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+
     )
 
     image_path = db.Column(
@@ -308,9 +307,17 @@ class State(db.Model):
         primary_key=True
     )
 
-
+    # state_abbreviation = db.Column(
+    #     db.Enum(StatesEnum),
+    #     nullable=False,
+    # )
     state_abbreviation = db.Column(
         db.String(2),
+        db.CheckConstraint(
+            "state_abbreviation in ('AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', "
+            "'IL', 'IN','IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', "
+            "'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', "
+            "'WA', 'WV', 'WI', 'WY')"),
         unique=True
     )
 
@@ -374,7 +381,6 @@ class Book(db.Model):
         nullable=False,
     )
 
-
     images = db.Relationship("BookImage", back_populates="book")
 
     title = db.Column(
@@ -403,19 +409,16 @@ class Book(db.Model):
     #     # TODO: select form (like new, fair, old af)
     # )
 
-
+    # condition = db.Column(
+    #     db.Enum(ConditionEnum),
+    #     default=ConditionEnum.LIKE_NEW,
+    #     nullable=False,
+    # )
 
     condition = db.Column(
-        db.Enum(MyEnum),
-        default=MyEnum.new,
-        nullable=False,
+        db.Text,
+        nullable=False
     )
-
-
-    # condition = db.Column(
-    #     db.Enum("Like-new", "Fair", "Used", name="ConditionTypes"),
-    #     default="Fair"
-    # )
 
     rate_price = db.Column(
         db.Integer,
@@ -483,7 +486,6 @@ class BookImage(db.Model):
         db.Text,
         nullable=False
     )
-
 
     def serialize(self):
         """ returns self """
