@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage
+from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage, UserImage
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
@@ -14,7 +14,8 @@ from flask_cors import CORS
 
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
-    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
+    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
+    geocode_address
 
 load_dotenv()
 
@@ -67,38 +68,42 @@ def create_user():
     Returns JSON like:
         {user: {user_uid, email, image_url, firstname, lastname, address, preferred_trade_location}}
     """
-    print("form", request.form)
-    try:
-        form = request.form
-        print("form", form)
 
-        file = request.files.get('file')
-        url = None
-        if (file):
-            [url] = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
-            # print("url", url)
-            # print("request.form.get('text')", request.form.get('text'))
-            # print("request.form['text']", request.form['text'])
-            # print("request.form['text'].keys()", request.form['text'].keys())
-            # print("request.forms.keys", request.form.keys())
-            # print("request.forms.items", request.form.items())
+    try:
+
+        # [url] = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
+        # print("url", url)
+        # print("request.form.get('text')", request.form.get('text'))
+        # print("request.form['text']", request.form['text'])
+        # print("request.form['text'].keys()", request.form['text'].keys())
+        # print("request.forms.keys", request.form.keys())
+        # print("request.forms.items", request.form.items())
+
+        profile_image = request.form.get('profile_image')
 
         user = User.signup(
-            email=form['email'],
-            password=form['password'],
-            firstname=form['firstname'],
-            lastname=form['lastname'],
-            address=form['address'],
-            preferred_trade_location=form['preferred_trade_location'],
-            image_url=url
+            email=request.form.get('email'),
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
         )
-        db.session.commit()
 
-        # user = User.authenticate(username, password)
-        token = create_access_token(identity=user.email)
+        token = create_access_token(identity=user.user_uid)
+        # token = create_access_token(identity=user.email)
         print("jsonify token: ", jsonify(token=token))
 
-        return jsonify(token=token)
+        if profile_image is not None:
+            [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+            user_image = UserImage(
+                image_url=url,
+                user_uid=user.user_uid
+            )
+            db.session.add(user_image)
+            db.session.commit()
+
+            return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
+
+        return jsonify(token=token, user=user.serialize()), 201
 
         # return (jsonify(user=user.serialize()), 201)
 
@@ -109,76 +114,47 @@ def create_user():
 
 # endregion
 
-@app.get("/search")
-def search():
-    """ Searches book properties for matched or similar values.
 
+# region Address Endpoints Start
+@app.post("/api/address")
+@jwt_required()
+def create_address():
+    """ Adds address to the currently logged-in user
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {address: {address_uid, street, city, state, zipcode}}
     """
 
-    # query_string = request.query_string
+    try:
+        current_user = get_jwt_identity()
+        user = User.query.get_or_404(current_user)
+        data = request.json
 
-    # endurance
-    # 94108
+        state = State(state_abbreviation=data['state'])
+        city = City(city_name=data['city'], state_uid=state.id)
+        zipcode = ZipCode(code=data['zipcode'])
+        address = Address(street_address=data['street'],
+                          city_uid=city.id,
+                          zipcode_uid=zipcode.id
+                          )
+        address_string = f"{address.street} {city.city_name} {state.state_abbreviation} {zipcode.code}"
+        location = geocode_address(address_string)
 
-    # logged_in_user_uid, book_title, book_author, city, state, zipcode
-    title = request.args.get('title')
-    author = request.args.get('author')
-    isbn = request.args.get('isbn')
-    city = request.args.get('city')
-    state = request.args.get('state')
-    zipcode = request.args.get('zipcode')  # mandatory
+        address.latlong_uid = location.id
 
-    request.args.keys()
-    # if len(key) > 0:
-    # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
-    # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
+        db.session.add(address, state, city, zipcode, location)
+        db.session.commit()
 
-    # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
-    # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
-    # qs = filter book by mandatory field
-    # if author is not none, qs = qs.filter(author)
+        user.address = address.address_uid
+        db.session.commit()
 
-    city_users = get_all_users_in_city("Hercules")
-    state_users = get_all_users_in_state("CA")
-    zipcode_users = get_all_users_in_zipcode("94547")
-    users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
-    city_books = get_all_books_in_city("Hercules")
-    state_books = get_all_books_in_state("CA")
-    zipcode_books = get_all_books_in_zipcode("94547")
-    all_books = Book.query.all()
-    searched_books = basic_book_search(1, title, author, city, state, zipcode)
+        return jsonify(address=address.serialize()), 201
 
-    serialized = [book.serialize() for book in searched_books]
-    return jsonify(books=serialized)
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to create address"}), 424
 
 
-@app.get("/api/search/books_nearby")
-def list_nearby_books():
-    """ Shows all books nearby
-
-    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
-    condition, price, reservations},...}
-    """
-
-    title = request.args.get('title')
-    author = request.args.get('author')
-
-    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
-
-    serialized = [book.serialize() for book in books]
-
-    return jsonify(books=serialized)
-
-
-@app.get("/api/search/nearby")
-def list_nearby():
-    """ Shows all points nearby """
-
-    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
-
-    return locations
+# endregion
 
 
 # region USERS ENDPOINTS START
@@ -264,6 +240,7 @@ def toggle_user_status(user_uid):
 def delete_user(user_uid):
     """Delete user. """
 
+    # TODO: add admin role to delete users
     current_user = get_jwt_identity()
     if current_user == user_uid:
         user = User.query.get_or_404(user_uid)
@@ -286,6 +263,81 @@ def list_books_of_user(user_uid):
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)
+
+
+# endregion
+
+# region Search Endpoints
+@app.get("/search")
+def search():
+    """ Searches book properties for matched or similar values.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    # query_string = request.query_string
+
+    # endurance
+    # 94108
+
+    # logged_in_user_uid, book_title, book_author, city, state, zipcode
+    title = request.args.get('title')
+    author = request.args.get('author')
+    isbn = request.args.get('isbn')
+    city = request.args.get('city')
+    state = request.args.get('state')
+    zipcode = request.args.get('zipcode')  # mandatory
+
+    request.args.keys()
+    # if len(key) > 0:
+    # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
+    # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
+
+    # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = filter book by mandatory field
+    # if author is not none, qs = qs.filter(author)
+
+    city_users = get_all_users_in_city("Hercules")
+    state_users = get_all_users_in_state("CA")
+    zipcode_users = get_all_users_in_zipcode("94547")
+    users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
+    city_books = get_all_books_in_city("Hercules")
+    state_books = get_all_books_in_state("CA")
+    zipcode_books = get_all_books_in_zipcode("94547")
+    all_books = Book.query.all()
+    searched_books = basic_book_search(1, title, author, city, state, zipcode)
+
+    serialized = [book.serialize() for book in searched_books]
+    return jsonify(books=serialized)
+
+
+@app.get("/api/search/books_nearby")
+def list_nearby_books():
+    """ Shows all books nearby
+
+    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
+    condition, price, reservations},...}
+    """
+
+    title = request.args.get('title')
+    author = request.args.get('author')
+
+    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
+
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
+
+
+@app.get("/api/search/nearby")
+def list_nearby():
+    """ Shows all points nearby """
+
+    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
+
+    return locations
 
 
 # endregion
@@ -367,37 +419,6 @@ def search_books_by_zipcode():
     return jsonify(books=serialized)
 
 
-# @app.post("/api/pools")
-# @jwt_required()
-# def create_pool():
-#     """Add pool, and return data about new pool.
-
-#     Returns JSON like:
-#         {pool: {id, owner_id, rate, size, description, address, image_url}}
-#     """
-
-#     current_user = get_jwt_identity()
-#     if current_user:
-#         data = request.json
-#         print("data", data)
-#         pool = Pool(
-#             owner_username=current_user,
-#             rate=data['rate'],
-#             size=data['size'],
-#             description=data['description'],
-#             city=data['city'],
-#             orig_image_url=data['orig_image_url']
-#         )
-
-#         db.session.add(pool)
-#         db.session.commit()
-
-#         # POST requests should return HTTP status of 201 CREATED
-#         return (jsonify(pool=pool.serialize()), 201)
-
-#     return (jsonify({"error": "not authorized"}), 401)
-
-# @app.post("/api/users/<int:user_uid>/books")
 @app.post("/api/books")
 @jwt_required()
 def create_book():

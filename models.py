@@ -54,7 +54,6 @@ class User(db.Model):
     address_id = db.Column(
         db.Integer,
         db.ForeignKey('addresses.address_uid')
-        
     )
 
     address = db.relationship('Address', uselist=False, back_populates='user')
@@ -106,7 +105,6 @@ class User(db.Model):
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
         return {
-
             "user_uid": self.user_uid,
             "status": self.status,
             "email": self.email,
@@ -121,8 +119,7 @@ class User(db.Model):
         }
 
     @classmethod
-    def signup(cls, email, password, firstname, lastname, address, preferred_trade_location,
-               image_url=DEFAULT_USER_IMAGE_URL):
+    def signup(cls, email, password, firstname, lastname):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -133,14 +130,13 @@ class User(db.Model):
         user = User(
             email=email,
             password=hashed_pwd,
-            image_url=image_url,
             firstname=firstname,
-            lastname=lastname,
-            address=address,
-            preferred_trade_location=preferred_trade_location
+            lastname=lastname
         )
 
         db.session.add(user)
+        db.session.commit()
+
         return user
 
     @classmethod
@@ -192,6 +188,18 @@ class UserImage(db.Model):
         nullable=False
     )
 
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "id": self.id,
+            "user_uid": self.user_uid,
+            "image_url": self.image_url
+        }
+
+    def __repr__(self):
+        return f"< UserImage #{self.id}, Image URL: {self.image_url} >"
+
 # endregion
 
 
@@ -238,6 +246,18 @@ class Address(db.Model):
     def __repr__(self):
         return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
                f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid}, Location: {self.latlong} >"
+
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "address_uid": self.address_uid,
+            "street_address": self.street_address,
+            "apt_number": self.apt_number,
+            "city_uid": self.city_uid,
+            "zipcode_uid": self.zipcode_uid,
+            "latlong_uid": self.latlong_uid,
+        }
 
 
 # endregion

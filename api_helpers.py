@@ -82,7 +82,7 @@ def upload_to_aws(file):
 
 def resize_image(file):
     """ Resizes image to height of 140 and sizes width proportionally"""
-
+    # TODO: CHECK OUT JESSE'S UPDATED RESIZE FUNCTION ON HIS POOLSHARE BNB
     img = Image.open(file)
 
     try:

@@ -1,3 +1,4 @@
+from geopy.geocoders import Nominatim
 from models import db, connect_db, User, Address, Location, City, State, ZipCode, Message, Book, Reservation, BookImage
 from sqlalchemy import func
 
@@ -116,7 +117,6 @@ def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, 
 def books_within_radius(latitude, longitude, radius, logged_in_user_uid, book_title, book_author):
     """ Returns books within a specified radius"""
 
-
     # convert radius to meters
     radius_m = int(radius) * 1000
 
@@ -152,3 +152,12 @@ def locations_within_radius(latitude, longitude, radius):
         func.ST_DistanceSphere(Location.point, point) <= radius_m)
 
     return locations.all()
+
+
+def geocode_address(address):
+    """ Geocode address and return lat/long. """
+
+    geolocator = Nominatim(user_agent="mnb")
+    location = geolocator.geocode(address)
+
+    return location.latitude, location.longitude
