@@ -51,6 +51,11 @@ class User(db.Model):
         nullable=False,
     )
 
+    is_admin = db.Column(
+        db.Boolean,
+        default=False
+    )
+
     address_id = db.Column(
         db.Integer,
         db.ForeignKey('addresses.address_uid')
@@ -110,6 +115,7 @@ class User(db.Model):
             "email": self.email,
             "firstname": self.firstname,
             "lastname": self.lastname,
+            "is_admin": self.is_admin,
             "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating
@@ -119,7 +125,7 @@ class User(db.Model):
         }
 
     @classmethod
-    def signup(cls, email, password, firstname, lastname):
+    def signup(cls, email, password, firstname, lastname, is_admin=False):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -161,7 +167,7 @@ class User(db.Model):
         return False
 
     def __repr__(self):
-        return f"< User #{self.user_uid}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname} >"
+        return f"< User #{self.user_uid}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, is_admin: {self.is_admin} >"
 
 
 # endregion
@@ -232,14 +238,14 @@ class Address(db.Model):
     city = db.relationship('City', back_populates="addresses", uselist=False)
 
     zipcode_uid = db.Column(
-        db.Integer, db.
-        ForeignKey('zip_codes.id')
+        db.Integer,
+        db.ForeignKey('zip_codes.id')
     )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
     latlong_uid = db.Column(
-        db.Integer, db.
-        ForeignKey('locations.id')
+        db.Integer,
+        db.ForeignKey('locations.id')
     )
     latlong = db.relationship('Location', uselist=False)
 

@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage, UserImage
+from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage, \
+    UserImage, Location
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
@@ -16,6 +17,7 @@ from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_bo
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
     geocode_address
+from decorators import admin_required
 
 load_dotenv()
 
@@ -56,9 +58,36 @@ def login():
 
     user = User.authenticate(email, password)
     token = create_access_token(identity=user.user_uid)
-    # token = create_access_token(identity=user.email)
 
     return jsonify(token=token)
+
+
+@app.post("/api/auth/signup_admin")
+@jwt_required()
+@admin_required
+def create_admin_user():
+    """Add user, and return data about new user.
+
+    Returns JSON like:
+        {user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}
+    """
+
+    try:
+        user = User.signup(
+            email=request.form.get('email'),
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
+            is_admin=request.form.get('is_admin'),
+        )
+
+        token = create_access_token(identity=user.user_uid)
+
+        return jsonify(token=token, user=user.serialize()), 201
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to signup"}), 424
 
 
 @app.post("/api/auth/signup")
@@ -70,15 +99,6 @@ def create_user():
     """
 
     try:
-
-        # [url] = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
-        # print("url", url)
-        # print("request.form.get('text')", request.form.get('text'))
-        # print("request.form['text']", request.form['text'])
-        # print("request.form['text'].keys()", request.form['text'].keys())
-        # print("request.forms.keys", request.form.keys())
-        # print("request.forms.items", request.form.items())
-
         profile_image = request.form.get('profile_image')
 
         user = User.signup(
@@ -89,7 +109,6 @@ def create_user():
         )
 
         token = create_access_token(identity=user.user_uid)
-        # token = create_access_token(identity=user.email)
         print("jsonify token: ", jsonify(token=token))
 
         if profile_image is not None:
@@ -104,8 +123,6 @@ def create_user():
             return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
 
         return jsonify(token=token, user=user.serialize()), 201
-
-        # return (jsonify(user=user.serialize()), 201)
 
     except Exception as error:
         print("Error", error)
@@ -129,20 +146,52 @@ def create_address():
         user = User.query.get_or_404(current_user)
         data = request.json
 
-        state = State(state_abbreviation=data['state'])
-        city = City(city_name=data['city'], state_uid=state.id)
-        zipcode = ZipCode(code=data['zipcode'])
-        address = Address(street_address=data['street'],
-                          city_uid=city.id,
-                          zipcode_uid=zipcode.id
-                          )
-        address_string = f"{address.street} {city.city_name} {state.state_abbreviation} {zipcode.code}"
-        location = geocode_address(address_string)
+        # TODO: should have table of states already set up
+        state = data['state']
+        state_found_id = State.query.filter(State.state_abbreviation == state).first().id
+        state = State.query.get_or_404(state_found_id)
+        # books = Book.query.filter(Book.owner_uid == user_uid)
+
+        # TODO: write checker for city to confirm its actually a real city
+        existing_city = City.query.filter(City.city_name == data['city']).first()
+        if existing_city is not None:
+            city = existing_city
+        else:
+            new_city = City(city_name=data['city'], state_uid=state_found_id)
+            db.session.add(new_city)
+            db.session.commit()
+            city = new_city
+
+        # TODO: write checker for zipcode to confirm its actually a real zipcode
+        zipcode = str(data['zipcode'])
+        existing_zipcode = ZipCode.query.filter(ZipCode.code == zipcode).first()
+        if existing_zipcode is not None:
+            zipcode = existing_zipcode
+        else:
+            zipcode = ZipCode(code=data['zipcode'])
+            db.session.add(zipcode)
+            db.session.commit()
+
+        # TODO: write checker for address to confirm its actually a real address
+        street_address = data['address']
+        existing_address = Address.query.filter(Address.street_address == street_address).first()
+        if existing_address is not None:
+            address = existing_address
+        else:
+            address = Address(street_address=street_address,
+                              city_uid=city.id,
+                              zipcode_uid=zipcode.id
+                              )
+            db.session.add(address)
+            db.session.commit()
+
+        address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
+        geocoded_address = geocode_address(address_string)
+        location = Location(point=f"POINT({geocoded_address[1]} {geocoded_address[0]})")
+        db.session.add(location)
+        db.session.commit()
 
         address.latlong_uid = location.id
-
-        db.session.add(address, state, city, zipcode, location)
-        db.session.commit()
 
         user.address = address.address_uid
         db.session.commit()
@@ -242,7 +291,7 @@ def delete_user(user_uid):
 
     # TODO: add admin role to delete users
     current_user = get_jwt_identity()
-    if current_user == user_uid:
+    if current_user == user_uid or current_user.is_admin:
         user = User.query.get_or_404(user_uid)
 
         db.session.delete(user)

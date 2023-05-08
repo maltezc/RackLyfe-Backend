@@ -12,6 +12,66 @@ db.create_all()
 # region create dummy users----------------------------------------
 
 
+states = [
+    {'name': 'Alabama', 'abbreviation': 'AL'},
+    {'name': 'Alaska', 'abbreviation': 'AK'},
+    {'name': 'Arizona', 'abbreviation': 'AZ'},
+    {'name': 'Arkansas', 'abbreviation': 'AR'},
+    {'name': 'California', 'abbreviation': 'CA'},
+    {'name': 'Colorado', 'abbreviation': 'CO'},
+    {'name': 'Connecticut', 'abbreviation': 'CT'},
+    {'name': 'Delaware', 'abbreviation': 'DE'},
+    {'name': 'Florida', 'abbreviation': 'FL'},
+    {'name': 'Georgia', 'abbreviation': 'GA'},
+    {'name': 'Hawaii', 'abbreviation': 'HI'},
+    {'name': 'Idaho', 'abbreviation': 'ID'},
+    {'name': 'Illinois', 'abbreviation': 'IL'},
+    {'name': 'Indiana', 'abbreviation': 'IN'},
+    {'name': 'Iowa', 'abbreviation': 'IA'},
+    {'name': 'Kansas', 'abbreviation': 'KS'},
+    {'name': 'Kentucky', 'abbreviation': 'KY'},
+    {'name': 'Louisiana', 'abbreviation': 'LA'},
+    {'name': 'Maine', 'abbreviation': 'ME'},
+    {'name': 'Maryland', 'abbreviation': 'MD'},
+    {'name': 'Massachusetts', 'abbreviation': 'MA'},
+    {'name': 'Michigan', 'abbreviation': 'MI'},
+    {'name': 'Minnesota', 'abbreviation': 'MN'},
+    {'name': 'Mississippi', 'abbreviation': 'MS'},
+    {'name': 'Missouri', 'abbreviation': 'MO'},
+    {'name': 'Montana', 'abbreviation': 'MT'},
+    {'name': 'Nebraska', 'abbreviation': 'NE'},
+    {'name': 'Nevada', 'abbreviation': 'NV'},
+    {'name': 'New Hampshire', 'abbreviation': 'NH'},
+    {'name': 'New Jersey', 'abbreviation': 'NJ'},
+    {'name': 'New Mexico', 'abbreviation': 'NM'},
+    {'name': 'New York', 'abbreviation': 'NY'},
+    {'name': 'North Carolina', 'abbreviation': 'NC'},
+    {'name': 'North Dakota', 'abbreviation': 'ND'},
+    {'name': 'Ohio', 'abbreviation': 'OH'},
+    {'name': 'Oklahoma', 'abbreviation': 'OK'},
+    {'name': 'Oregon', 'abbreviation': 'OR'},
+    {'name': 'Pennsylvania', 'abbreviation': 'PA'},
+    {'name': 'Rhode Island', 'abbreviation': 'RI'},
+    {'name': 'South Carolina', 'abbreviation': 'SC'},
+    {'name': 'South Dakota', 'abbreviation': 'SD'},
+    {'name': 'Tennessee', 'abbreviation': 'TN'},
+    {'name': 'Texas', 'abbreviation': 'TX'},
+    {'name': 'Utah', 'abbreviation': 'UT'},
+    {'name': 'Vermont', 'abbreviation': 'VT'},
+    {'name': 'Virginia', 'abbreviation': 'VA'},
+    {'name': 'Washington', 'abbreviation': 'WA'},
+    {'name': 'West Virginia', 'abbreviation': 'WV'},
+    {'name': 'Wisconsin', 'abbreviation': 'WI'},
+    {'name': 'Wyoming', 'abbreviation': 'WY'}
+]
+
+# Insert all states into the database
+for state_data in states:
+    state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
+    db.session.add(state)
+
+db.session.commit()
+
 # `$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q` <--- equals 'password'
 user1 = User(
     email="test1@email.com",
@@ -45,14 +105,14 @@ latlong1 = Location(
 city1 = City(
     id=1,
     city_name="Hercules",
-    state_uid=1,
+    state_uid=5,
 )
 
-state1 = State(
-    id=1,
-    state_abbreviation=StatesEnum.CALIFORNIA.value,
-    state_name="California",
-)
+# state1 = State(
+#     id=1,
+#     state_abbreviation=StatesEnum.CALIFORNIA.value,
+#     state_name="California",
+# )
 
 zipcode1 = ZipCode(
     id=1,
@@ -106,6 +166,7 @@ user3Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
 
+# TODO: REMOVE ADDRESS_UID FROM ADDRESS ELEMENTS. ITS MESSING UP THE ADDING. REFERENCE THE ADDRESS ID'S INSTEAD WHEN THEY ARE CREATED.
 address3 = Address(
     address_uid=3,
     street_address="655 E Drachman St",
@@ -122,22 +183,35 @@ latlong3 = Location(
 city2 = City(
     id=2,
     city_name="Tucson",
-    state_uid=2,
+    state_uid=3,
 )
 
-state2 = State(
-    id=2,
-    state_abbreviation=StatesEnum.ARIZONA.value,
-    state_name="Arizona",
-)
+# state2 = State(
+#     id=2,
+#     state_abbreviation=StatesEnum.ARIZONA.value,
+#     state_name="Arizona",
+# )
 
 zipcode2 = ZipCode(
     id=2,
     code=85705
 )
 
-db.session.add_all([user1, user1Image, address1, latlong1, city1, state1, zipcode1, user2, user2Image, address2, latlong2])
-db.session.add_all([user3, user3Image, address3, latlong3, city2, state2, zipcode2])
+user4 = User(
+    email="admin1@gmail.com",
+    password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
+    status="active",
+    firstname="admin1",
+    lastname="admin_lastname4",
+    is_admin=True,
+    # address_id=1,
+    # user_image_uid=1,
+    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
+)
+
+db.session.add_all(
+    [user1, user1Image, address1, latlong1, city1, zipcode1, user2, user2Image, address2, latlong2])
+db.session.add_all([user3, user3Image, address3, latlong3, city2, zipcode2, user4])
 
 db.session.commit()
 
@@ -149,7 +223,7 @@ db.session.commit()
 book1 = Book(
     owner_uid=1,
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
-              "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
+                      "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
     author="Patrick Rothfuss",
     isbn=9780756405892,
@@ -170,7 +244,7 @@ bookImage1 = BookImage(
 book2 = Book(
     owner_uid=2,
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
-    "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
+                      "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
     author="Isaac Asimov",
     isbn=9780553900347,
