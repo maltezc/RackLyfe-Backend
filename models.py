@@ -220,6 +220,11 @@ class Address(db.Model):
         primary_key=True,
     )
 
+    user_id = db.Column(
+        db.Integer,
+        # db.ForeignKey('users.user_uid')
+    )
+
     user = db.relationship('User', back_populates="address", uselist=False)
 
     street_address = db.Column(
@@ -278,6 +283,11 @@ class Location(db.Model):
     id = db.Column(
         db.Integer,
         primary_key=True,
+    )
+
+    address_id = db.Column(
+        db.Integer,
+        # db.ForeignKey('addresses.address_uid')
     )
 
     point = db.Column(

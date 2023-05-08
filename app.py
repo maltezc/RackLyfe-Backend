@@ -14,10 +14,12 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
+from address_helpers import retrieve_state, retrieve_city, retrieve_zipcode, retrieve_address, retrieve_location
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
     geocode_address
 from decorators import admin_required
+from enums import StatesEnum
 
 load_dotenv()
 
@@ -141,60 +143,29 @@ def create_address():
         {address: {address_uid, street, city, state, zipcode}}
     """
 
+    # with app.app_context():
     try:
         current_user = get_jwt_identity()
         user = User.query.get_or_404(current_user)
         data = request.json
 
+        # TODO: SET UP SCHEMA VALIDATOR
         # TODO: should have table of states already set up
-        state = data['state']
-        state_found_id = State.query.filter(State.state_abbreviation == state).first().id
-        state = State.query.get_or_404(state_found_id)
-        # books = Book.query.filter(Book.owner_uid == user_uid)
 
-        # TODO: write checker for city to confirm its actually a real city
-        existing_city = City.query.filter(City.city_name == data['city']).first()
-        if existing_city is not None:
-            city = existing_city
-        else:
-            new_city = City(city_name=data['city'], state_uid=state_found_id)
-            db.session.add(new_city)
-            db.session.commit()
-            city = new_city
+        state = retrieve_state(data['state'])
 
-        # TODO: write checker for zipcode to confirm its actually a real zipcode
-        zipcode = str(data['zipcode'])
-        existing_zipcode = ZipCode.query.filter(ZipCode.code == zipcode).first()
-        if existing_zipcode is not None:
-            zipcode = existing_zipcode
-        else:
-            zipcode = ZipCode(code=data['zipcode'])
-            db.session.add(zipcode)
-            db.session.commit()
+        city = retrieve_city(db, data['city'], state)
 
+        zipcode = retrieve_zipcode(db, data['zipcode'])
+
+        address, city, state, zipcode = retrieve_address(db, user, data['address'], city, state, zipcode)
         # TODO: write checker for address to confirm its actually a real address
-        street_address = data['address']
-        existing_address = Address.query.filter(Address.street_address == street_address).first()
-        if existing_address is not None:
-            address = existing_address
-        else:
-            address = Address(street_address=street_address,
-                              city_uid=city.id,
-                              zipcode_uid=zipcode.id
-                              )
-            db.session.add(address)
-            db.session.commit()
 
+        # address, city, state, zipcode = retrieve_address(db, user, address_str, city, state, zipcode)
         address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
-        geocoded_address = geocode_address(address_string)
-        location = Location(point=f"POINT({geocoded_address[1]} {geocoded_address[0]})")
-        db.session.add(location)
-        db.session.commit()
+        location = retrieve_location(db, address, address_string)
 
-        address.latlong_uid = location.id
-
-        user.address = address.address_uid
-        db.session.commit()
+        # VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
 
         return jsonify(address=address.serialize()), 201
 

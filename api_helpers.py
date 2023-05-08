@@ -7,7 +7,7 @@ from PIL import Image
 import io
 from pathlib import Path
 import traceback
-from models import Book, BookImage
+from models import Book, BookImage, State
 from models import db
 from flask import jsonify
 
@@ -175,3 +175,6 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
         return jsonify({"error": "Failed to add book"}), 401
 
 # TODO: write function to re-thumbnail entire AWS bucket
+
+
+

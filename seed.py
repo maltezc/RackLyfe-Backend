@@ -91,28 +91,25 @@ user1Image = UserImage(
 )
 
 address1 = Address(
+    user_id=user1.user_uid,
     street_address="164 Glenwood",
     city_uid=1,
     zipcode_uid=1,
-    latlong_uid=1
+
 )
 
 latlong1 = Location(
-    id=1,
+    # id=1,
+    address_id=address1.address_uid,
     point='POINT(-122.28195023589687 38.006370860286694)'
 )
+address1.latlong_uid = latlong1.location_uid
 
 city1 = City(
     id=1,
     city_name="Hercules",
     state_uid=5,
 )
-
-# state1 = State(
-#     id=1,
-#     state_abbreviation=StatesEnum.CALIFORNIA.value,
-#     state_name="California",
-# )
 
 zipcode1 = ZipCode(
     id=1,
@@ -137,7 +134,8 @@ user2Image = UserImage(
 )
 
 address2 = Address(
-    address_uid=2,
+    user_id=user2.user_uid,
+    # address_uid=2,
     street_address="100 Finch Court",
     city_uid=1,
     zipcode_uid=1,
@@ -145,7 +143,8 @@ address2 = Address(
 )
 
 latlong2 = Location(
-    id=2,
+    # id=2,
+    address_id=address2.address_uid,
     point='POINT(-122.25801 37.999126)'
 )
 
@@ -168,7 +167,7 @@ user3Image = UserImage(
 
 # TODO: REMOVE ADDRESS_UID FROM ADDRESS ELEMENTS. ITS MESSING UP THE ADDING. REFERENCE THE ADDRESS ID'S INSTEAD WHEN THEY ARE CREATED.
 address3 = Address(
-    address_uid=3,
+    user_id=user3.user_uid,
     street_address="655 E Drachman St",
     city_uid=2,
     zipcode_uid=2,
@@ -176,7 +175,8 @@ address3 = Address(
 )
 
 latlong3 = Location(
-    id=3,
+    # id=3,
+    address_id=address3.address_uid,
     point='POINT(-110.961431 32.239627)'
 )
 
