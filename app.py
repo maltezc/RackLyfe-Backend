@@ -13,7 +13,7 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
+from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image
 from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, retrieve_location
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
@@ -133,8 +133,56 @@ def create_user():
 
 # endregion
 
+# region User Image Endpoints Start
+
+@app.post("/api/user_image")
+@jwt_required()
+def add_user_image():
+    """ Adds image to the currently logged-in user
+    Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        profile_image = request.files.get("profile_image")
+
+        if profile_image is not None:
+            image_url = aws_upload_image(profile_image)
+            image_element = db_add_user_image(current_user_id, image_url)
+            image = UserImage.query.get_or_404(image_element.id)
+
+            return jsonify(user_image=image.serialize()), 201
+
+        return jsonify({"error": "Failed to add image"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to add image"}), 424
+
+
+@app.get("/api/current_user_image/")
+@jwt_required()
+def get_current_user_image():
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = user.profile_image
+
+        return jsonify(user_image=user_image.serialize()), 200
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get image"}), 424
+
+# endregion
 
 # region Address Endpoints Start
+
 @app.post("/api/address")
 @jwt_required()
 def create_address():

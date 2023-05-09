@@ -7,7 +7,7 @@ from PIL import Image
 import io
 from pathlib import Path
 import traceback
-from models import Book, BookImage, State
+from models import Book, BookImage, State, UserImage, User
 from models import db
 from flask import jsonify
 
@@ -21,7 +21,6 @@ s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
 
 MNB_BUCKET_NAME_IMAGES = 'my-neighbors-bookshelf'
 mnb_bucket_base_url_images = "https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/"
-
 
 BUCKET_NAME_LARGE_IMAGES = 'sharebnb-gmm'
 BUCKET_NAME_SMALL_IMAGES = 'sharebnb-gmm-small-images'
@@ -152,7 +151,6 @@ def db_add_book_image(user_id, book_uid, image_url):
 
 def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_schedule):
     """ Posts book to aws while in try block and returns serialized if successful, returns an error if not.
-
     """
 
     try:
@@ -174,7 +172,28 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
         print("Error, Failed in aws_post_book: ", error)
         return jsonify({"error": "Failed to add book"}), 401
 
+
 # TODO: write function to re-thumbnail entire AWS bucket
 
+def db_add_user_image(user_id, image_url):
+    """ Posts user_image to db while in try block and returns serialized if successful, returns an error if not. """
 
+    try:
+        user_image = UserImage(
+            # book_owner_uid=user_id,
 
+            image_url=image_url,
+        )
+        db.session.add(user_image)
+        db.session.commit()
+
+        user = User.query.get(user_id)
+        user_image = UserImage.query.get(user_image.id)
+        user.profile_image = user_image
+
+        db.session.commit()
+
+        return user_image
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to add book_image"}), 401

@@ -88,14 +88,14 @@ db.session.commit()
 
 user1Image = UserImage(
     # id=1,
-    user_uid=user1.user_uid,
+    # user_uid=user1.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
 
 db.session.add(user1Image)
 db.session.commit()
 
-user1.images = user1Image
+user1.profile_image = user1Image
 
 db.session.commit()
 
@@ -152,10 +152,13 @@ db.session.commit()
 
 user2Image = UserImage(
     # id=2,
-    user_uid=user2.user_uid,
+    # user_uid=user2.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
 )
 db.session.add(user2Image)
+db.session.commit()
+
+user2.profile_image = user2Image
 db.session.commit()
 
 address2 = Address(
@@ -170,6 +173,7 @@ db.session.add(address2)
 db.session.commit()
 
 user2.address = address2
+db.session.commit()
 
 address2.city = city1
 address2.zipcode = zipcode1
@@ -204,13 +208,16 @@ db.session.commit()
 
 user3Image = UserImage(
     # id=3,
-    user_uid=user3.user_uid,
+    # user_uid=user3.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
 db.session.add(user3Image)
 db.session.commit()
 
-# TODO: REMOVE ADDRESS_UID FROM ADDRESS ELEMENTS. ITS MESSING UP THE ADDING. REFERENCE THE ADDRESS ID'S INSTEAD WHEN THEY ARE CREATED.
+user3.profile_image = user3Image
+db.session.commit()
+
+
 address3 = Address(
     user_id=user3.user_uid,
     street_address="655 E Drachman St",

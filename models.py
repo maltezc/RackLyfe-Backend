@@ -81,7 +81,7 @@ class User(db.Model):
         db.ForeignKey('user_images.id')
     )
 
-    images = db.relationship('UserImage', back_populates='user')
+    profile_image = db.relationship('UserImage', back_populates='user', uselist=False)
 
     # TODO: owned_books_for_rent
 
@@ -183,11 +183,8 @@ class UserImage(db.Model):
         db.Integer,
         primary_key=True
     )
-    user_uid = db.Column(
-        db.Integer,
-    )
 
-    user = db.relationship('User', back_populates="images", uselist=False)
+    user = db.relationship('User', back_populates="profile_image", uselist=False)
 
     image_url = db.Column(
         db.Text,
@@ -199,7 +196,6 @@ class UserImage(db.Model):
 
         return {
             "id": self.id,
-            "user_uid": self.user_uid,
             "image_url": self.image_url
         }
 
