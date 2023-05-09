@@ -252,7 +252,7 @@ class Address(db.Model):
         db.Integer,
         db.ForeignKey('locations.id')
     )
-    latlong = db.relationship('Location', uselist=False)
+    latlong = db.relationship('Location', back_populates="address", uselist=False)
 
     def __repr__(self):
         return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
@@ -285,10 +285,11 @@ class Location(db.Model):
         primary_key=True,
     )
 
-    address_id = db.Column(
-        db.Integer,
-        # db.ForeignKey('addresses.address_uid')
-    )
+    # address_id = db.Column(
+    #     db.Integer,
+    #     # db.ForeignKey('addresses.address_uid')
+    # )
+    address = db.relationship("Address", back_populates="latlong")
 
     point = db.Column(
         Geometry(geometry_type='POINT', srid=4326),
