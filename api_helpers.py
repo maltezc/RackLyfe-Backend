@@ -46,6 +46,19 @@ def aws_upload_image(file):
     return orig_image_url
 
 
+def aws_delete_image(image_url):
+    """ Deletes an image from the MNB image_bucket of aws. """
+
+    try:
+        image_key = image_url.split('/')[-1]
+        s3.delete_object(
+            Bucket=MNB_BUCKET_NAME_IMAGES,
+            Key=image_key
+        )
+    except Exception as e:
+        print("failed to delete image: ", e)
+
+
 def upload_to_aws(file):
     """ Uploads an original image file to the large_image_bucket of  aws and
     then resizes the image and uploads the resized/smaller image to the was

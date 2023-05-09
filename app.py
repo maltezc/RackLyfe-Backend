@@ -13,8 +13,10 @@ from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image
-from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, retrieve_location
+from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
+    aws_delete_image
+from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, \
+    retrieve_location
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
     geocode_address
@@ -178,6 +180,81 @@ def get_current_user_image():
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to get image"}), 424
+
+
+@app.get("/api/user_image/<int:user_image_id>")
+def get_other_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        return jsonify(user_image=user_image.serialize()), 200
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get image"}), 424
+
+
+@app.patch("/api/user_image/<int:user_image_id>")
+@jwt_required()
+def update_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        if user.user_uid == user_image.user.user_uid:
+            profile_image = request.files.get("profile_image")
+
+            if user_image is not None:
+
+                aws_delete_image(user_image.image_url)
+
+            if profile_image is not None:
+                image_url = aws_upload_image(profile_image)
+                user_image.image_url = image_url
+                db.session.commit()
+
+                return jsonify(user_image=user_image.serialize()), 200
+
+        return jsonify({"error": "Failed to update image"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to update image"}), 424
+
+
+@app.delete("/api/user_image/<int:user_image_id>")
+@jwt_required()
+def delete_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        if user.user_uid == user_image.user.user_uid or user.is_admin:
+            aws_delete_image(user_image.image_url)
+            db.session.delete(user_image)
+            db.session.commit()
+
+            return jsonify(user=user.serialize(), user_profile_image=user.profile_image), 200
+
+        return jsonify({"error": "Failed to delete image"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to delete image"}), 424
 
 # endregion
 
