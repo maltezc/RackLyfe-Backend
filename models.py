@@ -206,6 +206,7 @@ class UserImage(db.Model):
     def __repr__(self):
         return f"< UserImage #{self.id}, Image URL: {self.image_url} >"
 
+
 # endregion
 
 
@@ -296,6 +297,17 @@ class Location(db.Model):
         # nullable=False
     )
 
+    def __repr__(self):
+        return f"< Location #{self.id} >"
+
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "id": self.id,
+            "point": self.point,
+        }
+
 
 # endregion
 
@@ -327,10 +339,20 @@ class City(db.Model):
     def __repr__(self):
         return f"< City # {self.id}, City Name: {self.city_name}, StateUid: {self.state_uid} >"
 
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "id": self.id,
+            "city_name": self.city_name,
+            "state_uid": self.state_uid
+        }
+
 
 # endregion
 
 # region States
+# NOTE: @LUCAS - keeping states to be able to do search by relationships.
 class State(db.Model):
     """ A State for the address """
 
@@ -361,6 +383,15 @@ class State(db.Model):
     def __repr__(self):
         return f"< State # {self.id}, State Abbreviation: {self.state_abbreviation}, State name: {self.state_name}>"
 
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "id": self.id,
+            "state_abbreviation": self.state_abbreviation,
+            "state_name": self.state_name
+        }
+
 
 # endregion
 
@@ -385,6 +416,13 @@ class ZipCode(db.Model):
     def __repr__(self):
         return f"< Zipcode # {self.id}, Code {self.code} >"
 
+    def serialize(self):
+        """ returns self """
+
+        return {
+            "id": self.id,
+            "code": self.code
+        }
 
 # endregion
 

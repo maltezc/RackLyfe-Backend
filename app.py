@@ -14,7 +14,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
-from address_helpers import retrieve_state, retrieve_city, retrieve_zipcode, retrieve_address, retrieve_location
+from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, retrieve_location
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
     geocode_address
@@ -143,31 +143,32 @@ def create_address():
         {address: {address_uid, street, city, state, zipcode}}
     """
 
-    # with app.app_context():
     try:
         current_user = get_jwt_identity()
         user = User.query.get_or_404(current_user)
         data = request.json
 
         # TODO: SET UP SCHEMA VALIDATOR
-        # TODO: should have table of states already set up
 
         state = retrieve_state(data['state'])
+        city = set_retrieve_city(db, data['city'], state)
+        zipcode = set_retrieve_zipcode(db, data['zipcode'])
 
-        city = retrieve_city(db, data['city'], state)
-
-        zipcode = retrieve_zipcode(db, data['zipcode'])
-
-        address, city, state, zipcode = retrieve_address(db, user, data['address'], city, state, zipcode)
+        address, city, state, zipcode = set_retrieve_address(db, user, data['address'], city, state, zipcode)
         # TODO: write checker for address to confirm its actually a real address
 
-        # address, city, state, zipcode = retrieve_address(db, user, address_str, city, state, zipcode)
         address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
         location = retrieve_location(db, address, address_string)
 
-        # VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
+        # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
 
-        return jsonify(address=address.serialize()), 201
+        return jsonify(
+            address=address.serialize(),
+            state=state.serialize(),
+            city=city.serialize(),
+            zipcode=zipcode.serialize(),
+            # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+        ), 201
 
     except Exception as error:
         print("Error", error)

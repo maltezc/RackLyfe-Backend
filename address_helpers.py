@@ -1,5 +1,5 @@
 from enums import StatesEnum
-from models import State, City, ZipCode, Address, Location
+from models import State, City, ZipCode, Address, Location, User
 from util_filters import geocode_address
 
 
@@ -18,7 +18,7 @@ def retrieve_state(state_str):
         print("Error", error)
 
 
-def retrieve_city(db, city_str, state):
+def set_retrieve_city(db, city_str, state):
     """ Given a city string, return the city object from the db """
 
     # TODO: write checker for city to confirm its actually a real city
@@ -38,7 +38,7 @@ def retrieve_city(db, city_str, state):
         print("Error", error)
 
 
-def retrieve_zipcode(db, zipcode_str):
+def set_retrieve_zipcode(db, zipcode_str):
     """ Given a zipcode string, return the zipcode object from the db """
 
     # TODO: write checker for zipcode to confirm its actually a real zipcode
@@ -58,7 +58,7 @@ def retrieve_zipcode(db, zipcode_str):
         print("Error", error)
 
 
-def retrieve_address(db, user, address_str, city, state, zipcode):
+def set_retrieve_address(db, user, address_str, city, state, zipcode):
     """ Given a address string, return the address object from the db """
 
     # TODO: write checker for address to confirm its actually a real address
@@ -73,7 +73,9 @@ def retrieve_address(db, user, address_str, city, state, zipcode):
         db.session.add(address)
         db.session.commit()
 
-        user.address_uid = address.address_uid
+        user = User.query.get_or_404(user.user_uid)
+        user.address = address
+
         db.session.commit()
 
         return address, city, state, zipcode
@@ -85,20 +87,17 @@ def retrieve_location(db, address, full_address_str):
     """ Given a location string, return the location object from the db """
 
     try:
-        # address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
         geocoded_address = geocode_address(full_address_str)
-        location = Location(address_id=address.address_uid, point=f"POINT({geocoded_address[1]} {geocoded_address[0]})")
+        location = Location(point=f"POINT({geocoded_address[1]} {geocoded_address[0]})")
         db.session.add(location)
         db.session.commit()
 
-        db.flush()
-        address.latlong_uid = location.id
+        address = Address.query.get_or_404(address.address_uid)
+        address.latlong = location
         db.session.commit()
 
         return location
     except Exception as error:
         print("Error", error)
-
-
 
 # endregion
