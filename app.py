@@ -16,7 +16,7 @@ from flask_cors import CORS
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
     aws_delete_image
 from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, \
-    retrieve_location
+    set_retrieve_location
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
     geocode_address
@@ -214,7 +214,6 @@ def update_user_image(user_image_id):
             profile_image = request.files.get("profile_image")
 
             if user_image is not None:
-
                 aws_delete_image(user_image.image_url)
 
             if profile_image is not None:
@@ -256,6 +255,7 @@ def delete_user_image(user_image_id):
         print("Error", error)
         return jsonify({"error": "Failed to delete image"}), 424
 
+
 # endregion
 
 # region Address Endpoints Start
@@ -274,21 +274,19 @@ def create_address():
         data = request.json
 
         # TODO: SET UP SCHEMA VALIDATOR
-
-        state = retrieve_state(data['state'])
-        city = set_retrieve_city(db, data['city'], state)
-        zipcode = set_retrieve_zipcode(db, data['zipcode'])
-
-        address, city, state, zipcode = set_retrieve_address(db, user, data['address'], city, state, zipcode)
-        # TODO: write checker for address to confirm its actually a real address
-
-        address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
-        location = retrieve_location(db, address, address_string)
+        address_in = data['address']
+        city_in = data['city']
+        state_in = data['state']
+        zipcode_in = data['zipcode']
+        user, address, city, state, zipcode, address_string = set_retrieve_address(db, user, address_in, city_in,
+                                                                                   state_in,
+                                                                                   zipcode_in)
+        # set_retrieve_location(db, address, address_string)
 
         # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
 
         return jsonify(
-            address=address.serialize(),
+            user=user.serialize_with_address(),
             state=state.serialize(),
             city=city.serialize(),
             zipcode=zipcode.serialize(),
@@ -297,13 +295,104 @@ def create_address():
 
     except Exception as error:
         print("Error", error)
+        db.flush()
         return jsonify({"error": "Failed to create address"}), 424
+
+
+@app.get("/api/address/<int:address_id>")
+def get_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    try:
+        address = Address.query.get_or_404(address_id)
+
+        return jsonify(address=address.serialize()), 200
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get address"}), 424
+
+
+@app.patch("/api/address/<int:address_id>")
+@jwt_required()
+def update_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    try:
+        current_user = get_jwt_identity()
+        user = User.query.get_or_404(current_user)
+        address = Address.query.get_or_404(address_id)
+        # TODO: IF DB IS RESEEDED, AND MOTIONS ARE DONE, USERID IS THE SAME.
+        if user.user_uid == address.user.user_uid or user.is_admin:
+
+            if address.latlong is not None:
+                db.session.delete(address.latlong)
+                db.session.delete(address)
+                db.session.commit()
+
+            data = request.json
+            # TODO: : pull information here
+            address_in = data['address']
+            city_in = data['city']
+            state_in = data['state']
+            zipcode_in = data['zipcode']
+            user, address, city, state, zipcode, address_string = set_retrieve_address(db, user, address_in, city_in,
+                                                                                       state_in, zipcode_in)
+
+            # TODO: FE - control this on front end and have user use a drop down of selectable options only
+            # update address info and other elements leave the rest for future use.
+            # leave city
+            # leave state
+            # leave zipcode
+
+            return jsonify(
+                user=user.serialize_with_address(),
+                state=state.serialize(),
+                city=city.serialize(),
+                zipcode=zipcode.serialize(),
+                # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+            ), 200
+
+        return jsonify({"error": "Failed to update address"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to update address"}), 424
+
+
+@app.delete("/api/address/<int:address_id>")
+@jwt_required()
+def delete_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    try:
+        current_user = get_jwt_identity()
+        user = User.query.get_or_404(current_user)
+        address = Address.query.get_or_404(address_id)
+
+        if user.user_uid == address.user.user_uid:
+            db.session.delete(address)
+            db.session.commit()
+
+            return jsonify(user=user.serialize()), 200
+
+        return jsonify({"error": "Failed to delete address"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to delete address"}), 424
 
 
 # endregion
 
 
-# region USERS ENDPOINTS START
+# region USERS List ENDPOINTS START
 
 @app.get("/api/users")
 def list_users():
@@ -766,9 +855,9 @@ def create_reservation(book_uid):
         db.session.add(reservation)
         db.session.commit()
 
-        return (jsonify(reservation=reservation.serialize()), 201)
+        return jsonify(reservation=reservation.serialize()), 201
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.get("/api/reservations/<int:book_uid>")

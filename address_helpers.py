@@ -58,12 +58,16 @@ def set_retrieve_zipcode(db, zipcode_str):
         print("Error", error)
 
 
-def set_retrieve_address(db, user, address_str, city, state, zipcode):
-    """ Given a address string, return the address object from the db """
+def set_retrieve_address(db, user, address_str, city_str, state_str, zipcode_str):
+    """ Given an address string, return the address object from the db """
 
     # TODO: write checker for address to confirm its actually a real address
 
     try:
+        state = retrieve_state(state_str)
+        city = set_retrieve_city(db, city_str, state)
+        zipcode = set_retrieve_zipcode(db, zipcode_str)
+
         address = Address(
             user_id=user.user_uid,
             street_address=address_str,
@@ -73,17 +77,25 @@ def set_retrieve_address(db, user, address_str, city, state, zipcode):
         db.session.add(address)
         db.session.commit()
 
+        address_string = f"{address.street_address} {city.city_name}, {state.state_abbreviation} {zipcode.code}"
+        set_retrieve_location(db, address, address_string)
+
+        address = Address.query.get_or_404(address.address_uid)
+        # city = City.query.get_or_404(city.id)
+        # address.city = city
+        # address.zipcode = zipcode
+
         user = User.query.get_or_404(user.user_uid)
         user.address = address
-
         db.session.commit()
 
-        return address, city, state, zipcode
+        return user, address, city, state, zipcode, address_string
     except Exception as error:
+        db.flush()
         print("Error", error)
 
 
-def retrieve_location(db, address, full_address_str):
+def set_retrieve_location(db, address, full_address_str):
     """ Given a location string, return the location object from the db """
 
     try:
@@ -99,5 +111,6 @@ def retrieve_location(db, address, full_address_str):
         return location
     except Exception as error:
         print("Error", error)
+        db.flush()
 
 # endregion

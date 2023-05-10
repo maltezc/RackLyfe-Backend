@@ -124,6 +124,24 @@ class User(db.Model):
             # "reserved_books" : self.reserved_books,
         }
 
+    def serialize_with_address(self):
+        """ returns self """
+
+        return {
+            "user_uid": self.user_uid,
+            "status": self.status,
+            "email": self.email,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "is_admin": self.is_admin,
+            "image_url": self.image_url,
+            "preferred_trade_location": self.preferred_trade_location,
+            "user_rating": self.user_rating,
+            "address": self.address.serialize()
+            # "owned_books" : self.owned_books
+            # "reserved_books" : self.reserved_books,
+        }
+
     @classmethod
     def signup(cls, email, password, firstname, lastname, is_admin=False):
         """Sign up user.
@@ -286,7 +304,7 @@ class Location(db.Model):
     #     db.Integer,
     #     # db.ForeignKey('addresses.address_uid')
     # )
-    address = db.relationship("Address", back_populates="latlong")
+    address = db.relationship("Address", back_populates="latlong", uselist=False)
 
     point = db.Column(
         Geometry(geometry_type='POINT', srid=4326),
