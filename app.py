@@ -286,7 +286,8 @@ def create_address():
         # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
 
         return jsonify(
-            user=user.serialize_with_address(),
+            user=user.serialize(),
+            address=address.serialize(),
             state=state.serialize(),
             city=city.serialize(),
             zipcode=zipcode.serialize(),

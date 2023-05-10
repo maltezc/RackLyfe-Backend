@@ -104,6 +104,7 @@ def set_retrieve_location(db, address, full_address_str):
         db.session.add(location)
         db.session.commit()
 
+
         address = Address.query.get_or_404(address.address_uid)
         address.latlong = location
         db.session.commit()
@@ -111,6 +112,6 @@ def set_retrieve_location(db, address, full_address_str):
         return location
     except Exception as error:
         print("Error", error)
-        db.flush()
+        db.session.rollback()
 
 # endregion
