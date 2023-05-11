@@ -19,7 +19,7 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    user_uid = db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
@@ -101,7 +101,11 @@ class User(db.Model):
     #     backref='owner'
     # )
 
-    owned_books = db.relationship('Book', backref='user')
+    book_id = db.Column(
+        db.Integer,
+        db.ForeignKey('books.id')
+    )
+    books = db.relationship('Book', back_populates='owner')
 
     # reservations = db.relationship('Reservation', backref='user') # TODO: need to figure this out.
 
@@ -110,7 +114,7 @@ class User(db.Model):
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
         return {
-            "user_uid": self.user_uid,
+            "id": self.id,
             "status": self.status,
             "email": self.email,
             "firstname": self.firstname,
@@ -128,7 +132,7 @@ class User(db.Model):
         """ returns self """
 
         return {
-            "user_uid": self.user_uid,
+            "id": self.id,
             "status": self.status,
             "email": self.email,
             "firstname": self.firstname,
@@ -185,7 +189,7 @@ class User(db.Model):
         return False
 
     def __repr__(self):
-        return f"< User #{self.user_uid}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, is_admin: {self.is_admin} >"
+        return f"< User #{self.id}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, is_admin: {self.is_admin} >"
 
 
 # endregion
@@ -235,11 +239,6 @@ class Address(db.Model):
         primary_key=True,
     )
 
-    user_id = db.Column(
-        db.Integer,
-        # db.ForeignKey('users.user_uid')
-    )
-
     user = db.relationship('User', back_populates="address", uselist=False)
 
     street_address = db.Column(
@@ -263,15 +262,15 @@ class Address(db.Model):
     )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
-    latlong_uid = db.Column(
+    location_id = db.Column(
         db.Integer,
         db.ForeignKey('locations.id')
     )
-    latlong = db.relationship('Location', back_populates="address", uselist=False)
+    location = db.relationship('Location', back_populates="address", uselist=False)
 
     def __repr__(self):
         return f"< Address #{self.address_uid}, Street: {self.street_address}, " \
-               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid}, Location: {self.latlong} >"
+               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid}, Location: {self.location} >"
 
     def serialize(self):
         """ returns self """
@@ -282,7 +281,7 @@ class Address(db.Model):
             "apt_number": self.apt_number,
             "city_uid": self.city_uid,
             "zipcode_uid": self.zipcode_uid,
-            "latlong_uid": self.latlong_uid,
+            "location_id": self.location_id,
         }
 
 
@@ -304,7 +303,7 @@ class Location(db.Model):
     #     db.Integer,
     #     # db.ForeignKey('addresses.address_uid')
     # )
-    address = db.relationship("Address", back_populates="latlong", uselist=False)
+    address = db.relationship("Address", back_populates="location", uselist=False)
 
     point = db.Column(
         Geometry(geometry_type='POINT', srid=4326),
@@ -345,8 +344,8 @@ class City(db.Model):
     )
 
     state_uid = db.Column(
-        db.Integer, db.
-        ForeignKey('states.id')
+        db.Integer,
+        db.ForeignKey('states.id')
     )
     state = db.relationship('State', back_populates="cities")
 
@@ -447,23 +446,29 @@ class Book(db.Model):
 
     __tablename__ = 'books'
 
-    book_uid = db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True,
     )
 
-    owner_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("users.user_uid"),
-        nullable=False,
-    )
+    # owner_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("users.user_uid"),
+    #     nullable=False,
+    # )
+    owner = db.relationship("User", back_populates="books", uselist=False)
 
     primary_image_url = db.Column(
         db.Text,
         nullable=False,
     )
 
-    images = db.Relationship("BookImage", back_populates="book")
+    book_image_id = db.Column(
+        db.Integer,
+        db.ForeignKey('book_images.id')
+    )
+
+    images = db.Relationship("BookImage", back_populates="book", uselist=True)
 
     title = db.Column(
         db.Text,
@@ -518,14 +523,18 @@ class Book(db.Model):
         nullable=False
     )
 
+    reservation_id = db.Column(
+        db.Integer,
+        db.ForeignKey('reservations.id')
+    )
     reservations = db.relationship('Reservation', back_populates='book')
 
     def serialize(self):
         """ returns self """
         return {
 
-            "book_uid": self.book_uid,
-            "owner_uid": self.owner_uid,
+            "book_uid": self.id,
+            # "owner_uid": self.owner_uid,
             # "orig_image_url": self.orig_image_url,
             "title": self.title,
             "author": self.author,
@@ -538,7 +547,7 @@ class Book(db.Model):
         }
 
     def __repr__(self):
-        return f"< Book #{self.book_uid}, OwnerId: {self.owner_uid}, " \
+        return f"< Book #{self.id}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
                f"Condition: {self.condition}, Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
 
@@ -549,7 +558,7 @@ class Book(db.Model):
 # region bookimage
 
 class BookImage(db.Model):
-    """ One to many table connecting a book to many image paths """
+    """ One-to-many table connecting a book to many image paths """
 
     __tablename__ = "book_images"
 
@@ -558,11 +567,11 @@ class BookImage(db.Model):
         primary_key=True
     )
 
-    book_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("books.book_uid", ondelete="CASCADE"),
-    )
-    book = db.relationship('Book', back_populates='images')
+    # book_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("books.book_uid", ondelete="CASCADE"),
+    # )
+    book = db.relationship('Book', back_populates='images', uselist=False)
 
     image_url = db.Column(
         db.Text,
@@ -578,7 +587,7 @@ class BookImage(db.Model):
         }
 
     def __repr__(self):
-        return f"< BookImage #{self.id}, Book_uid: {self.book_uid}, ImageUrl: {self.image_url}, IsPrimaryImage: {self.is_primary_image} >"
+        return f"< BookImage #{self.id}, ImageUrl: {self.image_url} >"
 
 
 # endregion
@@ -590,26 +599,28 @@ class Reservation(db.Model):
 
     __tablename__ = "reservations"
 
-    reservation_uid = db.Column(
+    id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    book_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("books.book_uid", ondelete="CASCADE"),
-    )
-    book = db.relationship('Book', back_populates='reservations')
+    # book_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("books.book_uid", ondelete="CASCADE"),
+    # )
+    book = db.relationship('Book', back_populates='reservations', uselist=False)
 
-    owner_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    )
+    # owner_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("users.user_uid", ondelete="CASCADE"),
+    # )
+    # owner = db.relationship("User", back_populates="reservations")
 
-    renter_uid = db.Column(
-        db.Integer,
-        db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    )
+    # renter_uid = db.Column(
+    #     db.Integer,
+    #     db.ForeignKey("users.id", ondelete="CASCADE"),
+    # )
+    # renter = db.relationship('User', back_populates='reservations', uselist=False)
 
     reservation_date_created = db.Column(
         db.DateTime,
@@ -650,9 +661,9 @@ class Reservation(db.Model):
     def serialize(self):
         """ returns self """
         return {
-            "reservation_uid": self.reservation_uid,
+            "reservation_uid": self.id,
             "book_uid": self.book_uid,
-            "owner_uid": self.owner_uid,
+            # "owner_uid": self.owner_uid,
             "renter_uid": self.renter_uid,
             "reservation_date_created": self.reservation_date_created,
             "start_date": self.start_date,
@@ -664,7 +675,7 @@ class Reservation(db.Model):
         }
 
     def __repr__(self):
-        return f"< Reservation # {self.reservation_uid}, BookId: {self.book_uid}, OwnerId: {self.owner_uid}, " \
+        return f"< Reservation # {self.id}, BookId: {self.book_uid}, " \
                f"RenderId: {self.renter_uid}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
                f"EndDate: {self.end_date}, Status: {self.status}, RentalPeriodMethod: {self.rental_period_method}," \
                f" Rental Period Duration: {self.rental_period_duration}, Rental Period Total: {self.total}>"
@@ -694,14 +705,14 @@ class Message(db.Model):
     # userid to
     sender_uid = db.Column(
         db.Integer,
-        db.ForeignKey('users.user_uid'),
+        db.ForeignKey('users.id'),
         nullable=False
     )
 
     # userid from
     recipient_uid = db.Column(
         db.Integer,
-        db.ForeignKey('users.user_uid'),
+        db.ForeignKey('users.id'),
         nullable=False
     )
 

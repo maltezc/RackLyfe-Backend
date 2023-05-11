@@ -79,63 +79,27 @@ user1 = User(
     status="active",
     firstname="firstname1",
     lastname="lastname1",
-    # address_id=1,
-    # user_image_uid=1,
-    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
 )
-db.session.add(user1)
-db.session.commit()
 
 user1Image = UserImage(
-    # id=1,
-    # user_uid=user1.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
-
-db.session.add(user1Image)
-db.session.commit()
-
 user1.profile_image = user1Image
 
-db.session.commit()
-
-address1 = Address(
-    user_id=user1.user_uid,
-    street_address="164 Glenwood",
-    # city_uid=1,
-    # zipcode_uid=1,
-)
-db.session.add(address1)
-db.session.commit()
-
+address1 = Address(street_address="164 Glenwood")
 user1.address = address1
 
-latlong1 = Location(
-    # id=1,
-    # address_id=address1.address_uid,
-    point='POINT(-122.28195023589687 38.006370860286694)'
-)
-
-db.session.add(latlong1)
-db.session.commit()
-
-address1.latlong = latlong1
-
-db.session.commit()
+location1 = Location(point='POINT(-122.28195023589687 38.006370860286694)')
+address1.location = location1
 
 city1 = City(
-    # id=1,
     city_name="Hercules",
     state_uid=5,
 )
 address1.city = city1
 
-zipcode1 = ZipCode(
-    # id=1,
-    code=94547
-)
+zipcode1 = ZipCode(code=94547)
 address1.zipcode = zipcode1
-db.session.commit()
 
 user2 = User(
     email="test2@email.com",
@@ -143,54 +107,18 @@ user2 = User(
     status="active",
     firstname="firstname2",
     lastname="lastname2",
-    # address_id=2,
-    # user_image_uid=2,
-    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg",
 )
-db.session.add(user2)
-db.session.commit()
-
 user2Image = UserImage(
-    # id=2,
-    # user_uid=user2.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
 )
-db.session.add(user2Image)
-db.session.commit()
-
 user2.profile_image = user2Image
-db.session.commit()
 
-address2 = Address(
-    user_id=user2.user_uid,
-    # address_uid=2,
-    street_address="100 Finch Court",
-    # city_uid=1,
-    # zipcode_uid=1,
-    # latlong_uid=2
-)
-db.session.add(address2)
-db.session.commit()
-
+address2 = Address(street_address="100 Finch Court")
 user2.address = address2
-db.session.commit()
-
 address2.city = city1
 address2.zipcode = zipcode1
-db.session.commit()
-
-latlong2 = Location(
-    # id=2,
-    # address_id=address2.address_uid,
-    point='POINT(-122.25801 37.999126)'
-)
-
-db.session.add(latlong2)
-db.session.commit()
-
-address2.latlong = latlong2
-
-db.session.commit()
+location2 = Location(point='POINT(-122.25801 37.999126)')
+address2.location = location2
 
 user3 = User(
     email="test3@email.com",
@@ -198,75 +126,26 @@ user3 = User(
     status="active",
     firstname="firstname3",
     lastname="lastname3",
-    # address_id=3,
-    # user_image_uid=3,
-    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg",
 )
-
-db.session.add(user3)
-db.session.commit()
-
 user3Image = UserImage(
-    # id=3,
-    # user_uid=user3.user_uid,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
-db.session.add(user3Image)
-db.session.commit()
-
 user3.profile_image = user3Image
-db.session.commit()
 
-
-address3 = Address(
-    user_id=user3.user_uid,
-    street_address="655 E Drachman St",
-    # city_uid=2,
-    # zipcode_uid=2,
-    # latlong_uid=3
-)
-db.session.add(address3)
-db.session.commit()
-
+address3 = Address(street_address="655 E Drachman St")
 user3.address = address3
-db.session.commit()
 
-latlong3 = Location(
-    # id=3,
-    # address_id=address3.address_uid,
-    point='POINT(-110.961431 32.239627)'
-)
-db.session.add(latlong3)
-db.session.commit()
-
-address3.latlong = latlong3
-db.session.commit()
+location3 = Location(point='POINT(-110.961431 32.239627)')
+address3.location = location3
 
 city2 = City(
-    # id=2,
     city_name="Tucson",
     state_uid=3,
 )
-db.session.add(city2)
-db.session.commit()
-
 address3.city = city2
-db.session.commit()
 
-# state2 = State(
-#     id=2,
-#     state_abbreviation=StatesEnum.ARIZONA.value,
-#     state_name="Arizona",
-# )
-
-zipcode2 = ZipCode(
-    code=85705
-)
-db.session.add(zipcode2)
-db.session.commit()
-
+zipcode2 = ZipCode(code=85705)
 address3.zipcode = zipcode2
-db.session.commit()
 
 user4 = User(
     email="admin1@gmail.com",
@@ -275,27 +154,17 @@ user4 = User(
     firstname="admin1",
     lastname="admin_lastname4",
     is_admin=True,
-    # address_id=1,
-    # user_image_uid=1,
-    # image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg",
 )
 
-db.session.add(user4)
+# endregion
+db.session.add_all([user1, user1Image, address1, location1, city1, zipcode1])
+db.session.add_all([user2, user2Image, address2, location2, address3, location3, city2, zipcode2])
+db.session.add_all([user3, user3Image, user4])
 db.session.commit()
 
-# db.session.add_all(
-#     [user1, user1Image, address1, latlong1, city1, zipcode1, user2, user2Image, address2, latlong2])
-# db.session.add_all([user3, user3Image, address3, latlong3, city2, zipcode2, user4])
-
-# db.session.commit()
-
-# endregion
-
-
-# region pools---------------------------------------------
+# region books---------------------------------------------
 
 book1 = Book(
-    owner_uid=1,
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
@@ -307,16 +176,16 @@ book1 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
+book1.owner = user1
 
 bookImage1 = BookImage(
-    book_uid=1,
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
-
 )
+book1.images.append(bookImage1)
 
 book2 = Book(
-    owner_uid=2,
+    # owner_uid=2,
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
                       "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
@@ -328,16 +197,18 @@ book2 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
+book2.owner = user2
 
 bookImage2 = BookImage(
-    book_uid=2,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
+# bookImage2.book = book2
+book2.images.append(bookImage2)
 
 book3 = Book(
-    owner_uid=3,
-    primary_image_url=3,
+    primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
+                      "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Endurance Shackleton's Incredible Voyage",
     author="Alfred Lansing",
     isbn=9780753809877,
@@ -347,15 +218,15 @@ book3 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
+book3.owner = user3
 
 bookImage3 = BookImage(
-    book_uid=3,
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
+book3.images.append(bookImage3)
 
 book4 = Book(
-    owner_uid=1,
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
@@ -366,20 +237,22 @@ book4 = Book(
     # rate_schedule="Weekly",
     status="Checked Out"
 )
+book4.owner = user1
 
 bookImage4 = BookImage(
-    book_uid=4,
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
               "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
 )
+book4.images.append(bookImage4)
 
 bookImage5 = BookImage(
-    book_uid=4,
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
 )
+book4.images.append(bookImage5)
 
 db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4, bookImage5])
 db.session.commit()
+
 # endregion
 
 # TODO: set this up. check for book1.reservations.book

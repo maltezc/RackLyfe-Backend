@@ -1,27 +1,21 @@
 import os
+
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage, \
-    UserImage, Location
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
-from sqlalchemy import func
-
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
-from flask_cors import CORS
 
+from address_helpers import set_retrieve_address
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
     aws_delete_image
-from address_helpers import retrieve_state, set_retrieve_city, set_retrieve_zipcode, set_retrieve_address, \
-    set_retrieve_location
-from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
-    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius, \
-    geocode_address
 from decorators import admin_required
-from enums import StatesEnum
+from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
+    UserImage
+from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
+    get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
 load_dotenv()
 
@@ -61,7 +55,7 @@ def login():
     password = data['password']
 
     user = User.authenticate(email, password)
-    token = create_access_token(identity=user.user_uid)
+    token = create_access_token(identity=user.id)
 
     return jsonify(token=token)
 
@@ -85,7 +79,7 @@ def create_admin_user():
             is_admin=request.form.get('is_admin'),
         )
 
-        token = create_access_token(identity=user.user_uid)
+        token = create_access_token(identity=user.id)
 
         return jsonify(token=token, user=user.serialize()), 201
 
@@ -112,14 +106,14 @@ def create_user():
             lastname=request.form.get('lastname'),
         )
 
-        token = create_access_token(identity=user.user_uid)
+        token = create_access_token(identity=user.id)
         print("jsonify token: ", jsonify(token=token))
 
         if profile_image is not None:
             [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
             user_image = UserImage(
                 image_url=url,
-                user_uid=user.user_uid
+                user_uid=user.id
             )
             db.session.add(user_image)
             db.session.commit()
@@ -210,7 +204,7 @@ def update_user_image(user_image_id):
         user = User.query.get_or_404(current_user_id)
         user_image = UserImage.query.get_or_404(user_image_id)
 
-        if user.user_uid == user_image.user.user_uid:
+        if user.id == user_image.user.id:
             profile_image = request.files.get("profile_image")
 
             if user_image is not None:
@@ -242,7 +236,7 @@ def delete_user_image(user_image_id):
         user = User.query.get_or_404(current_user_id)
         user_image = UserImage.query.get_or_404(user_image_id)
 
-        if user.user_uid == user_image.user.user_uid or user.is_admin:
+        if user.id == user_image.user.id or user.is_admin:
             aws_delete_image(user_image.image_url)
             db.session.delete(user_image)
             db.session.commit()
@@ -268,19 +262,19 @@ def create_address():
         {address: {address_uid, street, city, state, zipcode}}
     """
 
-    try:
-        current_user = get_jwt_identity()
-        user = User.query.get_or_404(current_user)
-        data = request.json
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
+    data = request.json
 
+    try:
+        # with app.app_context():
         # TODO: SET UP SCHEMA VALIDATOR
         address_in = data['address']
         city_in = data['city']
         state_in = data['state']
         zipcode_in = data['zipcode']
-        user, address, city, state, zipcode, address_string = set_retrieve_address(db, user, address_in, city_in,
-                                                                                   state_in,
-                                                                                   zipcode_in)
+        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
+                                                                                   state_in, zipcode_in)
         # set_retrieve_location(db, address, address_string)
 
         # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
@@ -295,8 +289,8 @@ def create_address():
         ), 201
 
     except Exception as error:
-        print("Error", error)
-        db.flush()
+        db.session.rollback()
+        raise error
         return jsonify({"error": "Failed to create address"}), 424
 
 
@@ -328,10 +322,10 @@ def update_address(address_id):
         user = User.query.get_or_404(current_user)
         address = Address.query.get_or_404(address_id)
         # TODO: IF DB IS RESEEDED, AND MOTIONS ARE DONE, USERID IS THE SAME.
-        if user.user_uid == address.user.user_uid or user.is_admin:
+        if user.id == address.user.id or user.is_admin:
 
-            if address.latlong is not None:
-                db.session.delete(address.latlong)
+            if address.location is not None:
+                db.session.delete(address.location)
                 db.session.delete(address)
                 db.session.commit()
 
@@ -341,7 +335,7 @@ def update_address(address_id):
             city_in = data['city']
             state_in = data['state']
             zipcode_in = data['zipcode']
-            user, address, city, state, zipcode, address_string = set_retrieve_address(db, user, address_in, city_in,
+            user, address, city, state, zipcode, address_string = set_retrieve_address(app, db, user, address_in, city_in,
                                                                                        state_in, zipcode_in)
 
             # TODO: FE - control this on front end and have user use a drop down of selectable options only
@@ -377,7 +371,7 @@ def delete_address(address_id):
         user = User.query.get_or_404(current_user)
         address = Address.query.get_or_404(address_id)
 
-        if user.user_uid == address.user.user_uid:
+        if user.id == address.user.id:
             db.session.delete(address)
             db.session.commit()
 
@@ -688,7 +682,7 @@ def create_book():
             for image in images:
                 image_url = aws_upload_image(images[image])
                 # post image to database
-                image_element = db_add_book_image(current_user_id, book_posted.book_uid, image_url)
+                image_element = db_add_book_image(current_user_id, book_posted.id, image_url)
                 images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary book image here but then its pinging the db twice for the patch request
@@ -901,7 +895,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     current_user = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if (user.user_uid == current_user):
+    if (user.id == current_user):
         reservations = (Reservation.query
                         .filter(owner_uid=current_user)
                         .order_by(Reservation.start_date.desc()))
@@ -923,7 +917,7 @@ def get_booked_reservation(reservation_id):
     current_user = get_jwt_identity()
 
     reservation = Reservation.get_or_404(reservation_id)
-    book_uid = reservation.book_uid
+    book_uid = reservation.id
     book = Book.get_or_404(book_uid)
 
     if ((reservation.renter_uid == current_user) or

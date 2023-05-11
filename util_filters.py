@@ -89,7 +89,7 @@ def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, 
 
     books = Book.query
     if logged_in_user_uid is not None:
-        books = books.join(User).filter(User.user_uid != logged_in_user_uid)
+        books = books.join(User).filter(User.id != logged_in_user_uid)
     if book_title is not None:
         books = books.filter(Book.title.ilike(f"%{book_title}%"))
     if book_author is not None:
@@ -126,7 +126,7 @@ def books_within_radius(latitude, longitude, radius, logged_in_user_uid, book_ti
     books = Book.query
 
     if logged_in_user_uid is not None:
-        books = books.join(User).filter(User.user_uid != logged_in_user_uid)
+        books = books.join(User).filter(User.id != logged_in_user_uid)
     if book_title is not None:
         books = books.filter(Book.title.ilike(f"%{book_title}%"))
     if book_author is not None:
