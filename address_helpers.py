@@ -75,7 +75,6 @@ def set_retrieve_address(user, address_str, city_str, state_str, zipcode_str):
             city_uid=city.id,
             zipcode_uid=zipcode.id
         )
-
         user.address = address
 
         db.session.add(address)
@@ -93,7 +92,7 @@ def set_retrieve_address(user, address_str, city_str, state_str, zipcode_str):
     return user, address, city, state, zipcode, address_string
 
 
-def set_retrieve_location(app, address, full_address_str):
+def set_retrieve_location(address, full_address_str):
     """ Given a location string, return the location object from the db """
 
     # with app.app_context():

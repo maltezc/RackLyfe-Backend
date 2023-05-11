@@ -291,7 +291,7 @@ def create_address():
     except Exception as error:
         db.session.rollback()
         raise error
-        return jsonify({"error": "Failed to create address"}), 424
+        # return jsonify({"error": "Failed to create address"}), 424
 
 
 @app.get("/api/address/<int:address_id>")
@@ -317,46 +317,47 @@ def update_address(address_id):
         {address: {address_uid, street, city, state, zipcode}}
     """
 
-    try:
-        current_user = get_jwt_identity()
-        user = User.query.get_or_404(current_user)
-        address = Address.query.get_or_404(address_id)
-        # TODO: IF DB IS RESEEDED, AND MOTIONS ARE DONE, USERID IS THE SAME.
-        if user.id == address.user.id or user.is_admin:
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
+    address = Address.query.get_or_404(address_id)
+    # TODO: IF DB IS RESEEDED, AND MOTIONS ARE DONE, USERID IS THE SAME.
+    if user.id == address.user.id or user.is_admin:
 
-            if address.location is not None:
+        if address.location is not None:
+            try:
                 db.session.delete(address.location)
-                db.session.delete(address)
+                db.session.delete(address) # @Lucas: Should I be deleting the address here or should i just be changing it?
                 db.session.commit()
+            except Exception as error:
+                print("Error", error)
+                return jsonify({"error": "Failed to update address"}), 424
 
-            data = request.json
-            # TODO: : pull information here
-            address_in = data['address']
-            city_in = data['city']
-            state_in = data['state']
-            zipcode_in = data['zipcode']
-            user, address, city, state, zipcode, address_string = set_retrieve_address(app, db, user, address_in, city_in,
-                                                                                       state_in, zipcode_in)
+        data = request.json
 
-            # TODO: FE - control this on front end and have user use a drop down of selectable options only
-            # update address info and other elements leave the rest for future use.
-            # leave city
-            # leave state
-            # leave zipcode
+        address_in = data['address']
+        city_in = data['city']
+        state_in = data['state']
+        zipcode_in = data['zipcode']
+        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
+                                                                                   state_in, zipcode_in)
 
-            return jsonify(
-                user=user.serialize_with_address(),
-                state=state.serialize(),
-                city=city.serialize(),
-                zipcode=zipcode.serialize(),
-                # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
-            ), 200
+        # TODO: FE - control this on front end and have user use a drop down of selectable options only
+        # update address info and other elements leave the rest for future use.
+        # leave city
+        # leave state
+        # leave zipcode
 
-        return jsonify({"error": "Failed to update address"}), 424
+        return jsonify(
+            user=user.serialize_with_address(),
+            state=state.serialize(),
+            city=city.serialize(),
+            zipcode=zipcode.serialize(),
+            # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+        ), 200
 
-    except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to update address"}), 424
+    return jsonify({"error": "Failed to update address"}), 424
+
+
 
 
 @app.delete("/api/address/<int:address_id>")
