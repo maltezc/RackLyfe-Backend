@@ -1,18 +1,19 @@
 import os
+
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from models import db, connect_db, User, Address, City, State, ZipCode, Message, Book, Reservation, BookImage
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload
-from sqlalchemy import func
-
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
-from flask_cors import CORS
 
-from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image
+from address_helpers import set_retrieve_address
+from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
+    aws_delete_image
+from decorators import admin_required
+from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
+    UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 
@@ -54,10 +55,37 @@ def login():
     password = data['password']
 
     user = User.authenticate(email, password)
-    token = create_access_token(identity=user.user_uid)
-    # token = create_access_token(identity=user.email)
+    token = create_access_token(identity=user.id)
 
     return jsonify(token=token)
+
+
+@app.post("/api/auth/signup_admin")
+@jwt_required()
+@admin_required
+def create_admin_user():
+    """Add user, and return data about new user.
+
+    Returns JSON like:
+        {user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}
+    """
+
+    try:
+        user = User.signup(
+            email=request.form.get('email'),
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
+            is_admin=request.form.get('is_admin'),
+        )
+
+        token = create_access_token(identity=user.id)
+
+        return jsonify(token=token, user=user.serialize()), 201
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to signup"}), 424
 
 
 @app.post("/api/auth/signup")
@@ -67,40 +95,32 @@ def create_user():
     Returns JSON like:
         {user: {user_uid, email, image_url, firstname, lastname, address, preferred_trade_location}}
     """
-    print("form", request.form)
-    try:
-        form = request.form
-        print("form", form)
 
-        file = request.files.get('file')
-        url = None
-        if (file):
-            [url] = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
-            # print("url", url)
-            # print("request.form.get('text')", request.form.get('text'))
-            # print("request.form['text']", request.form['text'])
-            # print("request.form['text'].keys()", request.form['text'].keys())
-            # print("request.forms.keys", request.form.keys())
-            # print("request.forms.items", request.form.items())
+    try:
+        profile_image = request.form.get('profile_image')
 
         user = User.signup(
-            email=form['email'],
-            password=form['password'],
-            firstname=form['firstname'],
-            lastname=form['lastname'],
-            address=form['address'],
-            preferred_trade_location=form['preferred_trade_location'],
-            image_url=url
+            email=request.form.get('email'),
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
         )
-        db.session.commit()
 
-        # user = User.authenticate(username, password)
-        token = create_access_token(identity=user.email)
+        token = create_access_token(identity=user.id)
         print("jsonify token: ", jsonify(token=token))
 
-        return jsonify(token=token)
+        if profile_image is not None:
+            [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+            user_image = UserImage(
+                image_url=url,
+                user_uid=user.id
+            )
+            db.session.add(user_image)
+            db.session.commit()
 
-        # return (jsonify(user=user.serialize()), 201)
+            return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
+
+        return jsonify(token=token, user=user.serialize()), 201
 
     except Exception as error:
         print("Error", error)
@@ -109,79 +129,249 @@ def create_user():
 
 # endregion
 
-@app.get("/search")
-def search():
-    """ Searches book properties for matched or similar values.
+# region User Image Endpoints Start
 
+@app.post("/api/user_image")
+@jwt_required()
+def add_user_image():
+    """ Adds image to the currently logged-in user
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {user_image: {user_image_uid, image_url, user_uid}}
     """
 
-    # query_string = request.query_string
+    try:
+        current_user_id = get_jwt_identity()
+        profile_image = request.files.get("profile_image")
 
-    # endurance
-    # 94108
+        if profile_image is not None:
+            image_url = aws_upload_image(profile_image)
+            image_element = db_add_user_image(current_user_id, image_url)
+            image = UserImage.query.get_or_404(image_element.id)
 
-    # logged_in_user_uid, book_title, book_author, city, state, zipcode
-    title = request.args.get('title')
-    author = request.args.get('author')
-    isbn = request.args.get('isbn')
-    city = request.args.get('city')
-    state = request.args.get('state')
-    zipcode = request.args.get('zipcode')  # mandatory
+            return jsonify(user_image=image.serialize()), 201
 
-    request.args.keys()
-    # if len(key) > 0:
-    # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
-    # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
+        return jsonify({"error": "Failed to add image"}), 424
 
-    # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
-    # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
-    # qs = filter book by mandatory field
-    # if author is not none, qs = qs.filter(author)
-
-    city_users = get_all_users_in_city("Hercules")
-    state_users = get_all_users_in_state("CA")
-    zipcode_users = get_all_users_in_zipcode("94547")
-    users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
-    city_books = get_all_books_in_city("Hercules")
-    state_books = get_all_books_in_state("CA")
-    zipcode_books = get_all_books_in_zipcode("94547")
-    all_books = Book.query.all()
-    searched_books = basic_book_search(1, title, author, city, state, zipcode)
-
-    serialized = [book.serialize() for book in searched_books]
-    return jsonify(books=serialized)
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to add image"}), 424
 
 
-@app.get("/api/search/books_nearby")
-def list_nearby_books():
-    """ Shows all books nearby
-
-    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
-    condition, price, reservations},...}
+@app.get("/api/current_user_image/")
+@jwt_required()
+def get_current_user_image():
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
     """
 
-    title = request.args.get('title')
-    author = request.args.get('author')
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = user.profile_image
 
-    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
+        return jsonify(user_image=user_image.serialize()), 200
 
-    serialized = [book.serialize() for book in books]
-
-    return jsonify(books=serialized)
-
-
-@app.get("/api/search/nearby")
-def list_nearby():
-    """ Shows all points nearby """
-
-    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
-
-    return locations
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get image"}), 424
 
 
-# region USERS ENDPOINTS START
+@app.get("/api/user_image/<int:user_image_id>")
+def get_other_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        return jsonify(user_image=user_image.serialize()), 200
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get image"}), 424
+
+
+@app.patch("/api/user_image/<int:user_image_id>")
+@jwt_required()
+def update_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        if user.id == user_image.user.id:
+            profile_image = request.files.get("profile_image")
+
+            if user_image is not None:
+                aws_delete_image(user_image.image_url)
+
+            if profile_image is not None:
+                image_url = aws_upload_image(profile_image)
+                user_image.image_url = image_url
+                db.session.commit()
+
+                return jsonify(user_image=user_image.serialize()), 200
+
+        return jsonify({"error": "Failed to update image"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to update image"}), 424
+
+
+@app.delete("/api/user_image/<int:user_image_id>")
+@jwt_required()
+def delete_user_image(user_image_id):
+    """ Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}
+    """
+
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        user_image = UserImage.query.get_or_404(user_image_id)
+
+        if user.id == user_image.user.id or user.is_admin:
+            aws_delete_image(user_image.image_url)
+            db.session.delete(user_image)
+            db.session.commit()
+
+            return jsonify(user=user.serialize(), user_profile_image=user.profile_image), 200
+
+        return jsonify({"error": "Failed to delete image"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to delete image"}), 424
+
+
+# endregion
+
+# region Address Endpoints Start
+
+@app.post("/api/address")
+@jwt_required()
+def create_address():
+    """ Adds address to the currently logged-in user
+    Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
+    data = request.json
+
+    # TODO: SET UP SCHEMA VALIDATOR
+    address_in = data['address']
+    city_in = data['city']
+    state_in = data['state']
+    zipcode_in = data['zipcode']
+    user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
+                                                                               state_in, zipcode_in)
+    # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
+
+    return jsonify(
+        user=user.serialize(),
+        address=address.serialize(),
+        state=state.serialize(),
+        city=city.serialize(),
+        zipcode=zipcode.serialize(),
+        # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+    ), 201
+
+
+@app.get("/api/address/<int:address_id>")
+def get_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    try:
+        address = Address.query.get_or_404(address_id)
+
+        return jsonify(address=address.serialize()), 200
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to get address"}), 424
+
+
+@app.patch("/api/address/<int:address_id>")
+@jwt_required()
+def update_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
+    address = Address.query.get_or_404(address_id)
+    # TODO: IF DB IS RESEEDED, AND MOTIONS ARE DONE, USERID IS THE SAME.
+    if user.id == address.user.id or user.is_admin:
+
+        if address.location is not None:
+            try:
+                db.session.delete(address.location)
+                db.session.delete(address) # @Lucas: Should I be deleting the address here or should i just be changing it?
+                db.session.commit()
+            except Exception as error:
+                print("Error", error)
+                return jsonify({"error": "Failed to update address"}), 424
+
+        address_in = request.json['address']
+        city_in = request.json['city']
+        state_in = request.json['state']
+        zipcode_in = request.json['zipcode']
+        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in, state_in,
+                                                                                   zipcode_in)
+
+        # TODO: FE - control this on front end and have user use a drop down of selectable options only
+
+        return jsonify(
+            user=user.serialize_with_address(),
+            state=state.serialize(),
+            city=city.serialize(),
+            zipcode=zipcode.serialize(),
+            # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+        ), 200
+
+    return jsonify({"error": "Failed to update address"}), 424
+
+
+@app.delete("/api/address/<int:address_id>")
+@jwt_required()
+def delete_address(address_id):
+    """ Returns JSON like:
+        {address: {address_uid, street, city, state, zipcode}}
+    """
+
+    try:
+        current_user = get_jwt_identity()
+        user = User.query.get_or_404(current_user)
+        address = Address.query.get_or_404(address_id)
+
+        if user.id == address.user.id:
+            db.session.delete(address)
+            db.session.commit()
+
+            return jsonify(user=user.serialize()), 200
+
+        return jsonify({"error": "Failed to delete address"}), 424
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to delete address"}), 424
+
+
+# endregion
+
+
+# region USERS List ENDPOINTS START
 
 @app.get("/api/users")
 def list_users():
@@ -264,8 +454,9 @@ def toggle_user_status(user_uid):
 def delete_user(user_uid):
     """Delete user. """
 
+    # TODO: add admin role to delete users
     current_user = get_jwt_identity()
-    if current_user == user_uid:
+    if current_user == user_uid or current_user.is_admin:
         user = User.query.get_or_404(user_uid)
 
         db.session.delete(user)
@@ -286,6 +477,81 @@ def list_books_of_user(user_uid):
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)
+
+
+# endregion
+
+# region Search Endpoints
+@app.get("/search")
+def search():
+    """ Searches book properties for matched or similar values.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    # query_string = request.query_string
+
+    # endurance
+    # 94108
+
+    # logged_in_user_uid, book_title, book_author, city, state, zipcode
+    title = request.args.get('title')
+    author = request.args.get('author')
+    isbn = request.args.get('isbn')
+    city = request.args.get('city')
+    state = request.args.get('state')
+    zipcode = request.args.get('zipcode')  # mandatory
+
+    request.args.keys()
+    # if len(key) > 0:
+    # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
+    # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
+
+    # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
+    # qs = filter book by mandatory field
+    # if author is not none, qs = qs.filter(author)
+
+    city_users = get_all_users_in_city("Hercules")
+    state_users = get_all_users_in_state("CA")
+    zipcode_users = get_all_users_in_zipcode("94547")
+    users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
+    city_books = get_all_books_in_city("Hercules")
+    state_books = get_all_books_in_state("CA")
+    zipcode_books = get_all_books_in_zipcode("94547")
+    all_books = Book.query.all()
+    searched_books = basic_book_search(1, title, author, city, state, zipcode)
+
+    serialized = [book.serialize() for book in searched_books]
+    return jsonify(books=serialized)
+
+
+@app.get("/api/search/books_nearby")
+def list_nearby_books():
+    """ Shows all books nearby
+
+    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
+    condition, price, reservations},...}
+    """
+
+    title = request.args.get('title')
+    author = request.args.get('author')
+
+    books = books_within_radius(38.006370860286694, -122.28195023589687, 1000, 1, title, author)
+
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
+
+
+@app.get("/api/search/nearby")
+def list_nearby():
+    """ Shows all points nearby """
+
+    locations = locations_within_radius(38.006370860286694, -122.28195023589687, 1000)
+
+    return locations
 
 
 # endregion
@@ -367,37 +633,6 @@ def search_books_by_zipcode():
     return jsonify(books=serialized)
 
 
-# @app.post("/api/pools")
-# @jwt_required()
-# def create_pool():
-#     """Add pool, and return data about new pool.
-
-#     Returns JSON like:
-#         {pool: {id, owner_id, rate, size, description, address, image_url}}
-#     """
-
-#     current_user = get_jwt_identity()
-#     if current_user:
-#         data = request.json
-#         print("data", data)
-#         pool = Pool(
-#             owner_username=current_user,
-#             rate=data['rate'],
-#             size=data['size'],
-#             description=data['description'],
-#             city=data['city'],
-#             orig_image_url=data['orig_image_url']
-#         )
-
-#         db.session.add(pool)
-#         db.session.commit()
-
-#         # POST requests should return HTTP status of 201 CREATED
-#         return (jsonify(pool=pool.serialize()), 201)
-
-#     return (jsonify({"error": "not authorized"}), 401)
-
-# @app.post("/api/users/<int:user_uid>/books")
 @app.post("/api/books")
 @jwt_required()
 def create_book():
@@ -431,7 +666,7 @@ def create_book():
             for image in images:
                 image_url = aws_upload_image(images[image])
                 # post image to database
-                image_element = db_add_book_image(current_user_id, book_posted.book_uid, image_url)
+                image_element = db_add_book_image(current_user_id, book_posted.id, image_url)
                 images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary book image here but then its pinging the db twice for the patch request
@@ -599,9 +834,9 @@ def create_reservation(book_uid):
         db.session.add(reservation)
         db.session.commit()
 
-        return (jsonify(reservation=reservation.serialize()), 201)
+        return jsonify(reservation=reservation.serialize()), 201
 
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.get("/api/reservations/<int:book_uid>")
@@ -644,7 +879,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     current_user = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if (user.user_uid == current_user):
+    if (user.id == current_user):
         reservations = (Reservation.query
                         .filter(owner_uid=current_user)
                         .order_by(Reservation.start_date.desc()))
@@ -666,7 +901,7 @@ def get_booked_reservation(reservation_id):
     current_user = get_jwt_identity()
 
     reservation = Reservation.get_or_404(reservation_id)
-    book_uid = reservation.book_uid
+    book_uid = reservation.id
     book = Book.get_or_404(book_uid)
 
     if ((reservation.renter_uid == current_user) or
