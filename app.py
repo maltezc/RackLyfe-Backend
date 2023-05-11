@@ -266,32 +266,23 @@ def create_address():
     user = User.query.get_or_404(current_user)
     data = request.json
 
-    try:
-        # with app.app_context():
-        # TODO: SET UP SCHEMA VALIDATOR
-        address_in = data['address']
-        city_in = data['city']
-        state_in = data['state']
-        zipcode_in = data['zipcode']
-        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
-                                                                                   state_in, zipcode_in)
-        # set_retrieve_location(db, address, address_string)
+    # TODO: SET UP SCHEMA VALIDATOR
+    address_in = data['address']
+    city_in = data['city']
+    state_in = data['state']
+    zipcode_in = data['zipcode']
+    user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
+                                                                               state_in, zipcode_in)
+    # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
 
-        # TODO: VALIDATE ADDRESS USING GOOLGE MAPS OR SIM API
-
-        return jsonify(
-            user=user.serialize(),
-            address=address.serialize(),
-            state=state.serialize(),
-            city=city.serialize(),
-            zipcode=zipcode.serialize(),
-            # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
-        ), 201
-
-    except Exception as error:
-        db.session.rollback()
-        raise error
-        # return jsonify({"error": "Failed to create address"}), 424
+    return jsonify(
+        user=user.serialize(),
+        address=address.serialize(),
+        state=state.serialize(),
+        city=city.serialize(),
+        zipcode=zipcode.serialize(),
+        # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
+    ), 201
 
 
 @app.get("/api/address/<int:address_id>")
@@ -332,20 +323,14 @@ def update_address(address_id):
                 print("Error", error)
                 return jsonify({"error": "Failed to update address"}), 424
 
-        data = request.json
-
-        address_in = data['address']
-        city_in = data['city']
-        state_in = data['state']
-        zipcode_in = data['zipcode']
-        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in,
-                                                                                   state_in, zipcode_in)
+        address_in = request.json['address']
+        city_in = request.json['city']
+        state_in = request.json['state']
+        zipcode_in = request.json['zipcode']
+        user, address, city, state, zipcode, address_string = set_retrieve_address(user, address_in, city_in, state_in,
+                                                                                   zipcode_in)
 
         # TODO: FE - control this on front end and have user use a drop down of selectable options only
-        # update address info and other elements leave the rest for future use.
-        # leave city
-        # leave state
-        # leave zipcode
 
         return jsonify(
             user=user.serialize_with_address(),
@@ -356,8 +341,6 @@ def update_address(address_id):
         ), 200
 
     return jsonify({"error": "Failed to update address"}), 424
-
-
 
 
 @app.delete("/api/address/<int:address_id>")
