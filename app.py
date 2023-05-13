@@ -468,23 +468,6 @@ def delete_user(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.get('/api/users/<int:user_uid>/books')
-def list_books_of_user(user_uid):
-    """Show books of specified user.
-
-    Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
-    """
-    # books = Book.query.filter(Book.owner_uid == user_uid)
-    # books = User.query.get_or_404(user_uid).books
-    user = User.query.get_or_404(user_uid)
-    # books = Book.query.filter(Book.owner == user).all()
-    books = user.books
-    serialized = [book.serialize() for book in books]
-
-    return jsonify(books=serialized)
-
-
 # endregion
 
 # region Search Endpoints
@@ -566,7 +549,7 @@ def list_nearby():
 # region BOOKS ENDPOINTS START
 
 @app.get("/api/books")
-def list_books():
+def list_all_books():
     """Return all books in system.
 
     Returns JSON like:
@@ -576,6 +559,21 @@ def list_books():
 
     serialized = [book.serialize() for book in books]
     return jsonify(pools=serialized)
+
+
+@app.get('/api/users/<int:user_uid>/books')
+def list_books_of_user(user_uid):
+    """Show books of specified user.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    user = User.query.get_or_404(user_uid)
+    books = user.books
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
 
 
 @app.get('/api/books/<int:book_uid>')

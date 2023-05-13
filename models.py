@@ -1,4 +1,4 @@
-"""SQLAlchemy models for ShareBNB."""
+"""SQLAlchemy models for MNB."""
 
 from datetime import datetime
 
@@ -56,11 +56,6 @@ class User(db.Model):
         default=False
     )
 
-    # address_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('addresses.address_uid')
-    # )
-
     address = db.relationship('Address', uselist=False, back_populates='user')
 
     image_url = db.Column(
@@ -76,35 +71,8 @@ class User(db.Model):
         default=5.0
     )
 
-    # user_image_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('user_images.id')
-    # )
-
     profile_image = db.relationship('UserImage', back_populates='user', uselist=False)
 
-    # TODO: owned_books_for_rent
-
-    # TODO: others_books_rented
-
-    # TODO: reservations
-
-    # reserved_books = db.relationship(
-    #     'Books',
-    #     secondary='owner',
-    #     backref='booker'
-    # )
-
-    # owned_books = db.relationship(
-    #     'Books',
-    #     secondary='booker',
-    #     backref='owner'
-    # )
-
-    # book_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('books.id')
-    # )
     books = db.relationship('Book', back_populates='owner', uselist=True)
 
     renting_reservations = db.relationship('Reservation', back_populates='renter',
@@ -124,9 +92,6 @@ class User(db.Model):
             "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating
-
-            # "owned_books" : self.owned_books
-            # "reserved_books" : self.reserved_books,
         }
 
     def serialize_with_address(self):
@@ -143,8 +108,6 @@ class User(db.Model):
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating,
             "address": self.address.serialize()
-            # "owned_books" : self.owned_books
-            # "reserved_books" : self.reserved_books,
         }
 
     @classmethod
@@ -259,38 +222,31 @@ class Address(db.Model):
         db.Integer
     )
 
-    # city_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('cities.id')
-    # )
+    city_uid = db.Column(
+        db.Integer,
+        db.ForeignKey('cities.id')
+    )
     city = db.relationship('City', back_populates="addresses", uselist=False)
 
-    # zipcode_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('zip_codes.id')
-    # )
+    zipcode_uid = db.Column(
+        db.Integer,
+        db.ForeignKey('zip_codes.id')
+    )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
-    # location_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('locations.id')
-    # )
     location = db.relationship('Location', back_populates="address", uselist=False)
 
     def __repr__(self):
-        return f"< Address #{self.id}, Street: {self.street_address}, " \
-               f"Apt#: {self.apt_number}, City: {self.city_uid}, Zipcode: {self.zipcode_uid}, Location: {self.location} >"
+        return f"< Address #{self.id}, Street Address: {self.street_address}, Apt Number: {self.apt_number}, City: {self.city}, Zipcode: {self.zipcode}, Location: {self.location} >"
 
     def serialize(self):
         """ returns self """
 
         return {
             "address_uid": self.id,
+            "user_id": self.user_id,
             "street_address": self.street_address,
             "apt_number": self.apt_number,
-            "city_uid": self.city_uid,
-            "zipcode_uid": self.zipcode_uid,
-            "location_id": self.location_id,
         }
 
 
@@ -307,11 +263,6 @@ class Location(db.Model):
         db.Integer,
         primary_key=True,
     )
-
-    # address_id = db.Column(
-    #     db.Integer,
-    #     # db.ForeignKey('addresses.address_uid')
-    # )
 
     address_id = db.Column(
         db.Integer,
@@ -350,21 +301,13 @@ class City(db.Model):
         primary_key=True,
     )
 
-    address_id = db.Column(
-        db.Integer,
-        db.ForeignKey('addresses.id')
-    )
-    addresses = db.relationship("Address", back_populates="city")
+    addresses = db.relationship("Address", back_populates="city", uselist=True)
 
     city_name = db.Column(
         db.Text,
         nullable=False
     )
 
-    # state_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('states.id')
-    # )
     state = db.relationship('State', back_populates="cities", uselist=False)
 
     def __repr__(self):
@@ -446,11 +389,7 @@ class ZipCode(db.Model):
         unique=True
     )
 
-    address_id = db.Column(
-        db.Integer,
-        db.ForeignKey('addresses.id')
-    )
-    addresses = db.relationship('Address', back_populates='zipcode')
+    addresses = db.relationship('Address', back_populates='zipcode', uselist=True)
 
     def __repr__(self):
         return f"< Zipcode # {self.id}, Code {self.code} >"
@@ -489,11 +428,6 @@ class Book(db.Model):
         db.Text,
         nullable=False,
     )
-
-    # book_image_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('book_images.id')
-    # )
 
     images = db.Relationship("BookImage", back_populates="book", uselist=True)
 
@@ -550,20 +484,15 @@ class Book(db.Model):
         nullable=False
     )
 
-    # reservation_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey('reservations.id')
-    # )
     reservations = db.relationship('Reservation', back_populates='book', uselist=True)
 
     def serialize(self):
         """ returns self """
         return {
 
-            "book_uid": self.id,
-            # "owner_uid": self.owner_uid,
-            # "orig_image_url": self.orig_image_url,
-            # "owner": self.owner, #! CANNOT HAVE THIS IN HERE
+            "id": self.id,
+            "owner_uid": self.owner_uid,
+            "primary_image_url": self.primary_image_url,
             "title": self.title,
             "author": self.author,
             "isbn": self.isbn,
@@ -571,7 +500,8 @@ class Book(db.Model):
             "condition": self.condition,
             "rate_price": self.rate_price,
             "rate_schedule": self.rate_schedule,
-            "status": self.status
+            "status": self.status,
+            "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
     def __repr__(self):

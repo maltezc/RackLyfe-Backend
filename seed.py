@@ -70,8 +70,6 @@ for state_data in states:
     state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
     db.session.add(state)
 
-db.session.commit()
-
 # `$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q` <--- equals 'password'
 user1 = User(
     email="test1@email.com",
@@ -84,26 +82,34 @@ user1 = User(
 user1Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
+db.session.add_all([user1, user1Image])
 user1.profile_image = user1Image
 
 address1 = Address(street_address="164 Glenwood")
-user1.address = address1
+db.session.add(address1)
+# user1.address = address1
+address1.user = user1
 
 location1 = Location(point='POINT(-122.28195023589687 38.006370860286694)')
+db.session.add(location1)
 address1.location = location1
 
 city1 = City(
     city_name="Hercules",
 )
+# breakpoint()
+db.session.add(city1)
 
 address1.city = city1
-# state1 = State(state_name="California", state_abbreviation="CA")
-# city1.state = state1
-# breakpoint()
+# city1.addresses.append(address1)
+
 city1.state = State.query.filter(State.state_abbreviation == "CA").first()
 
 zipcode1 = ZipCode(code=94547)
+db.session.add(zipcode1)
 address1.zipcode = zipcode1
+
+# breakpoint()
 
 user2 = User(
     email="test2@email.com",
@@ -115,14 +121,20 @@ user2 = User(
 user2Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
 )
+db.session.add_all([user2, user2Image])
 user2.profile_image = user2Image
 
 address2 = Address(street_address="100 Finch Court")
+db.session.add(address2)
+
 user2.address = address2
 address2.city = city1
 address2.zipcode = zipcode1
+
 location2 = Location(point='POINT(-122.25801 37.999126)')
+db.session.add(location2)
 address2.location = location2
+# breakpoint()
 
 user3 = User(
     email="test3@email.com",
@@ -134,23 +146,28 @@ user3 = User(
 user3Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
+db.session.add(user3, user3Image)
 user3.profile_image = user3Image
 
 address3 = Address(street_address="655 E Drachman St")
+db.session.add(address3)
 user3.address = address3
 
 location3 = Location(point='POINT(-110.961431 32.239627)')
+db.session.add(location3)
 address3.location = location3
 
 city2 = City(
     city_name="Tucson",
 )
+db.session.add(city2)
 address3.city = city2
-# state2 = State(state_name="Arizona", state_abbreviation="AZ")
-city2.state = State.query.filter(State.state_abbreviation == "AZ").first()
-# city2.state = state2
+
+state2 = State.query.filter(State.state_abbreviation == "AZ").first()
+city2.state = state2
 
 zipcode2 = ZipCode(code=85705)
+db.session.add(zipcode2)
 address3.zipcode = zipcode2
 
 user4 = User(
@@ -161,12 +178,14 @@ user4 = User(
     lastname="admin_lastname4",
     is_admin=True,
 )
+db.session.add(user4)
+breakpoint()
+db.session.commit()
 
 # endregion
-db.session.add_all([user1, user1Image, address1, location1, city1, zipcode1])
-db.session.add_all([user2, user2Image, address2, location2, address3, location3, city2, zipcode2])
-db.session.add_all([user3, user3Image, user4])
-db.session.commit()
+
+
+# db.session.add_all([user4])
 
 
 # region books---------------------------------------------
@@ -203,8 +222,6 @@ book4 = Book(
     status="Checked Out"
 )
 user1.books.append(book4)
-# book4.owner = user1
-
 
 bookImage4 = BookImage(
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
@@ -217,21 +234,7 @@ bookImage5 = BookImage(
 )
 book4.images.append(bookImage5)
 
-# book1.owner = user1
 db.session.add_all([book1, bookImage1, book4, bookImage4, bookImage5])
-db.session.commit()
-
-# user1.books = [book1, book4]
-
-
-# db.session.commit()
-
-# user1.books.append(book2)
-# breakpoint()
-# db.session.commit()
-
-# db.session.add_all([])
-# db.session.commit()
 
 book2 = Book(
     # owner_uid=2,
@@ -257,7 +260,6 @@ bookImage2 = BookImage(
 book2.images.append(bookImage2)
 
 db.session.add_all([book2, bookImage2])
-db.session.commit()
 
 book3 = Book(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
@@ -271,8 +273,8 @@ book3 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
-# book3.owner = user3
-user3.books.append(book3)
+book3.owner = user3
+# user3.books.append(book3)
 
 bookImage3 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -281,60 +283,57 @@ bookImage3 = BookImage(
 book3.images.append(bookImage3)
 
 db.session.add_all([book3, bookImage3])
-db.session.commit()
-
 
 # endregion
 
 # TODO: set this up. check for book1.reservations.book
 # region reservations
-# reservation1 = Reservation(
-#     id="1",
-#     # book_uid="1",
-#     # owner_uid="1",
-#     # renter_uid="2",
-#     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-#     start_date="Fri, 03 May 2023 12:01:00 GMT",
-#     end_date="Sun, 05 May 2023 12:01:00 GMT",
-#     status="Scheduled",
-#     rental_period_duration=10,
-#     total="1000",
-# )
-# book1.reservations.append(reservation1)
-# # reservation1.book = book1
-#
-# reservation2 = Reservation(
-#     id="2",
-#     # book_uid="2",
-#     # owner_uid="2",
-#     # renter_uid="1",
-#     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-#     start_date="Fri, 03 Feb 2023 12:01:00 GMT",
-#     end_date="Sun, 05 Feb 2023 12:01:00 GMT",
-#     status="Scheduled",
-#     rental_period_duration=10,
-#     total="800",
-# )
-# book2.reservations.append(reservation2)
-#
-#
-# reservation3 = Reservation(
-#     id="3",
-#     # book_uid="3",
-#     # owner_uid="3",
-#     # renter_uid="1",
-#     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-#     start_date="Fri, 03 May 2023 12:01:00 GMT",
-#     end_date="Sun, 05 May 2023 12:01:00 GMT",
-#     status="Scheduled",
-#     rental_period_duration=10,
-#     total="600",
-# )
-# book3.reservations.append(reservation3)
-#
-#
-# db.session.add_all([reservation1, reservation2, reservation3])
-# db.session.commit()
+
+reservation1 = Reservation(
+    id="1",
+    # book_uid="1",
+    # owner_uid="1",
+    # renter_uid="2",
+    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
+    start_date="Fri, 03 May 2023 12:01:00 GMT",
+    end_date="Sun, 05 May 2023 12:01:00 GMT",
+    status="Scheduled",
+    rental_period_duration=10,
+    total="1000",
+)
+book1.reservations.append(reservation1)
+# reservation1.book = book1
+
+reservation2 = Reservation(
+    id="2",
+    # book_uid="2",
+    # owner_uid="2",
+    # renter_uid="1",
+    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
+    start_date="Fri, 03 Feb 2023 12:01:00 GMT",
+    end_date="Sun, 05 Feb 2023 12:01:00 GMT",
+    status="Scheduled",
+    rental_period_duration=10,
+    total="800",
+)
+book2.reservations.append(reservation2)
+
+reservation3 = Reservation(
+    id="3",
+    # book_uid="3",
+    # owner_uid="3",
+    # renter_uid="1",
+    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
+    start_date="Fri, 03 May 2023 12:01:00 GMT",
+    end_date="Sun, 05 May 2023 12:01:00 GMT",
+    status="Scheduled",
+    rental_period_duration=10,
+    total="600",
+)
+book3.reservations.append(reservation3)
+
+db.session.add_all([reservation1, reservation2, reservation3])
+db.session.commit()
 
 # endregion
 
