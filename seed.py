@@ -94,9 +94,13 @@ address1.location = location1
 
 city1 = City(
     city_name="Hercules",
-    state_uid=5,
 )
+
 address1.city = city1
+# state1 = State(state_name="California", state_abbreviation="CA")
+# city1.state = state1
+# breakpoint()
+city1.state = State.query.filter(State.state_abbreviation == "CA").first()
 
 zipcode1 = ZipCode(code=94547)
 address1.zipcode = zipcode1
@@ -140,9 +144,11 @@ address3.location = location3
 
 city2 = City(
     city_name="Tucson",
-    state_uid=3,
 )
 address3.city = city2
+# state2 = State(state_name="Arizona", state_abbreviation="AZ")
+city2.state = State.query.filter(State.state_abbreviation == "AZ").first()
+# city2.state = state2
 
 zipcode2 = ZipCode(code=85705)
 address3.zipcode = zipcode2
@@ -162,6 +168,7 @@ db.session.add_all([user2, user2Image, address2, location2, address3, location3,
 db.session.add_all([user3, user3Image, user4])
 db.session.commit()
 
+
 # region books---------------------------------------------
 
 book1 = Book(
@@ -176,13 +183,55 @@ book1 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
-book1.owner = user1
+user1.books.append(book1)
 
 bookImage1 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
 )
 book1.images.append(bookImage1)
+
+book4 = Book(
+    primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
+    title="Harry Potter and the Sorcerer's Stone",
+    author="J.K. Rowling, Olly Moss ",
+    isbn=9781781100486,
+    genre="",
+    condition=ConditionEnum.LIKE_NEW.value,
+    rate_price="100",
+    # rate_schedule="Weekly",
+    status="Checked Out"
+)
+user1.books.append(book4)
+# book4.owner = user1
+
+
+bookImage4 = BookImage(
+    image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
+              "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
+)
+book4.images.append(bookImage4)
+
+bookImage5 = BookImage(
+    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
+)
+book4.images.append(bookImage5)
+
+# book1.owner = user1
+db.session.add_all([book1, bookImage1, book4, bookImage4, bookImage5])
+db.session.commit()
+
+# user1.books = [book1, book4]
+
+
+# db.session.commit()
+
+# user1.books.append(book2)
+# breakpoint()
+# db.session.commit()
+
+# db.session.add_all([])
+# db.session.commit()
 
 book2 = Book(
     # owner_uid=2,
@@ -197,7 +246,8 @@ book2 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
-book2.owner = user2
+# book2.owner = user2
+user2.books.append(book2)
 
 bookImage2 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -205,6 +255,9 @@ bookImage2 = BookImage(
 )
 # bookImage2.book = book2
 book2.images.append(bookImage2)
+
+db.session.add_all([book2, bookImage2])
+db.session.commit()
 
 book3 = Book(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
@@ -218,7 +271,8 @@ book3 = Book(
     rate_schedule="Weekly",
     status="Available"
 )
-book3.owner = user3
+# book3.owner = user3
+user3.books.append(book3)
 
 bookImage3 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -226,55 +280,34 @@ bookImage3 = BookImage(
 )
 book3.images.append(bookImage3)
 
-book4 = Book(
-    primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
-    title="Harry Potter and the Sorcerer's Stone",
-    author="J.K. Rowling, Olly Moss ",
-    isbn=9781781100486,
-    genre="",
-    condition=ConditionEnum.LIKE_NEW.value,
-    rate_price="100",
-    # rate_schedule="Weekly",
-    status="Checked Out"
-)
-book4.owner = user1
-
-bookImage4 = BookImage(
-    image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
-              "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
-)
-book4.images.append(bookImage4)
-
-bookImage5 = BookImage(
-    image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
-)
-book4.images.append(bookImage5)
-
-db.session.add_all([book1, bookImage1, book2, bookImage2, book3, bookImage3, book4, bookImage4, bookImage5])
+db.session.add_all([book3, bookImage3])
 db.session.commit()
+
 
 # endregion
 
 # TODO: set this up. check for book1.reservations.book
 # region reservations
 # reservation1 = Reservation(
-#     reservation_uid="1",
-#     book_uid="1",
-#     owner_uid="1",
-#     renter_uid="2",
+#     id="1",
+#     # book_uid="1",
+#     # owner_uid="1",
+#     # renter_uid="2",
 #     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-#     start_date="Fri, 03 Feb 2023 12:01:00 GMT",
-#     end_date="Sun, 05 Feb 2023 12:01:00 GMT",
+#     start_date="Fri, 03 May 2023 12:01:00 GMT",
+#     end_date="Sun, 05 May 2023 12:01:00 GMT",
 #     status="Scheduled",
 #     rental_period_duration=10,
 #     total="1000",
 # )
+# book1.reservations.append(reservation1)
+# # reservation1.book = book1
 #
 # reservation2 = Reservation(
-#     reservation_uid="2",
-#     book_uid="2",
-#     owner_uid="2",
-#     renter_uid="1",
+#     id="2",
+#     # book_uid="2",
+#     # owner_uid="2",
+#     # renter_uid="1",
 #     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
 #     start_date="Fri, 03 Feb 2023 12:01:00 GMT",
 #     end_date="Sun, 05 Feb 2023 12:01:00 GMT",
@@ -282,20 +315,22 @@ db.session.commit()
 #     rental_period_duration=10,
 #     total="800",
 # )
+# book2.reservations.append(reservation2)
+#
 #
 # reservation3 = Reservation(
-#
-#     reservation_uid="3",
-#     book_uid="3",
-#     owner_uid="3",
-#     renter_uid="1",
+#     id="3",
+#     # book_uid="3",
+#     # owner_uid="3",
+#     # renter_uid="1",
 #     reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-#     start_date="Fri, 03 Feb 2023 12:01:00 GMT",
-#     end_date="Sun, 05 Feb 2023 12:01:00 GMT",
+#     start_date="Fri, 03 May 2023 12:01:00 GMT",
+#     end_date="Sun, 05 May 2023 12:01:00 GMT",
 #     status="Scheduled",
 #     rental_period_duration=10,
 #     total="600",
 # )
+# book3.reservations.append(reservation3)
 #
 #
 # db.session.add_all([reservation1, reservation2, reservation3])

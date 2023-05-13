@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 
 from dotenv import load_dotenv
@@ -317,7 +318,8 @@ def update_address(address_id):
         if address.location is not None:
             try:
                 db.session.delete(address.location)
-                db.session.delete(address) # @Lucas: Should I be deleting the address here or should i just be changing it?
+                db.session.delete(
+                    address)  # @Lucas: Should I be deleting the address here or should i just be changing it?
                 db.session.commit()
             except Exception as error:
                 print("Error", error)
@@ -468,12 +470,16 @@ def delete_user(user_uid):
 
 @app.get('/api/users/<int:user_uid>/books')
 def list_books_of_user(user_uid):
-    """Show books of logged in user.
+    """Show books of specified user.
 
     Returns JSON like:
         {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    books = Book.query.filter(Book.owner_uid == user_uid)
+    # books = Book.query.filter(Book.owner_uid == user_uid)
+    # books = User.query.get_or_404(user_uid).books
+    user = User.query.get_or_404(user_uid)
+    # books = Book.query.filter(Book.owner == user).all()
+    books = user.books
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)
@@ -792,18 +798,6 @@ def add_book_image(book_uid):
 
 # region RESERVATIONS ENDPOINTS START
 
-@app.get("/api/reservations")
-def list_reservations():
-    """Return all reservations in system.
-
-    Returns JSON like:
-       {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
-    """
-    reservations = Reservation.query.all()
-
-    serialized = [reservation.serialize() for reservation in reservations]
-    return jsonify(reservations=serialized)
-
 
 @app.post("/api/reservations/<int:book_uid>")
 @jwt_required()
@@ -839,28 +833,64 @@ def create_reservation(book_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.get("/api/reservations/<int:book_uid>")
+@app.get("/api/reservations")
+def list_all_reservations():
+    """Return all reservations in system.
+
+    Returns JSON like:
+       {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+    """
+    reservations = Reservation.query.all()
+
+    serialized = [reservation.serialize() for reservation in reservations]
+    return jsonify(reservations=serialized)
+
+
+@app.get("/api/reservations/<int:book_uid>/upcoming")
 @jwt_required()
-def get_reservations_for_book(book_uid):
-    """ Gets all reservations assocaited with book_uid
+def get_all_upcoming_reservations_for_book(book_uid):
+    """ Gets all upcoming reservations associated with book_uid
 
     Returns JSON like:
         {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
 
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
 
     book = Book.query.get_or_404(book_uid)
-    if (book.owner_uid == current_user):
-        reservations = (Reservation.query
-                        .filter(book_uid=book_uid)
-                        .order_by(Reservation.start_date.desc()))
+    if book.owner == current_user_id:
+        reservations = book.reservations.filter(Reservation.start_date > datetime.now())
 
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
 
-        return (jsonify(reservations=serialized_reservations))
+        return jsonify(reservations=serialized_reservations)
+
+    # TODO: better error handling for more diverse errors
+    return jsonify({"error": "not authorized"}), 401
+
+
+@app.get("/api/reservations/<int:book_uid>/past")
+@jwt_required()
+def get_all_past_reservations_for_book(book_uid):
+    """ Gets all past reservations associated with book_uid
+
+    Returns JSON like:
+        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+
+    """
+
+    current_user_id = get_jwt_identity()
+
+    book = Book.query.get_or_404(book_uid)
+    if book.owner == current_user_id:
+        reservations = book.reservations.filter(Reservation.start_date < datetime.now())
+
+        serialized_reservations = ([reservation.serialize()
+                                    for reservation in reservations])
+
+        return jsonify(reservations=serialized_reservations)
 
     # TODO: better error handling for more diverse errors
     return jsonify({"error": "not authorized"}), 401
@@ -879,7 +909,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     current_user = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if (user.id == current_user):
+    if user.id == current_user:
         reservations = (Reservation.query
                         .filter(owner_uid=current_user)
                         .order_by(Reservation.start_date.desc()))
@@ -887,7 +917,7 @@ def get_booked_reservations_for_user_uid(user_uid):
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
 
-        return (jsonify(reservations=serialized_reservations))
+        return jsonify(reservations=serialized_reservations)
 
     # TODO: better error handling for more diverse errors
     return (jsonify({"error": "not authorized"}), 401)
@@ -895,7 +925,7 @@ def get_booked_reservations_for_user_uid(user_uid):
 
 @app.get("/api/reservations/<int:reservation_id>")
 @jwt_required()
-def get_booked_reservation(reservation_id):
+def get_reservation(reservation_id):
     """ Gets specific reservation """
 
     current_user = get_jwt_identity()
@@ -908,10 +938,10 @@ def get_booked_reservation(reservation_id):
             (book.owner_uid == current_user)):
         serialized_reservation = reservation.serialize()
 
-        return (jsonify(reservation=serialized_reservation), 200)
+        return jsonify(reservation=serialized_reservation), 200
 
     # TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 # // TODO: delete reservation

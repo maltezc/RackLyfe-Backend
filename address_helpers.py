@@ -102,7 +102,7 @@ def set_retrieve_location(address, full_address_str):
         db.session.add(location)
         db.session.commit()
 
-        address = Address.query.get_or_404(address.address_uid)
+        address = Address.query.get_or_404(address.id)
         address.location = location
         db.session.commit()
     except Exception as error:
