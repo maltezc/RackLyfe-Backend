@@ -3,6 +3,14 @@ from sqlalchemy import Enum
 from enum import Enum
 
 
+class UserStatusEnums(Enum):
+    """ Enum for user status """
+
+    ACTIVE = "Active"
+    INACTIVE = "Inactive"
+    DELETED = "Deleted"
+
+
 class PriceEnums(Enum):
     """ Enum for price """
 

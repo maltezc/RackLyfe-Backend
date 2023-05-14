@@ -5,7 +5,7 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geography, Geometry
-from enums import RentalDurationEnum, PriceEnums
+from enums import RentalDurationEnum, PriceEnums, ReservationStatusEnum, ConditionEnum, BookStatusEnum, UserStatusEnums
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 
@@ -28,8 +28,9 @@ class User(db.Model):
     )
 
     status = db.Column(
-        db.Text,
-        default="Active",
+        SQLAlchemyEnum(UserStatusEnums, name='user_status_enum'),
+        # db.Text,
+        # default="Active",
         nullable=False
     )
 
@@ -469,8 +470,9 @@ class Book(db.Model):
     # )
 
     condition = db.Column(
-        db.Text,
-        nullable=False
+        SQLAlchemyEnum(ConditionEnum, name='condition_enum'),
+        # db.Text,
+        # nullable=False
     )
 
     rate_price = db.Column(
@@ -485,8 +487,9 @@ class Book(db.Model):
     # db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
 
     status = db.Column(
-        db.Text,
-        default="Available",
+        SQLAlchemyEnum(BookStatusEnum, name='book_status_enum'),
+        # db.Text,
+        # default="Available",
         nullable=False
     )
 
@@ -618,8 +621,9 @@ class Reservation(db.Model):
     )
 
     status = db.Column(
-        db.Text,
-        default="Booked"
+        SQLAlchemyEnum(ReservationStatusEnum, name='reservation_status_enum'),
+        # db.Text,
+        # default="Booked"
     )
 
     rental_period_method = db.Column(

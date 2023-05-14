@@ -2,7 +2,7 @@
 from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
-from enums import ConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums
+from enums import ConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
 
 db.drop_all()
@@ -75,7 +75,7 @@ for state_data in states:
 user1 = User(
     email="test1@email.com",
     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-    status="active",
+    status=UserStatusEnums.ACTIVE,
     firstname="firstname1",
     lastname="lastname1",
 )
@@ -98,7 +98,6 @@ address1.location = location1
 city1 = City(
     city_name="Hercules",
 )
-# breakpoint()
 db.session.add(city1)
 
 address1.city = city1
@@ -110,12 +109,11 @@ zipcode1 = ZipCode(code=94547)
 db.session.add(zipcode1)
 address1.zipcode = zipcode1
 
-# breakpoint()
 
 user2 = User(
     email="test2@email.com",
     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-    status="active",
+    status=UserStatusEnums.ACTIVE,
     firstname="firstname2",
     lastname="lastname2",
 )
@@ -135,12 +133,11 @@ address2.zipcode = zipcode1
 location2 = Location(point='POINT(-122.25801 37.999126)')
 db.session.add(location2)
 address2.location = location2
-# breakpoint()
 
 user3 = User(
     email="test3@email.com",
     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-    status="active",
+    status=UserStatusEnums.ACTIVE,
     firstname="firstname3",
     lastname="lastname3",
 )
@@ -174,13 +171,12 @@ address3.zipcode = zipcode2
 user4 = User(
     email="admin1@gmail.com",
     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
-    status="active",
+    status=UserStatusEnums.ACTIVE,
     firstname="admin1",
     lastname="admin_lastname4",
     is_admin=True,
 )
 db.session.add(user4)
-# breakpoint()
 db.session.commit()
 
 # endregion
@@ -198,10 +194,10 @@ book1 = Book(
     author="Patrick Rothfuss",
     isbn=9780756405892,
     genre="",
-    condition=ConditionEnum.FAIR.value,
+    condition=ConditionEnum.FAIR,
     rate_price=PriceEnums.FOUR,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE.value,
+    status=BookStatusEnum.AVAILABLE,
 )
 user1.books.append(book1)
 
@@ -217,10 +213,10 @@ book2 = Book(
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
-    condition=ConditionEnum.LIKE_NEW.value,
+    condition=ConditionEnum.LIKE_NEW,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.UNAVAILABLE.value,
+    status=BookStatusEnum.UNAVAILABLE,
 )
 user1.books.append(book2)
 
@@ -244,10 +240,10 @@ book3 = Book(
     author="Isaac Asimov",
     isbn=9780553900347,
     genre="",
-    condition=ConditionEnum.USED.value,
+    condition=ConditionEnum.USED,
     rate_price=PriceEnums.THREE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE.value
+    status=BookStatusEnum.AVAILABLE
 )
 # book2.owner = user2
 user2.books.append(book3)
@@ -268,10 +264,10 @@ book4 = Book(
     author="Alfred Lansing",
     isbn=9780753809877,
     genre="",
-    condition=ConditionEnum.FAIR.value,
+    condition=ConditionEnum.FAIR,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE.value
+    status=BookStatusEnum.AVAILABLE
 )
 book4.owner = user3
 # user3.books.append(book3)
@@ -298,7 +294,7 @@ reservation1 = Reservation(
     start_date=start_date1,
     rental_period_duration=timedelta1,
     end_date=start_date1 + timedelta1,
-    status=ReservationStatusEnum.ACCEPTED.value,
+    status=ReservationStatusEnum.ACCEPTED,
     total=total1,
 )
 reservation1.renter = user2
@@ -313,7 +309,7 @@ reservation2 = Reservation(
     start_date=start_date2,
     rental_period_duration=timedelta2,
     end_date=start_date2 + timedelta2,
-    status=ReservationStatusEnum.ACCEPTED.value,
+    status=ReservationStatusEnum.ACCEPTED,
     total=total2
 )
 reservation2.renter = user1
@@ -329,7 +325,7 @@ reservation3 = Reservation(
     start_date=start_date3,
     rental_period_duration=timedelta3,
     end_date=start_date3 + timedelta3,
-    status=ReservationStatusEnum.ACCEPTED.value,
+    status=ReservationStatusEnum.ACCEPTED,
     total=total3,
 )
 # reservation3.book = book4
