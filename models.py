@@ -5,6 +5,9 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geography, Geometry
+from enums import RentalDurationEnum, PriceEnums
+from sqlalchemy import Enum as SQLAlchemyEnum
+
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -406,6 +409,8 @@ class ZipCode(db.Model):
 # endregion
 
 
+
+
 # region Books
 class Book(db.Model):
     """ Book in the system """
@@ -469,14 +474,15 @@ class Book(db.Model):
     )
 
     rate_price = db.Column(
-        db.Integer,
+        SQLAlchemyEnum(PriceEnums, name='rental_price_enum'),
         nullable=False  # select from $1-$10 / week
     )
 
     rate_schedule = db.Column(
-        db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
-        default="Daily"
+        SQLAlchemyEnum(RentalDurationEnum, name='rental_duration_enum'),
     )
+    # default=RentalDurationEnum.WEEKLY,
+    # db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
 
     status = db.Column(
         db.Text,
@@ -622,7 +628,7 @@ class Reservation(db.Model):
     )
 
     rental_period_duration = db.Column(
-        db.Integer,
+        db.Interval,
         nullable=False
     )
 

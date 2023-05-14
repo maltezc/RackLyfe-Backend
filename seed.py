@@ -2,7 +2,8 @@
 from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
-from enums import ConditionEnum, StatesEnum
+from enums import ConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums
+from datetime import datetime, timedelta
 
 db.drop_all()
 db.create_all()
@@ -179,7 +180,7 @@ user4 = User(
     is_admin=True,
 )
 db.session.add(user4)
-breakpoint()
+# breakpoint()
 db.session.commit()
 
 # endregion
@@ -198,9 +199,9 @@ book1 = Book(
     isbn=9780756405892,
     genre="",
     condition=ConditionEnum.FAIR.value,
-    rate_price="400",
-    rate_schedule="Weekly",
-    status="Available"
+    rate_price=PriceEnums.FOUR,
+    rate_schedule=RentalDurationEnum.WEEKLY,
+    status=BookStatusEnum.AVAILABLE.value,
 )
 user1.books.append(book1)
 
@@ -210,34 +211,33 @@ bookImage1 = BookImage(
 )
 book1.images.append(bookImage1)
 
-book4 = Book(
+book2 = Book(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
     condition=ConditionEnum.LIKE_NEW.value,
-    rate_price="100",
-    # rate_schedule="Weekly",
-    status="Checked Out"
+    rate_price=PriceEnums.ONE,
+    rate_schedule=RentalDurationEnum.WEEKLY,
+    status=BookStatusEnum.UNAVAILABLE.value,
 )
-user1.books.append(book4)
+user1.books.append(book2)
 
-bookImage4 = BookImage(
+bookImage2 = BookImage(
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
               "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
 )
-book4.images.append(bookImage4)
+book2.images.append(bookImage2)
 
-bookImage5 = BookImage(
+bookImage2a = BookImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
 )
-book4.images.append(bookImage5)
+book2.images.append(bookImage2a)
 
-db.session.add_all([book1, bookImage1, book4, bookImage4, bookImage5])
+db.session.add_all([book1, bookImage1, book2, bookImage2, bookImage2a])
 
-book2 = Book(
-    # owner_uid=2,
+book3 = Book(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
                       "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
@@ -245,23 +245,23 @@ book2 = Book(
     isbn=9780553900347,
     genre="",
     condition=ConditionEnum.USED.value,
-    rate_price="300",
-    rate_schedule="Weekly",
-    status="Available"
+    rate_price=PriceEnums.THREE,
+    rate_schedule=RentalDurationEnum.WEEKLY,
+    status=BookStatusEnum.AVAILABLE.value
 )
 # book2.owner = user2
-user2.books.append(book2)
+user2.books.append(book3)
 
-bookImage2 = BookImage(
+bookImage3 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
 # bookImage2.book = book2
-book2.images.append(bookImage2)
+book3.images.append(bookImage3)
 
-db.session.add_all([book2, bookImage2])
+db.session.add_all([book3, bookImage3])
 
-book3 = Book(
+book4 = Book(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
                       "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Endurance Shackleton's Incredible Voyage",
@@ -269,67 +269,71 @@ book3 = Book(
     isbn=9780753809877,
     genre="",
     condition=ConditionEnum.FAIR.value,
-    rate_price="200",
-    rate_schedule="Weekly",
-    status="Available"
+    rate_price=PriceEnums.ONE,
+    rate_schedule=RentalDurationEnum.WEEKLY,
+    status=BookStatusEnum.AVAILABLE.value
 )
-book3.owner = user3
+book4.owner = user3
 # user3.books.append(book3)
 
-bookImage3 = BookImage(
+bookImage4 = BookImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
-book3.images.append(bookImage3)
+book4.images.append(bookImage4)
 
-db.session.add_all([book3, bookImage3])
+db.session.add_all([book4, bookImage4])
 
 # endregion
 
 # TODO: set this up. check for book1.reservations.book
 # region reservations
 
+start_date1 = datetime(2023, 5, 20, 12, 1)
+timedelta1 = timedelta(weeks=5)
+total1 = book1.rate_price.value * (timedelta1.days/7)
 reservation1 = Reservation(
-    id="1",
-    # book_uid="1",
-    # owner_uid="1",
-    # renter_uid="2",
-    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-    start_date="Fri, 03 May 2023 12:01:00 GMT",
-    end_date="Sun, 05 May 2023 12:01:00 GMT",
-    status="Scheduled",
-    rental_period_duration=10,
-    total="1000",
+    # id="1",
+    reservation_date_created=datetime.utcnow(),
+    start_date=start_date1,
+    rental_period_duration=timedelta1,
+    end_date=start_date1 + timedelta1,
+    status=ReservationStatusEnum.ACCEPTED.value,
+    total=total1,
 )
-book1.reservations.append(reservation1)
-# reservation1.book = book1
+reservation1.renter = user2
+reservation1.book = book1
 
+start_date2 = datetime(2023, 5, 25, 12, 1)
+timedelta2 = timedelta(weeks=2)
+total2 = book2.rate_price.value * (timedelta2.days/7)
 reservation2 = Reservation(
-    id="2",
-    # book_uid="2",
-    # owner_uid="2",
-    # renter_uid="1",
-    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-    start_date="Fri, 03 Feb 2023 12:01:00 GMT",
-    end_date="Sun, 05 Feb 2023 12:01:00 GMT",
-    status="Scheduled",
-    rental_period_duration=10,
-    total="800",
+    # id="2",
+    reservation_date_created=datetime.utcnow(),
+    start_date=start_date2,
+    rental_period_duration=timedelta2,
+    end_date=start_date2 + timedelta2,
+    status=ReservationStatusEnum.ACCEPTED.value,
+    total=total2
 )
+reservation2.renter = user1
+# reservation2.book = book3
 book2.reservations.append(reservation2)
 
+
+start_date3 = datetime(2023, 5, 15, 12, 1)
+timedelta3 = timedelta(weeks=3)
+total3 = book3.rate_price.value * (timedelta3.days/7)
 reservation3 = Reservation(
-    id="3",
-    # book_uid="3",
-    # owner_uid="3",
-    # renter_uid="1",
-    reservation_date_created="Wed, 01 Feb 2023 12:01:00 GMT",
-    start_date="Fri, 03 May 2023 12:01:00 GMT",
-    end_date="Sun, 05 May 2023 12:01:00 GMT",
-    status="Scheduled",
-    rental_period_duration=10,
-    total="600",
+    reservation_date_created=datetime.utcnow(),
+    start_date=start_date3,
+    rental_period_duration=timedelta3,
+    end_date=start_date3 + timedelta3,
+    status=ReservationStatusEnum.ACCEPTED.value,
+    total=total3,
 )
+# reservation3.book = book4
+reservation3.renter = user1
 book3.reservations.append(reservation3)
 
 db.session.add_all([reservation1, reservation2, reservation3])
