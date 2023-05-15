@@ -803,7 +803,7 @@ def add_book_image(book_uid):
 @app.post("/api/reservations/<int:book_uid>")
 @jwt_required()
 def create_reservation(book_uid):
-    """ Creates a reservation for the pool you looking at if you are logged in
+    """ Creates a reservation for the pool you're looking at if you are logged in
 
     Returns JSON like:
         {reservation: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}
@@ -823,38 +823,7 @@ def create_reservation(book_uid):
         duration = int(duration_in)
         book_rate_schedule = book.rate_schedule
 
-        timedelta_duration = None
-        if book_rate_schedule == RentalDurationEnum.DAILY:
-            timedelta_duration = timedelta(days=duration)
-
-        elif book_rate_schedule == RentalDurationEnum.WEEKLY:
-            timedelta_duration = timedelta(weeks=duration)
-            duration = int(timedelta_duration.days / 7)
-        # TODO: HANDLE MONTHLY RENTAL DURATION
-        total = duration * book.rate_price.value
-
-        try:
-            reservation = Reservation(
-                # book_uid=book_uid,
-                reservation_date_created=datetime.utcnow(),
-                start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
-                duration=timedelta_duration,
-                # duration=duration,
-                end_date=start_date + timedelta_duration,
-                status=ReservationStatusEnum.PENDING,
-                total=total
-            )
-            reservation.book = book
-            reservation.renter = user
-
-            # breakpoint()
-            db.session.add(reservation)
-            db.session.commit()
-
-        except Exception as e:
-            print(e)
-            db.session.rollback()
-            return jsonify({"error": "unable to create reservation"}), 400
+        reservation = create_reservation(start_date, duration, book_rate_schedule, book, user)
 
         return jsonify(reservation=reservation.serialize()), 201
 
