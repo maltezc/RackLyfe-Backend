@@ -2,7 +2,7 @@
 from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
-from enums import ConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
+from enums import BookConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
 
 db.drop_all()
@@ -194,7 +194,7 @@ book1 = Book(
     author="Patrick Rothfuss",
     isbn=9780756405892,
     genre="",
-    condition=ConditionEnum.FAIR,
+    condition=BookConditionEnum.FAIR,
     rate_price=PriceEnums.FOUR,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=BookStatusEnum.AVAILABLE,
@@ -213,7 +213,7 @@ book2 = Book(
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
-    condition=ConditionEnum.LIKE_NEW,
+    condition=BookConditionEnum.LIKE_NEW,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=BookStatusEnum.UNAVAILABLE,
@@ -240,7 +240,7 @@ book3 = Book(
     author="Isaac Asimov",
     isbn=9780553900347,
     genre="",
-    condition=ConditionEnum.USED,
+    condition=BookConditionEnum.USED,
     rate_price=PriceEnums.THREE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=BookStatusEnum.AVAILABLE
@@ -264,7 +264,7 @@ book4 = Book(
     author="Alfred Lansing",
     isbn=9780753809877,
     genre="",
-    condition=ConditionEnum.FAIR,
+    condition=BookConditionEnum.FAIR,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=BookStatusEnum.AVAILABLE
@@ -292,7 +292,7 @@ reservation1 = Reservation(
     # id="1",
     reservation_date_created=datetime.utcnow(),
     start_date=start_date1,
-    rental_period_duration=timedelta1,
+    duration=timedelta1,
     end_date=start_date1 + timedelta1,
     status=ReservationStatusEnum.ACCEPTED,
     total=total1,
@@ -307,7 +307,7 @@ reservation2 = Reservation(
     # id="2",
     reservation_date_created=datetime.utcnow(),
     start_date=start_date2,
-    rental_period_duration=timedelta2,
+    duration=timedelta2,
     end_date=start_date2 + timedelta2,
     status=ReservationStatusEnum.ACCEPTED,
     total=total2
@@ -323,7 +323,7 @@ total3 = book3.rate_price.value * (timedelta3.days/7)
 reservation3 = Reservation(
     reservation_date_created=datetime.utcnow(),
     start_date=start_date3,
-    rental_period_duration=timedelta3,
+    duration=timedelta3,
     end_date=start_date3 + timedelta3,
     status=ReservationStatusEnum.ACCEPTED,
     total=total3,

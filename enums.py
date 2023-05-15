@@ -10,6 +10,8 @@ class UserStatusEnums(Enum):
     INACTIVE = "Inactive"
     DELETED = "Deleted"
 
+    # Custom JSON serializer for UserStatusEnums
+
 
 class PriceEnums(Enum):
     """ Enum for price """
@@ -52,7 +54,7 @@ class RentalDurationEnum(Enum):
     MONTHLY = 'Month'
 
 
-class ConditionEnum(Enum):
+class BookConditionEnum(Enum):
     """ Enum for book conditions """
 
     LIKE_NEW = "Like New"
@@ -120,3 +122,12 @@ class StatesEnum(Enum):
     KANSAS = "KS"
     NORTHERN_MARIANA_ISLANDS = "MP"
     WYOMING = "WY"
+
+
+def enum_serializer(obj):
+    """
+    Custom JSON serializer for UserStatusEnums"""
+    if isinstance(obj, Enum):
+        return obj.value
+
+    raise TypeError(f'Object of type {type(obj)} is not JSON serializable')

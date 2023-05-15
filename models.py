@@ -5,9 +5,9 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geography, Geometry
-from enums import RentalDurationEnum, PriceEnums, ReservationStatusEnum, ConditionEnum, BookStatusEnum, UserStatusEnums
+from enums import RentalDurationEnum, PriceEnums, ReservationStatusEnum, BookConditionEnum, BookStatusEnum, \
+    UserStatusEnums, enum_serializer
 from sqlalchemy import Enum as SQLAlchemyEnum
-
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -69,6 +69,7 @@ class User(db.Model):
     preferred_trade_location = db.Column(
         db.Text
     )
+    # TODO: add preferred drop off method. (meetup, mailbox, porch, etc.)
 
     user_rating = db.Column(
         db.Integer,
@@ -84,11 +85,12 @@ class User(db.Model):
 
     def serialize(self):
         """ returns self """
+
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
         return {
             "id": self.id,
-            "status": self.status,
+            "status": enum_serializer(self.status),
             "email": self.email,
             "firstname": self.firstname,
             "lastname": self.lastname,
@@ -115,7 +117,7 @@ class User(db.Model):
         }
 
     @classmethod
-    def signup(cls, email, password, firstname, lastname, is_admin=False):
+    def signup(cls, email, password, firstname, lastname, status, is_admin=False):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -127,7 +129,8 @@ class User(db.Model):
             email=email,
             password=hashed_pwd,
             firstname=firstname,
-            lastname=lastname
+            lastname=lastname,
+            status=status,
         )
 
         db.session.add(user)
@@ -410,8 +413,6 @@ class ZipCode(db.Model):
 # endregion
 
 
-
-
 # region Books
 class Book(db.Model):
     """ Book in the system """
@@ -470,7 +471,7 @@ class Book(db.Model):
     # )
 
     condition = db.Column(
-        SQLAlchemyEnum(ConditionEnum, name='condition_enum'),
+        SQLAlchemyEnum(BookConditionEnum, name='condition_enum'),
         # db.Text,
         # nullable=False
     )
@@ -578,25 +579,6 @@ class Reservation(db.Model):
     )
     book = db.relationship('Book', back_populates='reservations', uselist=False)
 
-    # owner_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.user_uid", ondelete="CASCADE"),
-    # )
-    # owner = db.relationship("User", back_populates="reservations")
-
-    # renter_uid = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("users.id", ondelete="CASCADE"),
-    # )
-
-    # lender = db.relationship('User', back_populates='lending_reservations', uselist=False)
-    # lender = book.owner
-
-    # reservation_id = db.Column(
-    #     db.Integer,
-    #     db.ForeignKey("reservations.id"),
-    #     # db.ForeignKey("users.id", ondelete="CASCADE"), TODO: figure out when to apply on delete=CASCADE
-    # )
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
@@ -622,16 +604,14 @@ class Reservation(db.Model):
 
     status = db.Column(
         SQLAlchemyEnum(ReservationStatusEnum, name='reservation_status_enum'),
-        # db.Text,
-        # default="Booked"
     )
 
-    rental_period_method = db.Column(
-        db.Text,
-        default="Days"
-    )
+    # rental_period_method = db.Column(
+    #     db.Text,
+    #     default="Days"
+    # )
 
-    rental_period_duration = db.Column(
+    duration = db.Column(
         db.Interval,
         nullable=False
     )
@@ -645,22 +625,19 @@ class Reservation(db.Model):
         """ returns self """
         return {
             "id": self.id,
-            # "book_uid": self.book_uid,
-            # "owner_uid": self.owner_uid,
-            # "renter_uid": self.renter_uid,
             "reservation_date_created": self.reservation_date_created,
             "start_date": self.start_date,
             "end_date": self.end_date,
-            "status": self.status,
-            "rental_period_method": self.rental_period_method,
-            "rental_period_duration": self.rental_period_duration,
+            "status": enum_serializer(self.status),
+            # "rental_period_method": self.rental_period_method,
+            "duration": str(self.duration),
             "total": self.total
         }
 
     def __repr__(self):
         return f"< Reservation # {self.id}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
-               f"EndDate: {self.end_date}, Status: {self.status}, RentalPeriodMethod: {self.rental_period_method}, " \
-               f"Rental Period Duration: {self.rental_period_duration}, Rental Period Total: {self.total}>"
+               f"EndDate: {self.end_date}, Status: {self.status}, Duration: {self.duration}, " \
+               f"Total: {self.total}>"
 
 
 # endregion
@@ -737,3 +714,13 @@ def connect_db(app):
     app.app_context().push()
     db.app = app
     db.init_app(app)
+
+
+# def enum_serializer(obj):
+#     """
+#     Custom JSON serializer for UserStatusEnums"""
+#
+#     if isinstance(obj, SQLAlchemyEnum):
+#         return obj.value
+#
+#     raise TypeError(f'Object of type {type(obj)} is not JSON serializable')

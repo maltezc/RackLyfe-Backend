@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 from dotenv import load_dotenv
@@ -17,6 +17,8 @@ from models import db, connect_db, User, Address, City, Message, Book, Reservati
     UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
+from enums import UserStatusEnums, PriceEnums, ReservationStatusEnum, BookStatusEnum, RentalDurationEnum, \
+    BookConditionEnum
 
 load_dotenv()
 
@@ -102,6 +104,7 @@ def create_user():
 
         user = User.signup(
             email=request.form.get('email'),
+            status=UserStatusEnums.ACTIVE,
             password=request.form.get('password'),
             firstname=request.form.get('firstname'),
             lastname=request.form.get('lastname'),
@@ -807,24 +810,51 @@ def create_reservation(book_uid):
     """
 
     current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
 
-    if current_user:
+    if user:
         data = request.json
 
-        reservation = Reservation(
-            renter_uid=current_user,
-            book_uid=book_uid,
-            reservation_date_created=data['reservation_date_created'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            reservation_uid=data['reservation_uid'],
-            status=data['status'],
-            rental_period=data['rental_period'],
-            total=data['total']
-        )
+        start_date_in = data['start_date']
+        duration_in = data['duration']
 
-        db.session.add(reservation)
-        db.session.commit()
+        book = Book.query.get_or_404(book_uid)
+        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        duration = int(duration_in)
+        book_rate_schedule = book.rate_schedule
+
+        timedelta_duration = None
+        if book_rate_schedule == RentalDurationEnum.DAILY:
+            timedelta_duration = timedelta(days=duration)
+
+        elif book_rate_schedule == RentalDurationEnum.WEEKLY:
+            timedelta_duration = timedelta(weeks=duration)
+            duration = int(timedelta_duration.days / 7)
+        # TODO: HANDLE MONTHLY RENTAL DURATION
+        total = duration * book.rate_price.value
+
+        try:
+            reservation = Reservation(
+                # book_uid=book_uid,
+                reservation_date_created=datetime.utcnow(),
+                start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
+                duration=timedelta_duration,
+                # duration=duration,
+                end_date=start_date + timedelta_duration,
+                status=ReservationStatusEnum.PENDING,
+                total=total
+            )
+            reservation.book = book
+            reservation.renter = user
+
+            # breakpoint()
+            db.session.add(reservation)
+            db.session.commit()
+
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return jsonify({"error": "unable to create reservation"}), 400
 
         return jsonify(reservation=reservation.serialize()), 201
 
