@@ -6,7 +6,7 @@ from enums import RentalDurationEnum, ReservationStatusEnum
 from models import db, Reservation
 
 
-def create_reservation(start_date, duration, book_rate_schedule, book, user):
+def create_new_reservation(start_date, duration, book_rate_schedule, book, user):
     """ Function for creating a reservation"""
 
     total, timedelta_duration, duration = get_time_duration_and_total(book_rate_schedule, duration, book)
@@ -32,6 +32,12 @@ def create_reservation(start_date, duration, book_rate_schedule, book, user):
         print(e)
         db.session.rollback()
         return jsonify({"error": "unable to create reservation"}), 400
+
+
+def update_reservation(reservation, start_date, duration):
+    """ Function for updating a reservation"""
+
+    reservation.start_date = 
 
 
 def get_time_duration_and_total(book_rate_schedule, duration, book):

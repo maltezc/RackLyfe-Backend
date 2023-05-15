@@ -12,6 +12,7 @@ from flask_jwt_extended import jwt_required
 from address_helpers import set_retrieve_address
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
     aws_delete_image
+from reservation_helpers import create_new_reservation
 from decorators import admin_required
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
@@ -823,7 +824,7 @@ def create_reservation(book_uid):
         duration = int(duration_in)
         book_rate_schedule = book.rate_schedule
 
-        reservation = create_reservation(start_date, duration, book_rate_schedule, book, user)
+        reservation = create_new_reservation(start_date, duration, book_rate_schedule, book, user)
 
         return jsonify(reservation=reservation.serialize()), 201
 
@@ -927,7 +928,7 @@ def get_reservation(reservation_id):
 
     current_user = get_jwt_identity()
 
-    reservation = Reservation.get_or_404(reservation_id)
+    reservation = Reservation.query.get_or_404(reservation_id)
     book_uid = reservation.id
     book = Book.get_or_404(book_uid)
 
@@ -947,14 +948,29 @@ def update_reservation(reservation_id):
     """ Updates specific reservation """
 
     current_user = get_jwt_identity()
+    # user = User.query.get_or_404(current_user)
+    reservation = Reservation.query.get_or_404(reservation_id)
+    book = reservation.book
 
-    reservation = Reservation.get_or_404(reservation_id)
-    book_uid = reservation.id
-    book = Book.get_or_404(book_uid)
-
-    if ((reservation.renter_uid == current_user) or
+    if ((reservation.user_id == current_user) or
             (book.owner_uid == current_user)):
+
         data = request.json
+        start_date_in = data['start_date']
+        duration_in = data['duration']
+
+        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        duration = int(duration_in)
+        book_rate_schedule = book.rate_schedule
+
+        reservation = update_reservation(reservation, start_date, duration, book_rate_schedule, book, user)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
+
+
+
 
 #       TODO: FINISH THIS. WILL PROBABLY NEED TO DECOMPOSE CREATE_RESERVATION BECAUSE IT HAS SIMILAR METHODS
 
