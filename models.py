@@ -579,7 +579,7 @@ class Reservation(db.Model):
     )
     book = db.relationship('Book', back_populates='reservations', uselist=False)
 
-    user_id = db.Column(
+    renter_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
         # db.ForeignKey("users.id", ondelete="CASCADE"), TODO: figure out when to apply on delete=CASCADE
@@ -621,6 +621,10 @@ class Reservation(db.Model):
         nullable=False
     )
 
+    cancellation_reason = db.Column(
+        db.String(500),
+    )
+
     def serialize(self):
         """ returns self """
         return {
@@ -629,15 +633,15 @@ class Reservation(db.Model):
             "start_date": self.start_date,
             "end_date": self.end_date,
             "status": enum_serializer(self.status),
-            # "rental_period_method": self.rental_period_method,
             "duration": str(self.duration),
-            "total": self.total
+            "total": self.total,
+            "cancellation_reason": self.cancellation_reason
         }
 
     def __repr__(self):
         return f"< Reservation # {self.id}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
                f"EndDate: {self.end_date}, Status: {self.status}, Duration: {self.duration}, " \
-               f"Total: {self.total}>"
+               f"Total: {self.total}>, CancellationReason: {self.cancellation_reason} >"
 
 
 # endregion
