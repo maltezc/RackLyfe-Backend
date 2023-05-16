@@ -1,5 +1,5 @@
-from models import User
-from flask import abort
+from models import User, Reservation
+from flask import abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from functools import wraps
 
@@ -7,6 +7,7 @@ from functools import wraps
 def admin_required(f):
     """
     Decorator to ensure user is admin"""
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         """
@@ -23,3 +24,64 @@ def admin_required(f):
     return decorated_function
 
 
+def is_book_owner_or_is_reservation_booker(func):
+    """
+    Decorator to ensure user is book owner or reservation booker"""
+
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        """
+        Wrapper function to ensure user is authorized to perform action on book"""
+        reservation_id = kwargs.get('reservation_id')
+        reservation = Reservation.query.get_or_404(reservation_id)
+
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        if reservation.renter_id == user.id or reservation.book.owner_id == user.id:
+            return func(*args, **kwargs)
+
+        return jsonify({"error": "Not authorized"}), 401
+
+    return decorated_function
+
+
+def is_reservation_booker(func):
+    """
+    Decorator to ensure user is authorized to perform action on book"""
+
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        """
+        Wrapper function to ensure user is authorized to perform action on book"""
+        reservation_id = kwargs.get('reservation_id')
+        reservation = Reservation.query.get_or_404(reservation_id)
+
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        if reservation.renter_id == user.id:
+            return func(*args, **kwargs)
+
+        return jsonify({"error": "Not authorized"}), 401
+
+    return decorated_function
+
+
+def is_reservation_listing_owner(func):
+    """
+    Decorator to ensure user is authorized to perform action on book"""
+
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        """
+        Wrapper function to ensure user is authorized to perform action on book"""
+        reservation_id = kwargs.get('reservation_id')
+        reservation = Reservation.query.get_or_404(reservation_id)
+
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        if reservation.book.owner.id == user.id:
+            return func(*args, **kwargs)
+
+        return jsonify({"error": "Not authorized"}), 401
+
+    return decorated_function

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 
 from dotenv import load_dotenv
@@ -11,11 +12,16 @@ from flask_jwt_extended import jwt_required
 from address_helpers import set_retrieve_address
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
     aws_delete_image
-from decorators import admin_required
+from reservation_helpers import create_new_reservation, attempt_reservation_update, reservation_is_in_future, \
+    attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
+from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
+    is_book_owner_or_is_reservation_booker
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
+from enums import UserStatusEnums, PriceEnums, ReservationStatusEnum, BookStatusEnum, RentalDurationEnum, \
+    BookConditionEnum
 
 load_dotenv()
 
@@ -101,6 +107,7 @@ def create_user():
 
         user = User.signup(
             email=request.form.get('email'),
+            status=UserStatusEnums.ACTIVE,
             password=request.form.get('password'),
             firstname=request.form.get('firstname'),
             lastname=request.form.get('lastname'),
@@ -317,7 +324,8 @@ def update_address(address_id):
         if address.location is not None:
             try:
                 db.session.delete(address.location)
-                db.session.delete(address) # @Lucas: Should I be deleting the address here or should i just be changing it?
+                db.session.delete(
+                    address)  # @Lucas: Should I be deleting the address here or should i just be changing it?
                 db.session.commit()
             except Exception as error:
                 print("Error", error)
@@ -466,19 +474,6 @@ def delete_user(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.get('/api/users/<int:user_uid>/books')
-def list_books_of_user(user_uid):
-    """Show books of logged in user.
-
-    Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
-    """
-    books = Book.query.filter(Book.owner_uid == user_uid)
-    serialized = [book.serialize() for book in books]
-
-    return jsonify(books=serialized)
-
-
 # endregion
 
 # region Search Endpoints
@@ -560,7 +555,7 @@ def list_nearby():
 # region BOOKS ENDPOINTS START
 
 @app.get("/api/books")
-def list_books():
+def list_all_books():
     """Return all books in system.
 
     Returns JSON like:
@@ -570,6 +565,21 @@ def list_books():
 
     serialized = [book.serialize() for book in books]
     return jsonify(pools=serialized)
+
+
+@app.get('/api/users/<int:user_uid>/books')
+def list_books_of_user(user_uid):
+    """Show books of specified user.
+
+    Returns JSON like:
+        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    user = User.query.get_or_404(user_uid)
+    books = user.books
+    serialized = [book.serialize() for book in books]
+
+    return jsonify(books=serialized)
 
 
 @app.get('/api/books/<int:book_uid>')
@@ -792,8 +802,39 @@ def add_book_image(book_uid):
 
 # region RESERVATIONS ENDPOINTS START
 
+
+@app.post("/api/reservations/<int:book_uid>")
+@jwt_required()
+def create_reservation(book_uid):
+    """ Creates a reservation for the pool you're looking at if you are logged in
+
+    Returns JSON like:
+        {reservation: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}
+    """
+
+    current_user = get_jwt_identity()
+    user = User.query.get_or_404(current_user)
+
+    if user:
+        data = request.json
+
+        start_date_in = data['start_date']
+        duration_in = data['duration']
+
+        book = Book.query.get_or_404(book_uid)
+        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        duration = int(duration_in)
+        book_rate_schedule = book.rate_schedule
+
+        reservation = create_new_reservation(start_date, duration, book_rate_schedule, book, user)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
+
+
 @app.get("/api/reservations")
-def list_reservations():
+def list_all_reservations():
     """Return all reservations in system.
 
     Returns JSON like:
@@ -805,68 +846,57 @@ def list_reservations():
     return jsonify(reservations=serialized)
 
 
-@app.post("/api/reservations/<int:book_uid>")
+@app.get("/api/reservations/<int:book_uid>/upcoming")
 @jwt_required()
-def create_reservation(book_uid):
-    """ Creates a reservation for the pool you looking at if you are logged in
-
-    Returns JSON like:
-        {reservation: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}
-    """
-
-    current_user = get_jwt_identity()
-
-    if current_user:
-        data = request.json
-
-        reservation = Reservation(
-            renter_uid=current_user,
-            book_uid=book_uid,
-            reservation_date_created=data['reservation_date_created'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            reservation_uid=data['reservation_uid'],
-            status=data['status'],
-            rental_period=data['rental_period'],
-            total=data['total']
-        )
-
-        db.session.add(reservation)
-        db.session.commit()
-
-        return jsonify(reservation=reservation.serialize()), 201
-
-    return jsonify({"error": "not authorized"}), 401
-
-
-@app.get("/api/reservations/<int:book_uid>")
-@jwt_required()
-def get_reservations_for_book(book_uid):
-    """ Gets all reservations assocaited with book_uid
+def get_all_upcoming_reservations_for_book(book_uid):
+    """ Gets all upcoming reservations associated with book_uid
 
     Returns JSON like:
         {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
 
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
 
     book = Book.query.get_or_404(book_uid)
-    if (book.owner_uid == current_user):
-        reservations = (Reservation.query
-                        .filter(book_uid=book_uid)
-                        .order_by(Reservation.start_date.desc()))
+    if book.owner == current_user_id:
+        reservations = book.reservations.filter(Reservation.start_date > datetime.now())
 
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
 
-        return (jsonify(reservations=serialized_reservations))
+        return jsonify(reservations=serialized_reservations)
 
     # TODO: better error handling for more diverse errors
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.get("/api/reservations/<int:user_uid>")
+@app.get("/api/reservations/<int:book_uid>/past")
+@jwt_required()
+def get_all_past_reservations_for_book(book_uid):
+    """ Gets all past reservations associated with book_uid
+
+    Returns JSON like:
+        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
+
+    """
+
+    current_user_id = get_jwt_identity()
+
+    book = Book.query.get_or_404(book_uid)
+    if book.owner == current_user_id:
+        reservations = book.reservations.filter(Reservation.start_date < datetime.now())
+
+        serialized_reservations = ([reservation.serialize()
+                                    for reservation in reservations])
+
+        return jsonify(reservations=serialized_reservations)
+
+    # TODO: better error handling for more diverse errors
+    return jsonify({"error": "not authorized"}), 401
+
+
+@app.get("/api/reservations/user/<int:user_uid>")
 @jwt_required()
 def get_booked_reservations_for_user_uid(user_uid):
     """ Gets all reservations created by a user_uid
@@ -879,7 +909,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     current_user = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if (user.id == current_user):
+    if user.id == current_user:
         reservations = (Reservation.query
                         .filter(owner_uid=current_user)
                         .order_by(Reservation.start_date.desc()))
@@ -887,56 +917,111 @@ def get_booked_reservations_for_user_uid(user_uid):
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
 
-        return (jsonify(reservations=serialized_reservations))
+        return jsonify(reservations=serialized_reservations)
 
     # TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
 @app.get("/api/reservations/<int:reservation_id>")
 @jwt_required()
-def get_booked_reservation(reservation_id):
+@is_book_owner_or_is_reservation_booker
+def get_reservation(reservation_id):
     """ Gets specific reservation """
 
-    current_user = get_jwt_identity()
-
-    reservation = Reservation.get_or_404(reservation_id)
-    book_uid = reservation.id
-    book = Book.get_or_404(book_uid)
-
-    if ((reservation.renter_uid == current_user) or
-            (book.owner_uid == current_user)):
+    reservation = Reservation.query.get_or_404(reservation_id)
+    if reservation:
         serialized_reservation = reservation.serialize()
 
-        return (jsonify(reservation=serialized_reservation), 200)
+        return jsonify(reservation=serialized_reservation), 200
 
     # TODO: better error handling for more diverse errors
-    return (jsonify({"error": "not authorized"}), 401)
+    return jsonify({"error": "not authorized"}), 401
 
 
-# // TODO: delete reservation
-# @app.delete("/api/reservations/<int:reservation_id>")
-# @jwt_required()
-# def delete_booked_reservation(reservation_id):
-#     """ Deletes a specific reservation if either pool owner or reservation booker """
+@app.patch("/api/reservations/<int:reservation_id>")
+@jwt_required()
+@is_reservation_booker
+def update_reservation(reservation_id):
+    """ Updates specific reservation """
 
-#     current_user = get_jwt_identity()
+    # current_user_id = get_jwt_identity()
+    reservation = Reservation.query.get_or_404(reservation_id)
+    # book = reservation.book
+    is_in_future = reservation_is_in_future(reservation)
 
-#     reservation = Reservation.get_or_404(reservation_id)
-#     pool_id = reservation.pool_id
-#     pool = Pool.get_or_404(pool_id)
+    if is_in_future:
+        data = request.json
+        start_date_in = data['start_date']
+        duration_in = data['duration']
 
-#     if ((reservation.booked_username == current_user) or
-#         (pool.owner_username == current_user)):
+        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        int_duration = int(duration_in)
+
+        reservation = attempt_reservation_update(reservation, start_date, int_duration)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
 
 
-#         db.session.delete(reservation)
-#         db.session.commit()
+@app.patch("/api/reservations/<int:reservation_id>/cancel")
+@jwt_required()
+@is_reservation_booker
+def cancel_reservation_request(reservation_id):
+    """ Cancels specific reservation """
 
-#         return (jsonify("Reservation successfully deleted"), 200)
+    current_user_id = get_jwt_identity()
+    user = User.query.get_or_404(current_user_id)
+    reservation = Reservation.query.get_or_404(reservation_id)
+    book = reservation.book
+    is_in_future = reservation_is_in_future(reservation)
+    data = request.json
+    cancellation_reason = data.get('cancellation_reason')
+    reservation_status = reservation.status
+    # TODO: CHECK USERS' CANCELLATION POLICY
 
-#     #TODO: better error handling for more diverse errors
-#     return (jsonify({"error": "not authorized"}), 401)
+    if (reservation_status == ReservationStatusEnum.PENDING) and is_in_future:
+        reservation = attempt_to_cancel_reservation(reservation, cancellation_reason)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
+
+
+@app.patch("/api/reservations/<int:reservation_id>/accept")
+@jwt_required()
+@is_reservation_listing_owner
+def accept_reservation(reservation_id):
+    """ Accepts specific reservation """
+
+    reservation = Reservation.query.get_or_404(reservation_id)
+    is_in_future = reservation_is_in_future(reservation)
+
+    if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
+        reservation = attempt_to_accept_reservation_request(reservation)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
+
+
+@app.patch("/api/reservations/<int:reservation_id>/decline")
+@jwt_required()
+@is_reservation_listing_owner
+def decline_reservation(reservation_id):
+    """ Declines specific reservation """
+
+    reservation = Reservation.query.get_or_404(reservation_id)
+    is_in_future = reservation_is_in_future(reservation)
+
+    if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
+        reservation = attempt_to_decline_reservation_request(reservation)
+
+        return jsonify(reservation=reservation.serialize()), 201
+
+    return jsonify({"error": "not authorized"}), 401
+
 
 # endregion
 

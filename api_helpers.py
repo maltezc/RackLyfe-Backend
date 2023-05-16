@@ -10,6 +10,7 @@ import traceback
 from models import Book, BookImage, State, UserImage, User
 from models import db
 from flask import jsonify
+from enums import PriceEnums
 
 load_dotenv()
 
@@ -166,6 +167,22 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
     """ Posts book to aws while in try block and returns serialized if successful, returns an error if not.
     """
 
+    price_enums_dict = {
+        '100': PriceEnums.ONE,
+        '200': PriceEnums.TWO,
+        '300': PriceEnums.THREE,
+        '400': PriceEnums.FOUR,
+        '500': PriceEnums.FIVE,
+        '600': PriceEnums.SIX,
+        '700': PriceEnums.SEVEN,
+        '800': PriceEnums.EIGHT,
+        '900': PriceEnums.NINE,
+        '1000': PriceEnums.TEN,
+    }
+
+    price = price_enums_dict[rate_price]
+
+    # need to somehow take a  for a price
     try:
         book = Book(
             owner_uid=user_id,
@@ -173,7 +190,7 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
             author=author,
             isbn=isbn,
             condition=condition,
-            rate_price=rate_price,
+            rate_price=price,
             rate_schedule=rate_schedule,
         )
 
