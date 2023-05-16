@@ -83,6 +83,10 @@ class User(db.Model):
     renting_reservations = db.relationship('Reservation', back_populates='renter',
                                            uselist=True)  # TODO: need to figure this out.
 
+    sent_messages = db.relationship('Message', back_populates='sender', foreign_keys='Message.sender_uid', lazy=True, uselist=True)
+    received_messages = db.relationship('Message', back_populates='recipient', foreign_keys='Message.recipient_uid',
+                                        lazy=True, uselist=True)
+
     def serialize(self):
         """ returns self """
 
@@ -671,13 +675,14 @@ class Message(db.Model):
         db.ForeignKey('users.id'),
         nullable=False
     )
+    sender = db.relationship('User', back_populates='sent_messages', foreign_keys=[sender_uid], uselist=False)
 
-    # userid from
     recipient_uid = db.Column(
         db.Integer,
         db.ForeignKey('users.id'),
         nullable=False
     )
+    recipient = db.relationship('User', back_populates='received_messages', foreign_keys=[recipient_uid], uselist=False)
 
     # text
     message_text = db.Column(
@@ -689,19 +694,29 @@ class Message(db.Model):
     timestamp = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=datetime.utcnow(),
     )
+
+    # todo: add repr
+
+    def __repr__(self):
+        return f"< Message #{self.message_uid}, " \
+               f"Reservation: {self.reservation_uid}, " \
+               f"Sender: {self.sender_uid}, " \
+               f"Recipient: {self.recipient_uid}, " \
+               f"Message: {self.message_text}, " \
+               f"Timestamp: {self.timestamp} >"
 
     def serialize(self):
         """ returns self """
         return {
 
             "message_uid": self.message_uid,
-            "res_uid": self.res_uid,
+            "reservation_uid": self.reservation_uid,
             "sender_uid": self.sender_uid,
             "recipient_uid": self.recipient_uid,
-            "text": self.text,
-            "timestamp": self.timestamp
+            "message_text": self.message_text,
+            "timestamp": self.timestamp,
         }
 
 
@@ -718,7 +733,6 @@ def connect_db(app):
     app.app_context().push()
     db.app = app
     db.init_app(app)
-
 
 # def enum_serializer(obj):
 #     """

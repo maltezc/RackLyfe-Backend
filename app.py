@@ -15,7 +15,7 @@ from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_bo
 from reservation_helpers import create_new_reservation, attempt_reservation_update, reservation_is_in_future, \
     attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
 from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
-    is_book_owner_or_is_reservation_booker
+    is_book_owner_or_is_reservation_booker, is_message_sender_reciever_or_admin
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
@@ -129,6 +129,7 @@ def create_user():
 
         return jsonify(token=token, user=user.serialize()), 201
 
+    # todo: refactor to only have try/execpt around databse edits.
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to signup"}), 424
@@ -1028,6 +1029,47 @@ def decline_reservation(reservation_id):
 
 # region MESSAGES ENDPOINTS START
 
+@app.post("/api/messages")
+@jwt_required()
+def create_message():
+    """ Creates a message to be sent to listing owner.
+
+    Returns JSON like:
+        {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
+    """
+
+    current_user_id = get_jwt_identity()
+
+    data = request.json
+    book_listing_id = data.get('book_listing_id')
+    recipient_uid = data.get('recipient_uid')
+    message_text = data.get('message_text')
+    # timestamp = data.get('timestamp')
+
+    listing = Book.query.get_or_404(book_listing_id)
+
+    # Ensure that the current user is the owner of the book listing or interested party
+    # if listing.owner_uid != current_user_id | listing.renter_uid != current_user_id:
+    #     return jsonify({"error": "You are not authorized to send messages for this book listing"}), 401
+
+    try:
+        message = Message(
+            reservation_uid=book_listing_id,
+            sender_uid=current_user_id,
+            recipient_uid=recipient_uid,
+            message_text=message_text,
+        )
+
+        db.session.add(message)
+        db.session.commit()
+
+        return jsonify(message=message.serialize()), 201
+    except Exception as e:
+        print(e)
+        db.session.rollback()
+        return jsonify({"error": "not authorized"}), 401
+
+
 @app.get("/api/messages")
 @jwt_required()
 def list_messages():
@@ -1038,16 +1080,17 @@ def list_messages():
 
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
+
     # inbox
     messages_inbox = (Message.query
-                      .filter(Message.recipient_username == current_user)
+                      .filter(Message.recipient_uid == current_user_id)
                       .order_by(Message.timestamp.desc()))
     serialized_inbox = [message.serialize() for message in messages_inbox]
 
     # outbox
     messages_outbox = (Message.query
-                       .filter(Message.sender_username == current_user)
+                       .filter(Message.sender_uid == current_user_id)
                        .order_by(Message.timestamp.desc()))
     serialized_outbox = [message.serialize() for message in messages_outbox]
 
@@ -1055,50 +1098,21 @@ def list_messages():
     return response
 
 
-@app.post("/api/messages")
-@jwt_required()
-def create_message():
-    """ Creates a message to be sent to listing owner.
-
-    Returns JSON like:
-        {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
-    """
-
-    current_user = get_jwt_identity()
-
-    data = request.json
-    message = Message(
-        reservation_uid=data['reservation_uid'],
-        sender_uid=current_user,
-        recipient_uid=data['recipient_uid'],
-        message_text=data['message_text'],
-        timestamp=data['timestamp']
-    )
-
-    db.session.add(message)
-    db.session.commit()
-
-    return jsonify(message=message.serialize()), 201
-
-
-@app.get("/api/messages/<message_uid>")
+# @app.get("/api/messages/<int:message_id>")
+@app.get("/api/messages/one/<int:message_id>")
 @jwt_required
-def show_message(message_uid):
+# @is_message_sender_reciever_or_admin
+def show_message(message_id):
     """ Show specific message
 
     Returns JSON like:
         {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
     """
 
-    current_user = get_jwt_identity()
+    message = User.query.get_or_404(message_id)
 
-    message = User.query.get_404(message_uid)
+    message = message.serialize()
+    return jsonify(message=message)
 
-    if ((message.sender_uid == current_user) or
-            (message.recipient_uid == current_user)):
-        message = message.serialize()
-        return jsonify(message=message)
-    else:
-        return jsonify({"error": "not authorized"}), 401
 
 # endregion
