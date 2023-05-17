@@ -1,5 +1,6 @@
 from enums import StatesEnum
-from models import db, State, City, ZipCode, Address, Location, User
+from models import State, City, ZipCode, Address, Location, User
+from database import db
 from util_filters import geocode_address
 
 

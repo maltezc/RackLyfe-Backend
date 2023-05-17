@@ -15,7 +15,8 @@ from address_helpers import set_retrieve_address
 from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_book_image, db_add_user_image, \
     aws_delete_image
 from reservation_helpers import create_new_reservation, attempt_reservation_update, reservation_is_in_future, \
-    attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
+    attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation, \
+    extract_reservation_data
 from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
     is_book_owner_or_is_reservation_booker_or_is_admin, is_message_sender_reciever_or_admin
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
@@ -854,9 +855,8 @@ def list_all_reservations():
 def get_all_upcoming_reservations_for_book(book_uid):
     """ Gets all upcoming reservations associated with book_uid
 
-    Returns JSON like:
-        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
-
+    Returns JSON like: {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created,
+    start_date, end_date, status, rental_period, total }, ...}
     """
 
     current_user_id = get_jwt_identity()
@@ -879,9 +879,8 @@ def get_all_upcoming_reservations_for_book(book_uid):
 def get_all_past_reservations_for_book(book_uid):
     """ Gets all past reservations associated with book_uid
 
-    Returns JSON like:
-        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
-
+    Returns JSON like: {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created,
+    start_date, end_date, status, rental_period, total }, ...}
     """
 
     current_user_id = get_jwt_identity()
@@ -899,28 +898,33 @@ def get_all_past_reservations_for_book(book_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@app.get("/api/reservations/user/<int:user_uid>")
+@app.get("/api/reservations/user")
 @jwt_required()
-def get_booked_reservations_for_user_uid(user_uid):
+def get_booked_reservations_for_user_uid():
     """ Gets all reservations created by a user_uid
 
-    Returns JSON like:
-        {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }, ...}
-
+    Returns JSON like: {reservations: {reservation_uid, book_uid, owner_uid, renter_uid, reservation_date_created,
+    start_date, end_date, status, rental_period, total }, ...}
     """
 
     current_user = get_jwt_identity()
 
-    user = User.query.get_or_404(user_uid)
+    user = User.query.get_or_404(current_user)
     if user.id == current_user:
         reservations = (Reservation.query
                         .filter(owner_uid=current_user)
                         .order_by(Reservation.start_date.desc()))
 
-        serialized_reservations = ([reservation.serialize()
-                                    for reservation in reservations])
+        data = [extract_reservation_data(reservation) for reservation in reservations]
+        book_titles, book_owner_names, renter_names = zip(*data)
 
-        return jsonify(reservations=serialized_reservations)
+        # extracted_data = ([book_title, book_owner_name, renter_name = extract_reservation_data(reservation) for reservation in reservations)
+
+
+        # serialized_reservations = ([reservation.serialize(book_title, book_owner_name, renter_name) for reservation in zip(*data)])
+        # serialized_reservations = ([reservation.serialize() for reservation in reservations])
+
+        return jsonify(reservations=reservations)
 
     # TODO: better error handling for more diverse errors
     return jsonify({"error": "not authorized"}), 401
@@ -934,7 +938,8 @@ def get_reservation(reservation_id):
 
     reservation = Reservation.query.get_or_404(reservation_id)
     if reservation:
-        serialized_reservation = reservation.serialize()
+        book_title, book_owner_name, renter_name = extract_reservation_data(reservation)
+        serialized_reservation = reservation.serialize(book_title, book_owner_name, renter_name)
 
         return jsonify(reservation=serialized_reservation), 200
 
@@ -948,9 +953,8 @@ def get_reservation(reservation_id):
 def update_reservation(reservation_id):
     """ Updates specific reservation """
 
-    # current_user_id = get_jwt_identity()
     reservation = Reservation.query.get_or_404(reservation_id)
-    # book = reservation.book
+    book_title, book_owner_name, renter_name = extract_reservation_data(reservation)
     is_in_future = reservation_is_in_future(reservation)
 
     if is_in_future:
@@ -963,7 +967,7 @@ def update_reservation(reservation_id):
 
         reservation = attempt_reservation_update(reservation, start_date, int_duration)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        return jsonify(reservation=reservation.serialize(book_title, book_owner_name, renter_name)), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -975,10 +979,10 @@ def cancel_reservation_request(reservation_id):
     """ Cancels specific reservation """
 
     current_user_id = get_jwt_identity()
-    user = User.query.get_or_404(current_user_id)
     reservation = Reservation.query.get_or_404(reservation_id)
-    book = reservation.book
+    book_title, book_owner_name, renter_name = extract_reservation_data(reservation)
     is_in_future = reservation_is_in_future(reservation)
+
     data = request.json
     cancellation_reason = data.get('cancellation_reason')
     reservation_status = reservation.status
@@ -987,7 +991,7 @@ def cancel_reservation_request(reservation_id):
     if (reservation_status == ReservationStatusEnum.PENDING) and is_in_future:
         reservation = attempt_to_cancel_reservation(reservation, cancellation_reason)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        return jsonify(reservation=reservation.serialize(book_title, book_owner_name, renter_name)), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -999,12 +1003,13 @@ def accept_reservation(reservation_id):
     """ Accepts specific reservation """
 
     reservation = Reservation.query.get_or_404(reservation_id)
+    book_title, book_owner_name, renter_name = extract_reservation_data(reservation)
     is_in_future = reservation_is_in_future(reservation)
 
     if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
         reservation = attempt_to_accept_reservation_request(reservation)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        return jsonify(reservation=reservation.serialize(book_title, book_owner_name, renter_name)), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -1016,12 +1021,14 @@ def decline_reservation(reservation_id):
     """ Declines specific reservation """
 
     reservation = Reservation.query.get_or_404(reservation_id)
+    book_title, book_owner_name, renter_name = extract_reservation_data(reservation)
+
     is_in_future = reservation_is_in_future(reservation)
 
     if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
         reservation = attempt_to_decline_reservation_request(reservation)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        return jsonify(reservation=reservation.serialize(book_title, book_owner_name, renter_name)), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -1046,9 +1053,8 @@ def create_message():
     book_listing_id = data.get('book_listing_id')
     recipient_uid = data.get('recipient_uid')
     message_text = data.get('message_text')
-    # timestamp = data.get('timestamp')
 
-    listing = Book.query.get_or_404(book_listing_id)
+    # listing = Book.query.get_or_404(book_listing_id)
 
     # Ensure that the current user is the owner of the book listing or interested party
     # if listing.owner_uid != current_user_id | listing.renter_uid != current_user_id:

@@ -3,7 +3,8 @@ from datetime import timedelta, datetime
 from flask import jsonify
 
 from enums import RentalDurationEnum, ReservationStatusEnum
-from models import db, Reservation
+from models import Reservation
+from database import db
 
 
 def create_new_reservation(start_date, duration, book_rate_schedule, book, user):
@@ -121,3 +122,28 @@ def attempt_to_decline_reservation_request(reservation):
         return jsonify({"error": "unable to decline reservation"}), 400
 
     return reservation
+
+
+def extract_reservation_data(reservation):
+    """
+    Function for extracting reservation data"""
+
+    book_title = reservation.book.title
+    book_owner_name = f"{reservation.book.owner.firstname} {reservation.book.owner.lastname}"
+    renter_name = f"{reservation.renter.firstname} {reservation.renter.lastname}"
+
+    return book_title, book_owner_name, renter_name
+
+
+def extract_serialized_data_from_multiple_reservations(reservations):
+    """
+    Function for extracting serialized data from multiple reservations"""
+
+    data = [extract_reservation_data(reservation) for reservation in reservations]
+    book_titles, book_owner_names, renter_names = zip(*data)
+
+    serialized_reservations = [reservation.serialize(book_title, book_owner_name, renter_name)
+                               for reservation, book_title, book_owner_name, renter_name
+                               in zip(reservations, book_titles, book_owner_names, renter_names)]
+
+    return serialized_reservations
