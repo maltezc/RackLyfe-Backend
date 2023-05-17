@@ -8,7 +8,7 @@ import io
 from pathlib import Path
 import traceback
 from models import Book, BookImage, State, UserImage, User
-from database import db
+from models import db
 from flask import jsonify
 from enums import PriceEnums
 
@@ -185,7 +185,7 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
     # need to somehow take a  for a price
     try:
         book = Book(
-            owner_uid=user_id,
+            owner_id=user_id,
             title=title,
             author=author,
             isbn=isbn,

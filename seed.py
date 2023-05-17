@@ -1,5 +1,5 @@
 # noinspection PyUnresolvedReferences
-from database import db
+from app import db
 from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
 from geoalchemy2 import Geography, Geometry
 from enums import BookConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums

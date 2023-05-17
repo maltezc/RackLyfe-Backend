@@ -1,5 +1,5 @@
 from geopy.geocoders import Nominatim
-from models import User, Address, Location, City, State, ZipCode, Message, Book, Reservation, BookImage
+from models import db, connect_db, User, Address, Location, City, State, ZipCode, Message, Book, Reservation, BookImage
 from sqlalchemy import func
 
 
