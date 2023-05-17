@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from collections import defaultdict
+
 import os
 
 from dotenv import load_dotenv
@@ -15,7 +17,7 @@ from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_bo
 from reservation_helpers import create_new_reservation, attempt_reservation_update, reservation_is_in_future, \
     attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
 from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
-    is_book_owner_or_is_reservation_booker, is_message_sender_reciever_or_admin
+    is_book_owner_or_is_reservation_booker_or_is_admin, is_message_sender_reciever_or_admin
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
@@ -926,7 +928,7 @@ def get_booked_reservations_for_user_uid(user_uid):
 
 @app.get("/api/reservations/<int:reservation_id>")
 @jwt_required()
-@is_book_owner_or_is_reservation_booker
+@is_book_owner_or_is_reservation_booker_or_is_admin
 def get_reservation(reservation_id):
     """ Gets specific reservation """
 
@@ -1063,44 +1065,67 @@ def create_message():
         db.session.add(message)
         db.session.commit()
 
-        return jsonify(message=message.serialize()), 201
+        return jsonify(message=message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}")), 201
     except Exception as e:
         print(e)
         db.session.rollback()
         return jsonify({"error": "not authorized"}), 401
 
 
-@app.get("/api/messages")
+@app.get("/api/messages/all")
 @jwt_required()
-def list_messages():
-    """ Gets all messages outgoing and incoming to view
-
-    Returns JSON like:
-        {messages: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}, ...}
-
-    """
+def show_all_messages():
+    """Gets all messages, organizing them into conversations"""
 
     current_user_id = get_jwt_identity()
 
-    # inbox
-    messages_inbox = (Message.query
-                      .filter(Message.recipient_uid == current_user_id)
-                      .order_by(Message.timestamp.desc()))
-    serialized_inbox = [message.serialize() for message in messages_inbox]
+    # Query all messages involving the current user
+    messages = (Message.query
+                .filter((Message.sender_uid == current_user_id) | (Message.recipient_uid == current_user_id))
+                .order_by(Message.timestamp.desc()))
 
-    # outbox
-    messages_outbox = (Message.query
-                       .filter(Message.sender_uid == current_user_id)
-                       .order_by(Message.timestamp.desc()))
-    serialized_outbox = [message.serialize() for message in messages_outbox]
+    # Group messages into conversations based on sender and recipient
+    conversations = defaultdict(list)
+    for message in messages:
+        # Determine the conversation participant
+        participant_id = message.recipient_uid if message.sender_uid == current_user_id else message.sender_uid
+        conversations[participant_id].append(message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}"))
 
-    response = {"messages": {"inbox": serialized_inbox, "outbox": serialized_outbox}}
-    return response
+    # Convert the defaultdict to a regular dictionary
+    conversations = dict(conversations)
+
+    return jsonify(conversations=conversations), 200
 
 
-# @app.get("/api/messages/<int:message_id>")
-@app.get("/api/messages/one/<int:message_id>")
-@jwt_required
+@app.get("/api/messages/listing/<int:book_listing_id>")
+@jwt_required()
+def show_conversation(book_listing_id):
+    """Gets the conversation between the current user and the book owner"""
+
+    current_user_id = get_jwt_identity()
+    book = Book.query.get_or_404(book_listing_id)
+    book_owner = book.owner
+
+    # Query messages between the current user and the book owner
+    listing_messages = Message.query.filter(Message.reservation_uid == book_listing_id)
+
+    # check for message sender is book owner or current user
+    users_messages = (listing_messages
+                      .filter(((Message.sender_uid == current_user_id) & (Message.recipient_uid == book_owner.id)) |
+                              ((Message.sender_uid == book_owner.id) & (Message.recipient_uid == current_user_id)))
+                      .order_by(Message.timestamp.asc())).all()
+
+    conversation = [message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}") for message in
+                    users_messages]
+
+    return jsonify(conversation=conversation), 200
+
+
+@app.get("/api/messages/single/<int:message_id>")
+@jwt_required()
 # @is_message_sender_reciever_or_admin
 def show_message(message_id):
     """ Show specific message
@@ -1109,10 +1134,11 @@ def show_message(message_id):
         {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
     """
 
-    message = User.query.get_or_404(message_id)
+    message = Message.query.get_or_404(message_id)
+    sender_name = f"{message.sender.firstname} {message.sender.lastname}"
+    recipient_name = f"{message.recipient.firstname} {message.recipient.lastname}"
 
-    message = message.serialize()
-    return jsonify(message=message)
-
+    message = message.serialize(f"{sender_name}", f"{recipient_name}")
+    return jsonify(message=message), 200
 
 # endregion

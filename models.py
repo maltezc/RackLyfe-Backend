@@ -702,19 +702,21 @@ class Message(db.Model):
     def __repr__(self):
         return f"< Message #{self.message_uid}, " \
                f"Reservation: {self.reservation_uid}, " \
-               f"Sender: {self.sender_uid}, " \
-               f"Recipient: {self.recipient_uid}, " \
+               f"Sender_Id: {self.sender_uid}, " \
+               f"Recipient_id: {self.recipient_uid}, " \
                f"Message: {self.message_text}, " \
                f"Timestamp: {self.timestamp} >"
 
-    def serialize(self):
+    def serialize(self, sender_name, recipient_name):
         """ returns self """
         return {
 
             "message_uid": self.message_uid,
             "reservation_uid": self.reservation_uid,
             "sender_uid": self.sender_uid,
+            "sender_name": sender_name,
             "recipient_uid": self.recipient_uid,
+            "recipient_name": recipient_name,
             "message_text": self.message_text,
             "timestamp": self.timestamp,
         }

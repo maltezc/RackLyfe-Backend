@@ -24,7 +24,7 @@ def admin_required(f):
     return decorated_function
 
 
-def is_book_owner_or_is_reservation_booker(func):
+def is_book_owner_or_is_reservation_booker_or_is_admin(func):
     """
     Decorator to ensure user is book owner or reservation booker"""
 
@@ -37,7 +37,7 @@ def is_book_owner_or_is_reservation_booker(func):
 
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        if reservation.renter_id == user.id or reservation.book.owner_id == user.id:
+        if reservation.renter_id == user.id or reservation.book.owner_id == user.id or user.is_admin:
             return func(*args, **kwargs)
 
         return jsonify({"error": "Not authorized"}), 401
