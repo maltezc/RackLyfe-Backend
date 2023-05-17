@@ -83,6 +83,10 @@ class User(db.Model):
     renting_reservations = db.relationship('Reservation', back_populates='renter',
                                            uselist=True)  # TODO: need to figure this out.
 
+    sent_messages = db.relationship('Message', back_populates='sender', foreign_keys='Message.sender_uid', lazy=True, uselist=True)
+    received_messages = db.relationship('Message', back_populates='recipient', foreign_keys='Message.recipient_uid',
+                                        lazy=True, uselist=True)
+
     def serialize(self):
         """ returns self """
 
@@ -193,7 +197,8 @@ class UserImage(db.Model):
 
         return {
             "id": self.id,
-            "image_url": self.image_url
+            "image_url": self.image_url,
+            "user_id": self.user_id
         }
 
     def __repr__(self):
@@ -254,6 +259,8 @@ class Address(db.Model):
             "user_id": self.user_id,
             "street_address": self.street_address,
             "apt_number": self.apt_number,
+            "city": self.city.serialize(),
+            "zipcode": self.zipcode.serialize(),
         }
 
 
@@ -326,7 +333,8 @@ class City(db.Model):
         return {
             "id": self.id,
             "city_name": self.city_name,
-            "state_uid": self.state_uid
+            # "state": self.state_uid,
+            "state": self.state.state_abbreviation
         }
 
 
@@ -424,7 +432,7 @@ class Book(db.Model):
         primary_key=True,
     )
 
-    owner_uid = db.Column(
+    owner_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
         nullable=False,
@@ -501,17 +509,18 @@ class Book(db.Model):
         return {
 
             "id": self.id,
-            "owner_uid": self.owner_uid,
+            "owner_id": self.owner_id,
+            "owner": self.owner.serialize(),
             "primary_image_url": self.primary_image_url,
             "title": self.title,
             "author": self.author,
             "isbn": self.isbn,
             "genre": self.genre,
-            "condition": self.condition,
-            "rate_price": self.rate_price,
-            "rate_schedule": self.rate_schedule,
-            "status": self.status,
-            "reservations": [reservation.serialize() for reservation in self.reservations]
+            "condition": enum_serializer(self.condition),
+            "rate_price": enum_serializer(self.rate_price),
+            "rate_schedule": enum_serializer(self.rate_schedule),
+            "status": enum_serializer(self.status),
+            "reservations": [reservation.serialize(self) for reservation in self.reservations]
         }
 
     def __repr__(self):
@@ -606,11 +615,6 @@ class Reservation(db.Model):
         SQLAlchemyEnum(ReservationStatusEnum, name='reservation_status_enum'),
     )
 
-    # rental_period_method = db.Column(
-    #     db.Text,
-    #     default="Days"
-    # )
-
     duration = db.Column(
         db.Interval,
         nullable=False
@@ -625,8 +629,9 @@ class Reservation(db.Model):
         db.String(500),
     )
 
-    def serialize(self):
+    def serialize(self, book):
         """ returns self """
+
         return {
             "id": self.id,
             "reservation_date_created": self.reservation_date_created,
@@ -635,7 +640,10 @@ class Reservation(db.Model):
             "status": enum_serializer(self.status),
             "duration": str(self.duration),
             "total": self.total,
-            "cancellation_reason": self.cancellation_reason
+            "cancellation_reason": self.cancellation_reason,
+            "book_title": book.title,
+            "book_owner": book.owner.serialize(),
+            "book_renter": book.renter.serialize(),
         }
 
     def __repr__(self):
@@ -671,13 +679,14 @@ class Message(db.Model):
         db.ForeignKey('users.id'),
         nullable=False
     )
+    sender = db.relationship('User', back_populates='sent_messages', foreign_keys=[sender_uid], uselist=False)
 
-    # userid from
     recipient_uid = db.Column(
         db.Integer,
         db.ForeignKey('users.id'),
         nullable=False
     )
+    recipient = db.relationship('User', back_populates='received_messages', foreign_keys=[recipient_uid], uselist=False)
 
     # text
     message_text = db.Column(
@@ -689,19 +698,31 @@ class Message(db.Model):
     timestamp = db.Column(
         db.DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=datetime.utcnow(),
     )
 
-    def serialize(self):
+    # todo: add repr
+
+    def __repr__(self):
+        return f"< Message #{self.message_uid}, " \
+               f"Reservation: {self.reservation_uid}, " \
+               f"Sender_Id: {self.sender_uid}, " \
+               f"Recipient_id: {self.recipient_uid}, " \
+               f"Message: {self.message_text}, " \
+               f"Timestamp: {self.timestamp} >"
+
+    def serialize(self, sender_name, recipient_name):
         """ returns self """
         return {
 
             "message_uid": self.message_uid,
-            "res_uid": self.res_uid,
+            "reservation_uid": self.reservation_uid,
             "sender_uid": self.sender_uid,
+            "sender_name": sender_name,
             "recipient_uid": self.recipient_uid,
-            "text": self.text,
-            "timestamp": self.timestamp
+            "recipient_name": recipient_name,
+            "message_text": self.message_text,
+            "timestamp": self.timestamp,
         }
 
 
@@ -718,7 +739,6 @@ def connect_db(app):
     app.app_context().push()
     db.app = app
     db.init_app(app)
-
 
 # def enum_serializer(obj):
 #     """

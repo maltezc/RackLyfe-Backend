@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from collections import defaultdict
+
 import os
 
 from dotenv import load_dotenv
@@ -15,7 +17,7 @@ from api_helpers import upload_to_aws, db_post_book, aws_upload_image, db_add_bo
 from reservation_helpers import create_new_reservation, attempt_reservation_update, reservation_is_in_future, \
     attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
 from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
-    is_book_owner_or_is_reservation_booker
+    is_book_owner_or_is_reservation_booker_or_is_admin, is_message_sender_reciever_or_admin
 from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
@@ -129,6 +131,7 @@ def create_user():
 
         return jsonify(token=token, user=user.serialize()), 201
 
+    # todo: refactor to only have try/execpt around databse edits.
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to signup"}), 424
@@ -482,7 +485,7 @@ def search():
     """ Searches book properties for matched or similar values.
 
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     # query_string = request.query_string
@@ -526,7 +529,7 @@ def search():
 def list_nearby_books():
     """ Shows all books nearby
 
-    Returns JSON like: {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre,
+    Returns JSON like: {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre,
     condition, price, reservations},...}
     """
 
@@ -559,7 +562,7 @@ def list_all_books():
     """Return all books in system.
 
     Returns JSON like:
-       {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+       {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
     books = Book.query.all()
 
@@ -572,7 +575,7 @@ def list_books_of_user(user_uid):
     """Show books of specified user.
 
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     user = User.query.get_or_404(user_uid)
@@ -587,7 +590,7 @@ def show_book_by_id(book_uid):
     """Return information on a specific book.
 
     Returns JSON like:
-        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {book: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
     book = Book.query.get_or_404(book_uid)
     serialized = book.serialize()
@@ -600,7 +603,7 @@ def show_books_by_city():
     """Return books in a specific city.
 
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     city = request.args.get('city')  # mandatory
@@ -616,7 +619,7 @@ def show_books_by_state():
     """Return books in a specific state.
 
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     state = request.args.get('state')  # mandatory
@@ -632,7 +635,7 @@ def search_books_by_zipcode():
     """Return books in a specific zipcode.
 
     Returns JSON like:
-        {books: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     zipcode = request.args.get('zipcode')  # mandatory
@@ -758,7 +761,7 @@ def delete_book(book_uid):
 
     current_user = get_jwt_identity()
     book = Book.query.get_or_404(book_uid)
-    if current_user == book.owner_uid:
+    if current_user == book.owner_id:
         db.session.delete(book)
         db.session.commit()
 
@@ -842,7 +845,7 @@ def list_all_reservations():
     """
     reservations = Reservation.query.all()
 
-    serialized = [reservation.serialize() for reservation in reservations]
+    serialized = [reservation.serialize(reservation.book) for reservation in reservations]
     return jsonify(reservations=serialized)
 
 
@@ -911,7 +914,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     user = User.query.get_or_404(user_uid)
     if user.id == current_user:
         reservations = (Reservation.query
-                        .filter(owner_uid=current_user)
+                        .filter(owner_id=current_user)
                         .order_by(Reservation.start_date.desc()))
 
         serialized_reservations = ([reservation.serialize()
@@ -925,7 +928,7 @@ def get_booked_reservations_for_user_uid(user_uid):
 
 @app.get("/api/reservations/<int:reservation_id>")
 @jwt_required()
-@is_book_owner_or_is_reservation_booker
+@is_book_owner_or_is_reservation_booker_or_is_admin
 def get_reservation(reservation_id):
     """ Gets specific reservation """
 
@@ -1014,11 +1017,12 @@ def decline_reservation(reservation_id):
 
     reservation = Reservation.query.get_or_404(reservation_id)
     is_in_future = reservation_is_in_future(reservation)
+    book = reservation.book
 
     if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
         reservation = attempt_to_decline_reservation_request(reservation)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        return jsonify(reservation=reservation.serialize(book)), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -1027,33 +1031,6 @@ def decline_reservation(reservation_id):
 
 
 # region MESSAGES ENDPOINTS START
-
-@app.get("/api/messages")
-@jwt_required()
-def list_messages():
-    """ Gets all messages outgoing and incoming to view
-
-    Returns JSON like:
-        {messages: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}, ...}
-
-    """
-
-    current_user = get_jwt_identity()
-    # inbox
-    messages_inbox = (Message.query
-                      .filter(Message.recipient_username == current_user)
-                      .order_by(Message.timestamp.desc()))
-    serialized_inbox = [message.serialize() for message in messages_inbox]
-
-    # outbox
-    messages_outbox = (Message.query
-                       .filter(Message.sender_username == current_user)
-                       .order_by(Message.timestamp.desc()))
-    serialized_outbox = [message.serialize() for message in messages_outbox]
-
-    response = {"messages": {"inbox": serialized_inbox, "outbox": serialized_outbox}}
-    return response
-
 
 @app.post("/api/messages")
 @jwt_required()
@@ -1064,41 +1041,98 @@ def create_message():
         {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
 
     data = request.json
-    message = Message(
-        reservation_uid=data['reservation_uid'],
-        sender_uid=current_user,
-        recipient_uid=data['recipient_uid'],
-        message_text=data['message_text'],
-        timestamp=data['timestamp']
-    )
+    book_listing_id = data.get('book_listing_id')
+    recipient_uid = data.get('recipient_uid')
+    message_text = data.get('message_text')
 
-    db.session.add(message)
-    db.session.commit()
+    try:
+        message = Message(
+            reservation_uid=book_listing_id,
+            sender_uid=current_user_id,
+            recipient_uid=recipient_uid,
+            message_text=message_text,
+        )
 
-    return jsonify(message=message.serialize()), 201
+        db.session.add(message)
+        db.session.commit()
+
+        return jsonify(message=message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}")), 201
+    except Exception as e:
+        print(e)
+        db.session.rollback()
+        return jsonify({"error": "not authorized"}), 401
 
 
-@app.get("/api/messages/<message_uid>")
-@jwt_required
-def show_message(message_uid):
+@app.get("/api/messages/all")
+@jwt_required()
+def show_all_messages():
+    """Gets all messages, organizing them into conversations"""
+
+    current_user_id = get_jwt_identity()
+
+    # Query all messages involving the current user
+    messages = (Message.query
+                .filter((Message.sender_uid == current_user_id) | (Message.recipient_uid == current_user_id))
+                .order_by(Message.timestamp.desc()))
+
+    # Group messages into conversations based on sender and recipient
+    conversations = defaultdict(list)
+    for message in messages:
+        # Determine the conversation participant
+        participant_id = message.recipient_uid if message.sender_uid == current_user_id else message.sender_uid
+        conversations[participant_id].append(message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}"))
+
+    # Convert the defaultdict to a regular dictionary
+    conversations = dict(conversations)
+
+    return jsonify(conversations=conversations), 200
+
+
+@app.get("/api/messages/listing/<int:book_listing_id>")
+@jwt_required()
+def show_conversation(book_listing_id):
+    """Gets the conversation between the current user and the book owner"""
+
+    current_user_id = get_jwt_identity()
+    book = Book.query.get_or_404(book_listing_id)
+    book_owner = book.owner
+
+    # Query messages between the current user and the book owner
+    listing_messages = Message.query.filter(Message.reservation_uid == book_listing_id)
+
+    # check for message sender is book owner or current user
+    users_messages = (listing_messages
+                      .filter(((Message.sender_uid == current_user_id) & (Message.recipient_uid == book_owner.id)) |
+                              ((Message.sender_uid == book_owner.id) & (Message.recipient_uid == current_user_id)))
+                      .order_by(Message.timestamp.asc())).all()
+
+    conversation = [message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
+                                      f"{message.recipient.firstname} {message.recipient.lastname}") for message in
+                    users_messages]
+
+    return jsonify(conversation=conversation), 200
+
+
+@app.get("/api/messages/single/<int:message_id>")
+@jwt_required()
+# @is_message_sender_reciever_or_admin
+def show_message(message_id):
     """ Show specific message
 
     Returns JSON like:
         {message: {message_uid, reservation_uid, sender_uid, recipient_uid, text, timestamp}}
     """
 
-    current_user = get_jwt_identity()
+    message = Message.query.get_or_404(message_id)
+    sender_name = f"{message.sender.firstname} {message.sender.lastname}"
+    recipient_name = f"{message.recipient.firstname} {message.recipient.lastname}"
 
-    message = User.query.get_404(message_uid)
-
-    if ((message.sender_uid == current_user) or
-            (message.recipient_uid == current_user)):
-        message = message.serialize()
-        return jsonify(message=message)
-    else:
-        return jsonify({"error": "not authorized"}), 401
+    message = message.serialize(f"{sender_name}", f"{recipient_name}")
+    return jsonify(message=message), 200
 
 # endregion

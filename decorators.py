@@ -1,4 +1,4 @@
-from models import User, Reservation
+from models import User, Reservation, Message
 from flask import abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from functools import wraps
@@ -24,7 +24,7 @@ def admin_required(f):
     return decorated_function
 
 
-def is_book_owner_or_is_reservation_booker(func):
+def is_book_owner_or_is_reservation_booker_or_is_admin(func):
     """
     Decorator to ensure user is book owner or reservation booker"""
 
@@ -37,7 +37,7 @@ def is_book_owner_or_is_reservation_booker(func):
 
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        if reservation.renter_id == user.id or reservation.book.owner_id == user.id:
+        if reservation.renter_id == user.id or reservation.book.owner_id == user.id or user.is_admin:
             return func(*args, **kwargs)
 
         return jsonify({"error": "Not authorized"}), 401
@@ -80,6 +80,27 @@ def is_reservation_listing_owner(func):
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
         if reservation.book.owner.id == user.id:
+            return func(*args, **kwargs)
+
+        return jsonify({"error": "Not authorized"}), 401
+
+    return decorated_function
+
+
+def is_message_sender_reciever_or_admin(func):
+    """
+    Decorator to ensure user is authorized to perform action on book"""
+
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        """
+        Wrapper function to ensure user is authorized to perform action on book"""
+        message_id = kwargs.get('message_id')
+        message = Message.query.get_or_404(message_id)
+
+        current_user_id = get_jwt_identity()
+        user = User.query.get_or_404(current_user_id)
+        if message.sender_id == user.id or message.reciever_id == user.id or user.is_admin:
             return func(*args, **kwargs)
 
         return jsonify({"error": "Not authorized"}), 401

@@ -340,23 +340,25 @@ db.session.commit()
 
 # region messages
 
-# message1 = Message(
-#     message_uid=1,
-#     reservation_uid=1,
-#     sender_uid=1,
-#     recipient_uid=2,
-#     message_text="hello",
-#     timestamp="Wed, 01 Feb 2023 12:01:00 GMT"
-# )
-#
-# message2 = Message(
-#     message_uid=2,
-#     reservation_uid=1,
-#     sender_uid=2,
-#     recipient_uid=1,
-#     message_text="hola",
-#     timestamp="Wed, 02 Feb 2023 12:01:00 GMT"
-# )
+message1 = Message(
+    # message_uid=1,
+    reservation_uid=1,
+    sender_uid=1,
+    recipient_uid=2,
+    message_text="hello",
+    # timestamp="Wed, 01 Feb 2023 12:01:00 GMT"
+)
+user1.sent_messages.append(message1)
+
+message2 = Message(
+    # message_uid=2,
+    reservation_uid=1,
+    sender_uid=2,
+    recipient_uid=1,
+    message_text="hola",
+    # timestamp="Wed, 02 Feb 2023 12:01:00 GMT"
+)
+user2.sent_messages.append(message2)
 
 
 # message1 = Message(
@@ -386,7 +388,7 @@ db.session.commit()
 #     timestamp="Thu, 02 Feb 2023 12:11:00 GMT"
 # )
 
-# db.session.add_all([message1, message2])
-# db.session.commit()
+db.session.add_all([message1, message2])
+db.session.commit()
 
 # endregion
