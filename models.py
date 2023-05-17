@@ -18,7 +18,7 @@ DEFAULT_USER_IMAGE_URL = "testimage.jpg"
 
 # region Users
 class User(db.Model):
-    """User in the system."""
+    """ User model """
 
     __tablename__ = 'users'
 
@@ -29,8 +29,6 @@ class User(db.Model):
 
     status = db.Column(
         SQLAlchemyEnum(UserStatusEnums, name='user_status_enum'),
-        # db.Text,
-        # default="Active",
         nullable=False
     )
 
@@ -83,7 +81,8 @@ class User(db.Model):
     renting_reservations = db.relationship('Reservation', back_populates='renter',
                                            uselist=True)  # TODO: need to figure this out.
 
-    sent_messages = db.relationship('Message', back_populates='sender', foreign_keys='Message.sender_uid', lazy=True, uselist=True)
+    sent_messages = db.relationship('Message', back_populates='sender', foreign_keys='Message.sender_uid', lazy=True,
+                                    uselist=True)
     received_messages = db.relationship('Message', back_populates='recipient', foreign_keys='Message.recipient_uid',
                                         lazy=True, uselist=True)
 
@@ -92,6 +91,10 @@ class User(db.Model):
 
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
+
+        address = self.address.serialize() if self.address else None
+        user_image = self.profile_image.serialize() if self.profile_image else None
+
         return {
             "id": self.id,
             "status": enum_serializer(self.status),
@@ -101,23 +104,9 @@ class User(db.Model):
             "is_admin": self.is_admin,
             "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
-            "user_rating": self.user_rating
-        }
-
-    def serialize_with_address(self):
-        """ returns self """
-
-        return {
-            "id": self.id,
-            "status": self.status,
-            "email": self.email,
-            "firstname": self.firstname,
-            "lastname": self.lastname,
-            "is_admin": self.is_admin,
-            "image_url": self.image_url,
-            "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating,
-            "address": self.address.serialize()
+            "user_image": user_image,
+            "address": address
         }
 
     @classmethod
@@ -465,25 +454,6 @@ class Book(db.Model):
         db.Text,
     )
 
-    # condition = db.Column(
-    #     db.Text,
-    #     nullable=False
-    #
-    #     # TODO: select form (like new, fair, old af)
-    # )
-
-    # condition = db.Column(
-    #     db.Enum(ConditionEnum),
-    #     default=ConditionEnum.LIKE_NEW,
-    #     nullable=False,
-    # )
-
-    condition = db.Column(
-        SQLAlchemyEnum(BookConditionEnum, name='condition_enum'),
-        # db.Text,
-        # nullable=False
-    )
-
     rate_price = db.Column(
         SQLAlchemyEnum(PriceEnums, name='rental_price_enum'),
         nullable=False  # select from $1-$10 / week
@@ -492,13 +462,9 @@ class Book(db.Model):
     rate_schedule = db.Column(
         SQLAlchemyEnum(RentalDurationEnum, name='rental_duration_enum'),
     )
-    # default=RentalDurationEnum.WEEKLY,
-    # db.Enum("Daily", "Weekly", "Monthly", name="ScheduleTypes"),
 
     status = db.Column(
         SQLAlchemyEnum(BookStatusEnum, name='book_status_enum'),
-        # db.Text,
-        # default="Available",
         nullable=False
     )
 
@@ -506,8 +472,8 @@ class Book(db.Model):
 
     def serialize(self):
         """ returns self """
-        return {
 
+        return {
             "id": self.id,
             "owner_id": self.owner_id,
             "owner": self.owner.serialize(),
@@ -516,11 +482,11 @@ class Book(db.Model):
             "author": self.author,
             "isbn": self.isbn,
             "genre": self.genre,
-            "condition": enum_serializer(self.condition),
+            # "condition": enum_serializer(self.condition),
             "rate_price": enum_serializer(self.rate_price),
             "rate_schedule": enum_serializer(self.rate_schedule),
             "status": enum_serializer(self.status),
-            "reservations": [reservation.serialize(self) for reservation in self.reservations]
+            "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
     def __repr__(self):
@@ -557,6 +523,7 @@ class BookImage(db.Model):
 
     def serialize(self):
         """ returns self """
+        
         return {
             "id": self.id,
             "book_id": self.book_id,
@@ -629,8 +596,10 @@ class Reservation(db.Model):
         db.String(500),
     )
 
-    def serialize(self, book):
+    def serialize(self):
         """ returns self """
+
+        book = self.book
 
         return {
             "id": self.id,
@@ -641,9 +610,9 @@ class Reservation(db.Model):
             "duration": str(self.duration),
             "total": self.total,
             "cancellation_reason": self.cancellation_reason,
-            "book_title": book.title,
+            # "book": book.serialize(),
             "book_owner": book.owner.serialize(),
-            "book_renter": book.renter.serialize(),
+            "book_renter": self.renter.serialize(),
         }
 
     def __repr__(self):
@@ -658,7 +627,7 @@ class Reservation(db.Model):
 # region Messages
 
 class Message(db.Model):
-    "Messages between users in the system"
+    """Messages between users in the system"""
 
     __tablename__ = "messages"
 
@@ -667,13 +636,11 @@ class Message(db.Model):
         primary_key=True
     )
 
-    # listing message is associated with
     reservation_uid = db.Column(
         db.Integer,
         nullable=False,
     )
 
-    # userid to
     sender_uid = db.Column(
         db.Integer,
         db.ForeignKey('users.id'),
@@ -688,13 +655,11 @@ class Message(db.Model):
     )
     recipient = db.relationship('User', back_populates='received_messages', foreign_keys=[recipient_uid], uselist=False)
 
-    # text
     message_text = db.Column(
         db.Text,
         nullable=False,
     )
 
-    # timestamp
     timestamp = db.Column(
         db.DateTime,
         nullable=False,
@@ -739,12 +704,3 @@ def connect_db(app):
     app.app_context().push()
     db.app = app
     db.init_app(app)
-
-# def enum_serializer(obj):
-#     """
-#     Custom JSON serializer for UserStatusEnums"""
-#
-#     if isinstance(obj, SQLAlchemyEnum):
-#         return obj.value
-#
-#     raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
