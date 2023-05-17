@@ -45,7 +45,6 @@ jwt = JWTManager(app)
 
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["JWT_IDENTITY_CLAIM"] = "user_uid"
-# app.config["JWT_IDENTITY_CLAIM"] = "username"
 
 
 connect_db(app)
@@ -56,7 +55,9 @@ db.create_all()
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
-    """ Login user, returns JWT if authenticated """
+    """Handle user login.
+    Returns JSON like:
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
 
     data = request.json
     email = data['email']
@@ -65,18 +66,16 @@ def login():
     user = User.authenticate(email, password)
     token = create_access_token(identity=user.id)
 
-    return jsonify(token=token)
+    return jsonify(token=token, user=user.serialize()), 200
 
 
 @app.post("/api/auth/signup_admin")
 @jwt_required()
 @admin_required
 def create_admin_user():
-    """Add user, and return data about new user.
-
+    """Add admin user, and return data about new user.
     Returns JSON like:
-        {user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}
-    """
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
 
     try:
         user = User.signup(
@@ -99,14 +98,12 @@ def create_admin_user():
 @app.post("/api/auth/signup")
 def create_user():
     """Add user, and return data about new user.
-
     Returns JSON like:
-        {user: {user_uid, email, image_url, firstname, lastname, address, preferred_trade_location}}
-    """
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
+
+    profile_image = request.form.get('profile_image')
 
     try:
-        profile_image = request.form.get('profile_image')
-
         user = User.signup(
             email=request.form.get('email'),
             status=UserStatusEnums.ACTIVE,
@@ -144,10 +141,9 @@ def create_user():
 @app.post("/api/user_image")
 @jwt_required()
 def add_user_image():
-    """ Adds image to the currently logged-in user
+    """Add user image, and return data about new user image.
     Returns JSON like:
-        {user_image: {user_image_uid, image_url, user_uid}}
-    """
+        {user_image: {user_image_uid, image_url, user_uid}}"""
 
     try:
         current_user_id = get_jwt_identity()
@@ -170,9 +166,9 @@ def add_user_image():
 @app.get("/api/current_user_image/")
 @jwt_required()
 def get_current_user_image():
-    """ Returns JSON like:
-        {user_image: {user_image_uid, image_url, user_uid}}
-    """
+    """ Handle getting current user image
+    Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}"""
 
     try:
         current_user_id = get_jwt_identity()
@@ -186,28 +182,12 @@ def get_current_user_image():
         return jsonify({"error": "Failed to get image"}), 424
 
 
-@app.get("/api/user_image/<int:user_image_id>")
-def get_other_user_image(user_image_id):
-    """ Returns JSON like:
-        {user_image: {user_image_uid, image_url, user_uid}}
-    """
-
-    try:
-        user_image = UserImage.query.get_or_404(user_image_id)
-
-        return jsonify(user_image=user_image.serialize()), 200
-
-    except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to get image"}), 424
-
-
 @app.patch("/api/user_image/<int:user_image_id>")
 @jwt_required()
 def update_user_image(user_image_id):
-    """ Returns JSON like:
-        {user_image: {user_image_uid, image_url, user_uid}}
-    """
+    """ Updates image to the currently logged-in user
+    Returns JSON like:
+        {user_image: {user_image_uid, image_url, user_uid}}"""
 
     try:
         current_user_id = get_jwt_identity()
@@ -344,7 +324,7 @@ def update_address(address_id):
         # TODO: FE - control this on front end and have user use a drop down of selectable options only
 
         return jsonify(
-            user=user.serialize_with_address(),
+            user=user.serialize(),
             state=state.serialize(),
             city=city.serialize(),
             zipcode=zipcode.serialize(),
@@ -845,7 +825,7 @@ def list_all_reservations():
     """
     reservations = Reservation.query.all()
 
-    serialized = [reservation.serialize(reservation.book) for reservation in reservations]
+    serialized = [reservation.serialize() for reservation in reservations]
     return jsonify(reservations=serialized)
 
 
@@ -946,11 +926,10 @@ def get_reservation(reservation_id):
 @jwt_required()
 @is_reservation_booker
 def update_reservation(reservation_id):
-    """ Updates specific reservation """
+    """ Updates specific reservation Returns JSON like: {reservation: {reservation_uid, book_uid, owner_uid,
+    renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}"""
 
-    # current_user_id = get_jwt_identity()
     reservation = Reservation.query.get_or_404(reservation_id)
-    # book = reservation.book
     is_in_future = reservation_is_in_future(reservation)
 
     if is_in_future:
@@ -972,12 +951,11 @@ def update_reservation(reservation_id):
 @jwt_required()
 @is_reservation_booker
 def cancel_reservation_request(reservation_id):
-    """ Cancels specific reservation """
+    """ Cancels specific reservation
+    Returns JSON like: {reservation: {reservation_uid, book_uid, owner_uid,"""
 
     current_user_id = get_jwt_identity()
-    user = User.query.get_or_404(current_user_id)
     reservation = Reservation.query.get_or_404(reservation_id)
-    book = reservation.book
     is_in_future = reservation_is_in_future(reservation)
     data = request.json
     cancellation_reason = data.get('cancellation_reason')
@@ -996,7 +974,8 @@ def cancel_reservation_request(reservation_id):
 @jwt_required()
 @is_reservation_listing_owner
 def accept_reservation(reservation_id):
-    """ Accepts specific reservation """
+    """ Accepts specific reservation Returns JSON like: {reservation: {reservation_uid, book_uid, owner_uid,
+    renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}"""
 
     reservation = Reservation.query.get_or_404(reservation_id)
     is_in_future = reservation_is_in_future(reservation)
@@ -1013,16 +992,16 @@ def accept_reservation(reservation_id):
 @jwt_required()
 @is_reservation_listing_owner
 def decline_reservation(reservation_id):
-    """ Declines specific reservation """
+    """ Declines specific reservation Returns JSON like: {reservation: {reservation_uid, book_uid, owner_uid,
+    renter_uid, reservation_date_created, start_date, end_date, status, rental_period, total }}"""
 
     reservation = Reservation.query.get_or_404(reservation_id)
     is_in_future = reservation_is_in_future(reservation)
-    book = reservation.book
 
     if (reservation.status == ReservationStatusEnum.PENDING) and is_in_future:
         reservation = attempt_to_decline_reservation_request(reservation)
 
-        return jsonify(reservation=reservation.serialize(book)), 201
+        return jsonify(reservation=reservation.serialize()), 201
 
     return jsonify({"error": "not authorized"}), 401
 
@@ -1070,7 +1049,9 @@ def create_message():
 @app.get("/api/messages/all")
 @jwt_required()
 def show_all_messages():
-    """Gets all messages, organizing them into conversations"""
+    """Gets all messages, organizing them into conversations
+    Returns JSON like:
+        {conversations: {recipient_uid: [message, message, ...], ...}}"""
 
     current_user_id = get_jwt_identity()
 
@@ -1087,7 +1068,6 @@ def show_all_messages():
         conversations[participant_id].append(message.serialize(f"{message.sender.firstname} {message.sender.lastname}",
                                       f"{message.recipient.firstname} {message.recipient.lastname}"))
 
-    # Convert the defaultdict to a regular dictionary
     conversations = dict(conversations)
 
     return jsonify(conversations=conversations), 200
