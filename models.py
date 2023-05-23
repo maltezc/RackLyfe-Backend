@@ -35,7 +35,7 @@ class User(db.Model):
     email = db.Column(
         db.Text,
         nullable=False,
-        unique=True,
+        unique=True, # REVIEW: what if two customer share an email? very common with older people
     )
 
     password = db.Column(
@@ -143,12 +143,12 @@ class User(db.Model):
         False.
         """
 
-        user = cls.query.filter_by(email=email).first()
+        user = cls.query.filter_by(email=email).first() # REVIEW: you can findAll if email is not unique and try password on both just login whoever passes
 
         if user:
             is_auth = bcrypt.check_password_hash(user.password, password)
             if is_auth:
-                return user
+                return user # REVIEW: do you need to return the entire user here or just specific details?
 
         return False
 
@@ -380,7 +380,7 @@ class State(db.Model):
 # region Zipcodes
 
 class ZipCode(db.Model):
-    """ A zipcode for every city """
+    """ A zipcode for every city """ # REVIEW: some cities could have multiple zipz and vice versa
     __tablename__ = 'zip_codes'
 
     id = db.Column(
