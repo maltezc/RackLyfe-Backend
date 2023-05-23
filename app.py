@@ -57,13 +57,13 @@ db.create_all()
 def login():
     """Handle user login.
     Returns JSON like:
-        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}""" # REVIEW: I would put is_admin and user_uid on the token and just return whatever you need for the frontend user here
 
     data = request.json
     email = data['email']
     password = data['password']
 
-    user = User.authenticate(email, password)
+    user = User.authenticate(email, password) # REVIEW: what happens if it fails?
     token = create_access_token(identity=user.id)
 
     return jsonify(token=token, user=user.serialize()), 200
@@ -71,7 +71,7 @@ def login():
 
 @app.post("/api/auth/signup_admin")
 @jwt_required()
-@admin_required
+@admin_required # REVIEW: they can't already be an admin if they are signing up now
 def create_admin_user():
     """Add admin user, and return data about new user.
     Returns JSON like:
@@ -485,12 +485,13 @@ def search():
     # if len(key) > 0:
     # TODO: Create dynamic filter: if filter is not empty, add filter to ultimate filter
     # https://stackoverflow.com/questions/41305129/sqlalchemy-dynamic-filtering
-
+    
     # test = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
     # qs = Book.query.filter(Book.title.ilike(f"%{title}%") | Book.author.ilike(f"%{author}%") | Book.isbn.ilike(f"%{isbn}%")).all()
     # qs = filter book by mandatory field
     # if author is not none, qs = qs.filter(author)
 
+    # REVIEW: try using separate search methods, elastic search for titles and authors and then spatial search for locations
     city_users = get_all_users_in_city("Hercules")
     state_users = get_all_users_in_state("CA")
     zipcode_users = get_all_users_in_zipcode("94547")
