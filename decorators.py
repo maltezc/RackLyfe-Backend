@@ -17,7 +17,7 @@ def admin_required(f):
 
         # user_id = g.user_id  # assuming g.user_id is the user ID of the logged-in user
         user = User.query.get(current_user_id)
-        if not user or not user.is_admin:
+        if not user or not user.is_admin: # REVIEW: this would allow any user to be admin. If I exist as a user I immediately pass the OR statement. You could do if not user abort(400) then else if not user.is_admin abort(403)
             abort(403)  # raise a 403 Forbidden error if the user is not an admin
         return f(*args, **kwargs)
 
