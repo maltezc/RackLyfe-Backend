@@ -18,12 +18,16 @@ from reservation_helpers import create_new_reservation, attempt_reservation_upda
     attempt_to_accept_reservation_request, attempt_to_decline_reservation_request, attempt_to_cancel_reservation
 from decorators import admin_required, is_reservation_booker, is_reservation_listing_owner, \
     is_book_owner_or_is_reservation_booker_or_is_admin, is_message_sender_reciever_or_admin
-from models import db, connect_db, User, Address, City, Message, Book, Reservation, BookImage, \
+from models import db, User, Address, City, Message, Book, Reservation, BookImage, \
     UserImage
+from database import connect_db
 from util_filters import get_all_users_in_city, get_all_users_in_state, get_all_users_in_zipcode, get_all_books_in_city, \
     get_all_books_in_state, get_all_books_in_zipcode, basic_book_search, locations_within_radius, books_within_radius
 from enums import UserStatusEnums, PriceEnums, ReservationStatusEnum, BookStatusEnum, RentalDurationEnum, \
     BookConditionEnum
+
+
+from mnb-backend.root.routes import root_routes
 
 load_dotenv()
 
