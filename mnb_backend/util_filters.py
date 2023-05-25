@@ -4,7 +4,7 @@ from geopy.geocoders import Nominatim
 from sqlalchemy import func
 
 from mnb_backend.addresses.models import Address, City, State, ZipCode, Location
-from mnb_backend.listings.models import Book
+from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
 
 
@@ -51,7 +51,7 @@ def get_all_users_in_zipcode(zipcode):
 def get_all_books_in_city(city):
     """ Gets all books of a city"""
 
-    books = Book.query \
+    books = Listing.query \
         .join(User) \
         .join(Address) \
         .join(City) \
@@ -63,7 +63,7 @@ def get_all_books_in_city(city):
 def get_all_books_in_state(state):
     """ Gets all books of a city"""
 
-    books = Book.query \
+    books = Listing.query \
         .join(User) \
         .join(Address) \
         .join(City) \
@@ -76,7 +76,7 @@ def get_all_books_in_state(state):
 def get_all_books_in_zipcode(code):
     """ Gets all books of a Zipcode"""
 
-    books = Book.query \
+    books = Listing.query \
         .join(User) \
         .join(Address) \
         .join(ZipCode) \
@@ -88,13 +88,13 @@ def get_all_books_in_zipcode(code):
 def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
     """ Performs basic searches based off the information provided """
 
-    books = Book.query
+    books = Listing.query
     if logged_in_user_uid is not None:
         books = books.join(User).filter(User.id != logged_in_user_uid)
     if book_title is not None:
-        books = books.filter(Book.title.ilike(f"%{book_title}%"))
+        books = books.filter(Listing.title.ilike(f"%{book_title}%"))
     if book_author is not None:
-        books = books.filter(Book.author.ilike(f"%{book_author}%"))
+        books = books.filter(Listing.author.ilike(f"%{book_author}%"))
     if city is not None or state is not None or zipcode is not None:
         books = books.join(Address)
         if zipcode is not None:
@@ -124,14 +124,14 @@ def books_within_radius(latitude, longitude, radius, logged_in_user_uid, book_ti
     # create a point from the latitude and longitude values
     point = f"POINT({longitude} {latitude})"
 
-    books = Book.query
+    books = Listing.query
 
     if logged_in_user_uid is not None:
         books = books.join(User).filter(User.id != logged_in_user_uid)
     if book_title is not None:
-        books = books.filter(Book.title.ilike(f"%{book_title}%"))
+        books = books.filter(Listing.title.ilike(f"%{book_title}%"))
     if book_author is not None:
-        books = books.filter(Book.author.ilike(f"%{book_author}%"))
+        books = books.filter(Listing.author.ilike(f"%{book_author}%"))
 
     books_nearby = books.join(Address).join(Location).filter(
         func.ST_DistanceSphere(Location.point, point) <= radius_m)

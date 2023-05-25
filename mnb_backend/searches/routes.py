@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, request
 
 from mnb_backend.addresses.models import Address, City
-from mnb_backend.listings.models import Book
+from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
 from mnb_backend.util_filters import get_all_books_in_zipcode, get_all_users_in_city, get_all_users_in_state, \
     get_all_users_in_zipcode, get_all_books_in_city, get_all_books_in_state, basic_book_search, books_within_radius, \
@@ -51,7 +51,7 @@ def search():
     city_books = get_all_books_in_city("Hercules")
     state_books = get_all_books_in_state("CA")
     zipcode_books = get_all_books_in_zipcode("94547")
-    all_books = Book.query.all()
+    all_books = Listing.query.all()
     searched_books = basic_book_search(1, title, author, city, state, zipcode)
 
     serialized = [book.serialize() for book in searched_books]
@@ -97,7 +97,7 @@ def list_all_books():
     Returns JSON like:
        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    books = Book.query.all()
+    books = Listing.query.all()
 
     serialized = [book.serialize() for book in books]
     return jsonify(pools=serialized)
@@ -125,7 +125,7 @@ def show_book_by_id(book_uid):
     Returns JSON like:
         {book: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    book = Book.query.get_or_404(book_uid)
+    book = Listing.query.get_or_404(book_uid)
     serialized = book.serialize()
 
     return jsonify(book=serialized)

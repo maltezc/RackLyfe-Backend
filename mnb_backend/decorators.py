@@ -41,7 +41,7 @@ def is_book_owner_or_is_reservation_booker_or_is_admin(func):
 
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        if reservation.renter_id == user.id or reservation.book.owner_id == user.id or user.is_admin:
+        if reservation.renter_id == user.id or reservation.listing.owner_id == user.id or user.is_admin:
             return func(*args, **kwargs)
 
         return jsonify({"error": "Not authorized"}), 401
@@ -83,7 +83,7 @@ def is_reservation_listing_owner(func):
 
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        if reservation.book.owner.id == user.id:
+        if reservation.listing.owner.id == user.id:
             return func(*args, **kwargs)
 
         return jsonify({"error": "Not authorized"}), 401

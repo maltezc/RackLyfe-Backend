@@ -1,12 +1,12 @@
 # noinspection PyUnresolvedReferences
 from __init__ import db
 
-from mnb_backend.enums import BookConditionEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
+from mnb_backend.enums import BookConditionEnum, RentalDurationEnum, ListingStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
 
 from mnb_backend.addresses.models import State, Address, Location, City, ZipCode
-from mnb_backend.listing_images.models import BookImage
-from mnb_backend.listings.models import Book
+from mnb_backend.listing_images.models import ListingImage
+from mnb_backend.listings.models import Listing
 from mnb_backend.messages.models import Message
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.user_images.models import UserImage
@@ -194,7 +194,7 @@ db.session.commit()
 
 # region books---------------------------------------------
 
-book1 = Book(
+book1 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
@@ -204,17 +204,17 @@ book1 = Book(
     condition=BookConditionEnum.FAIR,
     rate_price=PriceEnums.FOUR,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE,
+    status=ListingStatusEnum.AVAILABLE,
 )
 user1.books.append(book1)
 
-bookImage1 = BookImage(
+bookImage1 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
 )
 book1.images.append(bookImage1)
 
-book2 = Book(
+book2 = Listing(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
     title="Harry Potter and the Sorcerer's Stone",
     author="J.K. Rowling, Olly Moss ",
@@ -223,24 +223,24 @@ book2 = Book(
     condition=BookConditionEnum.LIKE_NEW,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.UNAVAILABLE,
+    status=ListingStatusEnum.UNAVAILABLE,
 )
 user1.books.append(book2)
 
-bookImage2 = BookImage(
+bookImage2 = ListingImage(
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
               "=ACfU3U0pxFjDUW9HplCcIzSmlQs0B15≥9ow&w=1280",
 )
 book2.images.append(bookImage2)
 
-bookImage2a = BookImage(
+bookImage2a = ListingImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
 )
 book2.images.append(bookImage2a)
 
 db.session.add_all([book1, bookImage1, book2, bookImage2, bookImage2a])
 
-book3 = Book(
+book3 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
                       "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Foundation",
@@ -250,12 +250,12 @@ book3 = Book(
     condition=BookConditionEnum.USED,
     rate_price=PriceEnums.THREE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE
+    status=ListingStatusEnum.AVAILABLE
 )
 # book2.owner = user2
 user2.books.append(book3)
 
-bookImage3 = BookImage(
+bookImage3 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )
@@ -264,7 +264,7 @@ book3.images.append(bookImage3)
 
 db.session.add_all([book3, bookImage3])
 
-book4 = Book(
+book4 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
                       "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Endurance Shackleton's Incredible Voyage",
@@ -274,12 +274,12 @@ book4 = Book(
     condition=BookConditionEnum.FAIR,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
-    status=BookStatusEnum.AVAILABLE
+    status=ListingStatusEnum.AVAILABLE
 )
 book4.owner = user3
 # user3.books.append(book3)
 
-bookImage4 = BookImage(
+bookImage4 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
               "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
 )

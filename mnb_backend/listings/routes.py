@@ -3,25 +3,25 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from mnb_backend.database import db
-from mnb_backend.api_helpers import db_post_book, aws_upload_image, db_add_book_image
-from mnb_backend.listings.models import Book
+from mnb_backend.api_helpers import db_post_listing, aws_upload_image, db_add_listing_image
+from mnb_backend.listings.models import Listing
 
 listings_routes = Blueprint('listings_routes', __name__)
 
 
-@listings_routes.post("/api/books")
+@listings_routes.post("/api/listings")
 @jwt_required()
-def create_book():
-    """Add book, and return data about new book.
+def create_listing():
+    """Add listing, and return data about new listing.
 
     Returns JSON like:
-        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
+        {listing: {listing_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
     """
-    # TODO: try posting a book object to the db first. if successful, post book image to aws, if successful,
-    #  switch url for book from dummy_url to aws_url. if anything fails delete the book and the book image.
+    # TODO: try posting a listing object to the db first. if successful, post listing image to aws, if successful,
+    #  switch url for listing from dummy_url to aws_url. if anything fails delete the listing and the listing image.
     # https://www.geeksforgeeks.org/try-except-else-and-finally-in-python/
 
-    print("I'm in api/books")
+    print("I'm in api/listings")
     current_user_id = get_jwt_identity()
     if current_user_id:
         try:
@@ -33,8 +33,8 @@ def create_book():
             rate_price = int(request.form.get("rate_price"))
             rate_schedule = request.form.get("rate_schedule")
 
-            # post book to db
-            book_posted = db_post_book(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
+            # post listing to db
+            listing_posted = db_post_listing(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
 
             images_posted = []
             # post image to aws
@@ -42,90 +42,90 @@ def create_book():
             for image in images:
                 image_url = aws_upload_image(images[image])
                 # post image to database
-                image_element = db_add_book_image(current_user_id, book_posted.id, image_url)
+                image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
                 images_posted.append(image_element.serialize())
 
-            # TODO: might have to set primary book image here but then its pinging the db twice for the patch request
+            # TODO: might have to set primary listing image here but then its pinging the db twice for the patch request
 
-            return jsonify(book=book_posted.serialize(), images_posted=images_posted), 201
+            return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
             print("Error", error)
-            return jsonify({"error": f"Failed to add book and book image: {error}", }), 401
+            return jsonify({"error": f"Failed to add listing and listing image: {error}", }), 401
 
 
-@listings_routes.patch('/api/books/<int:book_uid>')
+@listings_routes.patch('/api/listings/<int:listing_uid>')
 @jwt_required()
-def update_book(book_uid):
-    """ Update book information
+def update_listing(listing_uid):
+    """ Update listing information
 
     Returns JSON like:
-        {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
+        {listing: {listing_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
 
-    Authorization: must be owner of book
+    Authorization: must be owner of listing
     """
 
     current_user = get_jwt_identity()
-    book = Book.query.get_or_404(book_uid)
-    print("book owner", book.owner_username)
-    if current_user == book.owner_username:
+    listing = Listing.query.get_or_404(listing_uid)
+    print("listing owner", listing.owner_username)
+    if current_user == listing.owner_username:
         data = request.json
 
-        book.orig_image_url = data['orig_image_url'],
-        book.small_image_url = data['small_image_url'],
-        book.title = data['title'],
-        book.author = data['author'],
-        book.isbn = data['isbn'],
-        book.genre = data['genre'],
-        book.condition = data['condition'],
-        book.price = data['price'],
+        listing.orig_image_url = data['orig_image_url'],
+        listing.small_image_url = data['small_image_url'],
+        listing.title = data['title'],
+        listing.author = data['author'],
+        listing.isbn = data['isbn'],
+        listing.genre = data['genre'],
+        listing.condition = data['condition'],
+        listing.price = data['price'],
 
-        db.session.add(book)
+        db.session.add(listing)
         db.session.commit()
 
-        return jsonify(book=book.serialize()), 200
+        return jsonify(listing=listing.serialize()), 200
 
     return jsonify({"error": "not authorized"}), 401
 
 
-@listings_routes.patch('/api/users/<int:user_uid>/books/<int:book_uid>/toggle_status')
+@listings_routes.patch('/api/users/<int:user_uid>/listings/<int:listing_uid>/toggle_status')
 @jwt_required()
-def toggle_book_status(user_uid, book_uid):
-    """ Toggles book availability status. """
+def toggle_listing_status(user_uid, listing_uid):
+    """ Toggles listing availability status. """
 
     current_user = get_jwt_identity()
 
     if current_user == user_uid:
-        book = Book.query.get_or_404(book_uid)
+        listing = Listing.query.get_or_404(listing_uid)
 
-        if book.status == "Available":
-            book.status = "Checked Out"
+        if listing.status == "Available":
+            listing.status = "Checked Out"
         else:
-            book.status = "Available"
+            listing.status = "Available"
 
-        db.session.add(book)
+        db.session.add(listing)
         db.session.commit()
 
-        return jsonify(book=book.serialize()), 200
+        return jsonify(listing=listing.serialize()), 200
 
     return jsonify({"error": "not authorized"}), 401
 
 
-@listings_routes.delete('/api/books/<int:book_uid>')
+@listings_routes.delete('/api/listings/<int:listing_uid>')
 @jwt_required()
-def delete_book(book_uid):
-    """ update book information
+def delete_listing(listing_uid):
+    """ update listing information
 
     Returns JSON like:
-    {book: {book_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
+    {listing: {listing_uid, owner_uid, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}}
 
-    Authorization: must be owner of book
+    Authorization: must be owner of listing
     """
 
     current_user = get_jwt_identity()
-    book = Book.query.get_or_404(book_uid)
-    if current_user == book.owner_id:
-        db.session.delete(book)
+    listing = Listing.query.get_or_404(listing_uid)
+    if current_user == listing.owner_id:
+        db.session.delete(listing)
         db.session.commit()
 
         return jsonify("Book successfully deleted"), 200
