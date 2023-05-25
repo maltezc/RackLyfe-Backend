@@ -2,8 +2,8 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from database import db
-from api_helpers import db_post_book, aws_upload_image, db_add_book_image
+from mnb_backend.database import db
+from mnb_backend.api_helpers import db_post_book, aws_upload_image, db_add_book_image
 from mnb_backend.listings.models import Book
 
 listings_routes = Blueprint('listings_routes', __name__)

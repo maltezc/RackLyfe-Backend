@@ -1,6 +1,6 @@
 """Model for Address"""
-from database import db
-from geoalchemy2 import Geography, Geometry
+from mnb_backend.database import db
+from geoalchemy2 import Geometry
 
 
 # region Address

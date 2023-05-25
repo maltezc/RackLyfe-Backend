@@ -10,8 +10,8 @@ import traceback
 
 from flask import jsonify
 
-from database import db
-from enums import PriceEnums
+from mnb_backend.database import db
+from mnb_backend.enums import PriceEnums
 from mnb_backend.listing_images.models import BookImage
 from mnb_backend.listings.models import Book
 from mnb_backend.user_images.models import UserImage

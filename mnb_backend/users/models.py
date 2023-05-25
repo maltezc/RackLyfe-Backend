@@ -1,8 +1,8 @@
 """Models for Users"""
 from flask_bcrypt import Bcrypt
-from database import db
+from mnb_backend.database import db
 
-from enums import UserStatusEnums, enum_serializer
+from mnb_backend.enums import UserStatusEnums, enum_serializer
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 bcrypt = Bcrypt()

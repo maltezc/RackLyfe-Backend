@@ -1,5 +1,5 @@
 """Listing Images Model"""
-from database import db
+from mnb_backend.database import db
 
 
 # region book image

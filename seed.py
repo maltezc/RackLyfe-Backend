@@ -1,8 +1,7 @@
 # noinspection PyUnresolvedReferences
 from __init__ import db
 
-from geoalchemy2 import Geography, Geometry
-from enums import BookConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
+from mnb_backend.enums import BookConditionEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
 
 from mnb_backend.addresses.models import State, Address, Location, City, ZipCode

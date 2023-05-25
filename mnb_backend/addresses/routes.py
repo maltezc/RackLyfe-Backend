@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from database import db
+from mnb_backend.database import db
 
 from mnb_backend.addresses.address_helpers import set_retrieve_address
 from mnb_backend.addresses.models import Address

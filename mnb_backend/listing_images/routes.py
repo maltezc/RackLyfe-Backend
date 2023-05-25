@@ -2,9 +2,9 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from database import db
+from mnb_backend.database import db
 
-from api_helpers import upload_to_aws
+from mnb_backend.api_helpers import upload_to_aws
 from mnb_backend.listing_images.models import BookImage
 from mnb_backend.listings.models import Book
 

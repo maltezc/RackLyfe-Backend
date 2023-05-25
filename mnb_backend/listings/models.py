@@ -1,6 +1,6 @@
 """Models for listings"""
-from database import db
-from enums import enum_serializer, PriceEnums, RentalDurationEnum, BookStatusEnum
+from mnb_backend.database import db
+from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, BookStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 

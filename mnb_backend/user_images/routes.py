@@ -3,8 +3,8 @@ from flask import jsonify, request, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
-from api_helpers import aws_delete_image, aws_upload_image, db_add_user_image
-from database import db
+from mnb_backend.api_helpers import aws_delete_image, aws_upload_image, db_add_user_image
+from mnb_backend.database import db
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 

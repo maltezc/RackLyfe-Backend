@@ -7,13 +7,13 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from mnb_backend.listings.models import Book
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
-from reservation_helpers import create_new_reservation, reservation_is_in_future, attempt_reservation_update, \
+from mnb_backend.reservation_helpers import create_new_reservation, reservation_is_in_future, attempt_reservation_update, \
     attempt_to_cancel_reservation, attempt_to_accept_reservation_request, attempt_to_decline_reservation_request
 
-from decorators import is_reservation_listing_owner, is_book_owner_or_is_reservation_booker_or_is_admin, \
+from mnb_backend.decorators import is_reservation_listing_owner, is_book_owner_or_is_reservation_booker_or_is_admin, \
     is_reservation_booker
 
-from enums import ReservationStatusEnum
+from mnb_backend.enums import ReservationStatusEnum
 
 reservations_routes = Blueprint('reservations_routes_routes', __name__)
 

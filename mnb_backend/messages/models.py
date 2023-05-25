@@ -1,7 +1,7 @@
 """Models for Messages"""
 from datetime import datetime
 
-from database import db
+from mnb_backend.database import db
 
 
 # region Messages

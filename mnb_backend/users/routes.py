@@ -1,14 +1,12 @@
 """Routes for users blueprint."""
 
-from flask import Flask, Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from database import db
+from mnb_backend.database import db
 from mnb_backend.users.models import User
 
 root_views = Blueprint('user_views', __name__)
-
-from sqlalchemy.exc import IntegrityError
 
 user_routes = Blueprint('user_routes', __name__)
 

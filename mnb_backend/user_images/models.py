@@ -1,5 +1,5 @@
 """Models for UserImage"""
-from database import db
+from mnb_backend.database import db
 
 
 # region userimage

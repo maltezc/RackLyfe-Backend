@@ -2,8 +2,8 @@ from datetime import timedelta, datetime
 
 from flask import jsonify
 
-from database import db
-from enums import RentalDurationEnum, ReservationStatusEnum
+from mnb_backend.database import db
+from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
 from mnb_backend.reservations.models import Reservation
 
 

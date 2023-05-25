@@ -1,14 +1,13 @@
 """Routes for authentication blueprint."""
 
 from flask import Blueprint, request, jsonify
-from sqlalchemy.exc import IntegrityError
-from flask_jwt_extended import get_jwt_identity, create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, jwt_required
 
-from database import db
-from decorators import admin_required
-from enums import UserStatusEnums
+from mnb_backend.database import db
+from mnb_backend.decorators import admin_required
+from mnb_backend.enums import UserStatusEnums
 
-from api_helpers import upload_to_aws
+from mnb_backend.api_helpers import upload_to_aws
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 
