@@ -2,8 +2,9 @@ from datetime import timedelta, datetime
 
 from flask import jsonify
 
-from enums import RentalDurationEnum, ReservationStatusEnum
-from models import db, Reservation
+from mnb_backend.database import db
+from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
+from mnb_backend.reservations.models import Reservation
 
 
 def create_new_reservation(start_date, duration, book_rate_schedule, book, user):

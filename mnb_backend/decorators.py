@@ -1,7 +1,11 @@
-from models import User, Reservation, Message
+
 from flask import abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from functools import wraps
+
+from mnb_backend.messages.models import Message
+from mnb_backend.reservations.models import Reservation
+from mnb_backend.users.models import User
 
 
 def admin_required(f):
@@ -87,7 +91,7 @@ def is_reservation_listing_owner(func):
     return decorated_function
 
 
-def is_message_sender_reciever_or_admin(func):
+def is_message_sender_receiver_or_admin(func):
     """
     Decorator to ensure user is authorized to perform action on book"""
 

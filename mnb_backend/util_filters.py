@@ -1,11 +1,12 @@
+
 from geopy.geocoders import Nominatim
-from models import db, connect_db, User, Address, Location, City, State, ZipCode, Message, Book, Reservation, BookImage
+
 from sqlalchemy import func
 
+from mnb_backend.addresses.models import Address, City, State, ZipCode, Location
+from mnb_backend.listings.models import Book
+from mnb_backend.users.models import User
 
-# from flask import Flask
-# from flask_sqlalchemy import SQLAlchemy
-# from geoalchemy2 import Geometry
 
 # region User Queries
 def get_all_users_in_city(city):
@@ -85,7 +86,7 @@ def get_all_books_in_zipcode(code):
 
 
 def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
-    """ Performs basic search based off the information provided """
+    """ Performs basic searches based off the information provided """
 
     books = Book.query
     if logged_in_user_uid is not None:
