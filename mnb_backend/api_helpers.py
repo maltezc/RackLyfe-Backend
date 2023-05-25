@@ -12,8 +12,8 @@ from flask import jsonify
 
 from mnb_backend.database import db
 from mnb_backend.enums import PriceEnums
-from mnb_backend.listing_images.models import BookImage
-from mnb_backend.listings.models import Book
+from mnb_backend.listing_images.models import ListingImage
+from mnb_backend.listings.models import Listing
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 
@@ -150,11 +150,11 @@ def aux_make_thumbnail_manual(file):
     img.show()
 
 
-def db_add_book_image(user_id, book_uid, image_url):
+def db_add_listing_image(user_id, book_uid, image_url):
     """ Posts book_image to db while in try block and returns serialized if successful, returns an error if not. """
 
     try:
-        book_image = BookImage(
+        book_image = ListingImage(
             # book_owner_uid=user_id,
             book_id=book_uid,
             image_url=image_url,
@@ -168,7 +168,7 @@ def db_add_book_image(user_id, book_uid, image_url):
         return jsonify({"error": "Failed to add book_image"}), 401
 
 
-def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_schedule):
+def db_post_listing(user_id, title, author, isbn, condition, rate_price, rate_schedule):
     """ Posts book to aws while in try block and returns serialized if successful, returns an error if not.
     """
 
@@ -189,7 +189,7 @@ def db_post_book(user_id, title, author, isbn, condition, rate_price, rate_sched
 
     # need to somehow take a  for a price
     try:
-        book = Book(
+        book = Listing(
             owner_id=user_id,
             title=title,
             author=author,

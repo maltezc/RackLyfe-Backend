@@ -4,10 +4,10 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from mnb_backend.listings.models import Book
+from mnb_backend.listings.models import Listing
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
-from mnb_backend.reservation_helpers import create_new_reservation, reservation_is_in_future, attempt_reservation_update, \
+from mnb_backend.reservations.reservation_helpers import create_new_reservation, reservation_is_in_future, attempt_reservation_update, \
     attempt_to_cancel_reservation, attempt_to_accept_reservation_request, attempt_to_decline_reservation_request
 
 from mnb_backend.decorators import is_reservation_listing_owner, is_book_owner_or_is_reservation_booker_or_is_admin, \
@@ -38,7 +38,7 @@ def create_reservation(book_uid):
         start_date_in = data['start_date']
         duration_in = data['duration']
 
-        book = Book.query.get_or_404(book_uid)
+        book = Listing.query.get_or_404(book_uid)
         start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
         duration = int(duration_in)
         book_rate_schedule = book.rate_schedule
@@ -75,7 +75,7 @@ def get_all_upcoming_reservations_for_book(book_uid):
 
     current_user_id = get_jwt_identity()
 
-    book = Book.query.get_or_404(book_uid)
+    book = Listing.query.get_or_404(book_uid)
     if book.owner == current_user_id:
         reservations = book.reservations.filter(Reservation.start_date > datetime.now())
 
@@ -100,7 +100,7 @@ def get_all_past_reservations_for_book(book_uid):
 
     current_user_id = get_jwt_identity()
 
-    book = Book.query.get_or_404(book_uid)
+    book = Listing.query.get_or_404(book_uid)
     if book.owner == current_user_id:
         reservations = book.reservations.filter(Reservation.start_date < datetime.now())
 

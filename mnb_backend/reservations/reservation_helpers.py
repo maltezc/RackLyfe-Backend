@@ -38,8 +38,8 @@ def create_new_reservation(start_date, duration, book_rate_schedule, book, user)
 def attempt_reservation_update(reservation, start_date, duration):
     """ Function for updating a reservation"""
 
-    total, timedelta_duration, duration = get_time_duration_and_total(reservation.book.rate_schedule, duration,
-                                                                      reservation.book)
+    total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration,
+                                                                      reservation.listing)
     try:
         reservation.start_date = start_date
         reservation.duration = timedelta_duration

@@ -3,7 +3,7 @@ from flask import jsonify, Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from collections import defaultdict
 
-from mnb_backend.listings.models import Book
+from mnb_backend.listings.models import Listing
 from mnb_backend.messages.models import (db, Message)
 
 
@@ -80,7 +80,7 @@ def show_conversation(book_listing_id):
     """Gets the conversation between the current user and the book owner"""
 
     current_user_id = get_jwt_identity()
-    book = Book.query.get_or_404(book_listing_id)
+    book = Listing.query.get_or_404(book_listing_id)
     book_owner = book.owner
 
     # Query messages between the current user and the book owner

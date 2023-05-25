@@ -39,7 +39,7 @@ class ReservationStatusEnum(Enum):
     COMPLETED = "Completed"
 
 
-class BookStatusEnum(Enum):
+class ListingStatusEnum(Enum):
     """ Enum for book status """
 
     AVAILABLE = "Available"

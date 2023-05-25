@@ -1,14 +1,14 @@
 """Models for listings"""
 from mnb_backend.database import db
-from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, BookStatusEnum
+from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, ListingStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 
-# region Books
-class Book(db.Model):
-    """ Book in the system """
+# region Listings
+class Listing(db.Model):
+    """ Listing in the system """
 
-    __tablename__ = 'books'
+    __tablename__ = 'listings'
 
     id = db.Column(
         db.Integer,
@@ -20,14 +20,14 @@ class Book(db.Model):
         db.ForeignKey("users.id"),
         nullable=False,
     )
-    owner = db.relationship("User", back_populates="books", uselist=False)
+    owner = db.relationship("User", back_populates="listings", uselist=False)
 
     primary_image_url = db.Column(
         db.Text,
         nullable=False,
     )
 
-    images = db.Relationship("BookImage", back_populates="book", uselist=True)
+    images = db.Relationship("ListingImage", back_populates="listing", uselist=True)
 
     title = db.Column(
         db.Text,
@@ -58,11 +58,11 @@ class Book(db.Model):
     )
 
     status = db.Column(
-        SQLAlchemyEnum(BookStatusEnum, name='book_status_enum'),
+        SQLAlchemyEnum(ListingStatusEnum, name='listing_status_enum'),
         nullable=False
     )
 
-    reservations = db.relationship('Reservation', back_populates='book', uselist=True)
+    reservations = db.relationship('Reservation', back_populates='listing', uselist=True)
 
     def serialize(self):
         """ returns self """
@@ -84,7 +84,7 @@ class Book(db.Model):
         }
 
     def __repr__(self):
-        return f"< Book #{self.id}, " \
+        return f"< Listing #{self.id}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
                f"Condition: {self.condition}, Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
 
