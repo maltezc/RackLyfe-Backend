@@ -1,9 +1,17 @@
 # noinspection PyUnresolvedReferences
 from __init__ import db
-from models import User, UserImage, Address, Location, City, State, ZipCode, Book, BookImage, Reservation, Message
+
 from geoalchemy2 import Geography, Geometry
 from enums import BookConditionEnum, StatesEnum, RentalDurationEnum, BookStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
+
+from mnb_backend.addresses.models import State, Address, Location, City, ZipCode
+from mnb_backend.listing_images.models import BookImage
+from mnb_backend.listings.models import Book
+from mnb_backend.messages.models import Message
+from mnb_backend.reservations.models import Reservation
+from mnb_backend.user_images.models import UserImage
+from mnb_backend.users.models import User
 
 db.drop_all()
 db.create_all()

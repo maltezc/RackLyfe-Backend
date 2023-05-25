@@ -7,10 +7,15 @@ from PIL import Image
 import io
 from pathlib import Path
 import traceback
-from models import Book, BookImage, State, UserImage, User
-from models import db
+
 from flask import jsonify
+
+from database import db
 from enums import PriceEnums
+from mnb_backend.listing_images.models import BookImage
+from mnb_backend.listings.models import Book
+from mnb_backend.user_images.models import UserImage
+from mnb_backend.users.models import User
 
 load_dotenv()
 

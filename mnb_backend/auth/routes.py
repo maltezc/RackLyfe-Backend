@@ -3,24 +3,21 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import get_jwt_identity, create_access_token, jwt_required
+
+from database import db
 from decorators import admin_required
 from enums import UserStatusEnums
 
-
 from api_helpers import upload_to_aws
+from mnb_backend.user_images.models import UserImage
+from mnb_backend.users.models import User
 
-from models import UserImage
+auth_routes = Blueprint('auth_routes', __name__)
 
-
-from mnb-backend.users.models import User
-from mnb-backend.database import db
-
-
-auth_views = Blueprint('auth_views', __name__)
 
 # region AUTH ENDPOINTS START
 
-@auth_views.route("/api/auth/login", methods=["POST"])
+@auth_routes.route("/api/auth/login", methods=["POST"])
 def login():
     """Handle user login.
     Returns JSON like:
@@ -36,7 +33,7 @@ def login():
     return jsonify(token=token, user=user.serialize()), 200
 
 
-@auth_views.post("/api/auth/signup_admin")
+@auth_routes.post("/api/auth/signup_admin")
 @jwt_required()
 @admin_required
 def create_admin_user():
@@ -62,7 +59,7 @@ def create_admin_user():
         return jsonify({"error": "Failed to signup"}), 424
 
 
-@auth_views.post("/api/auth/signup")
+@auth_routes.post("/api/auth/signup")
 def create_user():
     """Add user, and return data about new user.
     Returns JSON like:
@@ -99,6 +96,5 @@ def create_user():
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to signup"}), 424
-
 
 # endregion

@@ -1,7 +1,11 @@
-from models import User, Reservation, Message
+
 from flask import abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from functools import wraps
+
+from mnb_backend.messages.models import Message
+from mnb_backend.reservations.models import Reservation
+from mnb_backend.users.models import User
 
 
 def admin_required(f):
