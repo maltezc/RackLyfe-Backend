@@ -1,12 +1,11 @@
 """Routes for searches blueprint."""
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from mnb_backend.addresses.models import Address, City
 from mnb_backend.listings.models import Book
 from mnb_backend.users.models import User
-from util_filters import get_all_books_in_zipcode, get_all_users_in_city, get_all_users_in_state, \
+from mnb_backend.util_filters import get_all_books_in_zipcode, get_all_users_in_city, get_all_users_in_state, \
     get_all_users_in_zipcode, get_all_books_in_city, get_all_books_in_state, basic_book_search, books_within_radius, \
     locations_within_radius
 
