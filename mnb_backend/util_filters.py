@@ -1,3 +1,4 @@
+
 from geopy.geocoders import Nominatim
 
 from sqlalchemy import func
@@ -6,10 +7,6 @@ from mnb_backend.addresses.models import Address, City, State, ZipCode, Location
 from mnb_backend.listings.models import Book
 from mnb_backend.users.models import User
 
-
-# from flask import Flask
-# from flask_sqlalchemy import SQLAlchemy
-# from geoalchemy2 import Geometry
 
 # region User Queries
 def get_all_users_in_city(city):

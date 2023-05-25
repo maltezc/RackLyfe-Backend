@@ -91,7 +91,7 @@ def is_reservation_listing_owner(func):
     return decorated_function
 
 
-def is_message_sender_reciever_or_admin(func):
+def is_message_sender_receiver_or_admin(func):
     """
     Decorator to ensure user is authorized to perform action on book"""
 
