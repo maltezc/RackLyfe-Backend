@@ -1,6 +1,8 @@
-from enums import StatesEnum
-from models import db, State, City, ZipCode, Address, Location, User
-from util_filters import geocode_address
+from mnb_backend.database import db
+from mnb_backend.enums import StatesEnum
+from mnb_backend.addresses.models import State, City, ZipCode, Address, Location
+
+from mnb_backend.util_filters import geocode_address
 
 
 # region address helpers
