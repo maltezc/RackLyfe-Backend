@@ -24,13 +24,13 @@ def create_message():
     current_user_id = get_jwt_identity()
 
     data = request.json
-    book_listing_id = data.get('book_listing_id')
+    listing_id = data.get('listing_id')
     recipient_uid = data.get('recipient_uid')
     message_text = data.get('message_text')
 
     try:
         message = Message(
-            reservation_uid=book_listing_id,
+            reservation_uid=listing_id,
             sender_uid=current_user_id,
             recipient_uid=recipient_uid,
             message_text=message_text,
@@ -74,22 +74,22 @@ def show_all_messages():
     return jsonify(conversations=conversations), 200
 
 
-@messages_routes.get("/api/messages/listing/<int:book_listing_id>")
+@messages_routes.get("/api/messages/listing/<int:listing_id>")
 @jwt_required()
-def show_conversation(book_listing_id):
-    """Gets the conversation between the current user and the book owner"""
+def show_conversation(listing_id):
+    """Gets the conversation between the current user and the listing owner"""
 
     current_user_id = get_jwt_identity()
-    book = Listing.query.get_or_404(book_listing_id)
-    book_owner = book.owner
+    listing = Listing.query.get_or_404(listing_id)
+    listing_owner = listing.owner
 
-    # Query messages between the current user and the book owner
-    listing_messages = Message.query.filter(Message.reservation_uid == book_listing_id)
+    # Query messages between the current user and the listing owner
+    listing_messages = Message.query.filter(Message.reservation_uid == listing_id)
 
-    # check for message sender is book owner or current user
+    # check for message sender is listing owner or current user
     users_messages = (listing_messages
-                      .filter(((Message.sender_uid == current_user_id) & (Message.recipient_uid == book_owner.id)) |
-                              ((Message.sender_uid == book_owner.id) & (Message.recipient_uid == current_user_id)))
+                      .filter(((Message.sender_uid == current_user_id) & (Message.recipient_uid == listing_owner.id)) |
+                              ((Message.sender_uid == listing_owner.id) & (Message.recipient_uid == current_user_id)))
                       .order_by(Message.timestamp.asc())).all()
 
     conversation = [message.serialize(f"{message.sender.firstname} {message.sender.lastname}",

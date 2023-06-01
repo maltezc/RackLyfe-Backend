@@ -40,7 +40,7 @@ class ReservationStatusEnum(Enum):
 
 
 class ListingStatusEnum(Enum):
-    """ Enum for book status """
+    """ Enum for listing status """
 
     AVAILABLE = "Available"
     UNAVAILABLE = "Unavailable"
@@ -54,8 +54,8 @@ class RentalDurationEnum(Enum):
     MONTHLY = 'Month'
 
 
-class BookConditionEnum(Enum):
-    """ Enum for book conditions """
+class ListingConditionEnum(Enum):
+    """ Enum for listing conditions """
 
     LIKE_NEW = "Like New"
     FAIR = "Fair"

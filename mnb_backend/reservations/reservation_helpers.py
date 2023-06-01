@@ -7,10 +7,10 @@ from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
 from mnb_backend.reservations.models import Reservation
 
 
-def create_new_reservation(start_date, duration, book_rate_schedule, book, user):
+def create_new_reservation(start_date, duration, listing_rate_schedule, listing, user):
     """ Function for creating a reservation"""
 
-    total, timedelta_duration, duration = get_time_duration_and_total(book_rate_schedule, duration, book)
+    total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
 
     try:
         reservation = Reservation(
@@ -21,7 +21,7 @@ def create_new_reservation(start_date, duration, book_rate_schedule, book, user)
             status=ReservationStatusEnum.PENDING,
             total=total
         )
-        reservation.book = book
+        reservation.listing = listing
         reservation.renter = user
 
         db.session.add(reservation)
@@ -55,18 +55,18 @@ def attempt_reservation_update(reservation, start_date, duration):
         return jsonify({"error": "unable to create reservation"}), 400
 
 
-def get_time_duration_and_total(book_rate_schedule, duration, book):
+def get_time_duration_and_total(listing_rate_schedule, duration, listing):
     """ Function for getting the timedelta duration and total price of a reservation"""
 
     timedelta_duration = None
-    if book_rate_schedule == RentalDurationEnum.DAILY:
+    if listing_rate_schedule == RentalDurationEnum.DAILY:
         timedelta_duration = timedelta(days=duration)
 
-    elif book_rate_schedule == RentalDurationEnum.WEEKLY:
+    elif listing_rate_schedule == RentalDurationEnum.WEEKLY:
         timedelta_duration = timedelta(weeks=duration)
         duration = int(timedelta_duration.days / 7)
     # TODO: HANDLE MONTHLY RENTAL DURATION
-    total = duration * book.rate_price.value
+    total = duration * listing.rate_price.value
 
     return total, timedelta_duration, duration
 

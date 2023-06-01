@@ -2,13 +2,14 @@
 from datetime import datetime
 
 from mnb_backend.database import db
+from mnb_backend.listings.models import Listing
 from mnb_backend.enums import enum_serializer, ReservationStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 
 # region reservations
 class Reservation(db.Model):
-    """ Connection of a User and Book that they reserve """
+    """ Connection of a User and Listing that they reserve """
 
     __tablename__ = "reservations"
 
@@ -17,12 +18,12 @@ class Reservation(db.Model):
         primary_key=True
     )
 
-    book_uid = db.Column(
+    listing_uid = db.Column(
         db.Integer,
-        db.ForeignKey("books.id"),
+        db.ForeignKey("listings.id"),
         # db.ForeignKey("books.id", ondelete="CASCADE"),
     )
-    book = db.relationship('Book', back_populates='reservations', uselist=False)
+    listing = db.relationship('Listing', back_populates='reservations', uselist=False)
 
     renter_id = db.Column(
         db.Integer,
@@ -68,7 +69,7 @@ class Reservation(db.Model):
     def serialize(self):
         """ returns self """
 
-        book = self.book
+        listing = self.listing
 
         return {
             "id": self.id,
@@ -80,8 +81,8 @@ class Reservation(db.Model):
             "total": self.total,
             "cancellation_reason": self.cancellation_reason,
             # "book": book.serialize(),
-            "book_owner": book.owner.serialize(),
-            "book_renter": self.renter.serialize(),
+            "listing_owner": listing.owner.serialize(),
+            "listing_renter": self.renter.serialize(),
         }
 
     def __repr__(self):

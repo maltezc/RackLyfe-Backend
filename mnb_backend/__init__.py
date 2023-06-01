@@ -6,6 +6,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from mnb_backend.database import connect_db, db
+from mnb_backend.config import DATABASE_URL
 
 from mnb_backend.auth.routes import auth_routes
 from mnb_backend.users.routes import user_routes
@@ -23,20 +24,20 @@ from mnb_backend.searches.routes import searches_routes
 
 # TODO: CREATE REVIEWS ROUTES / MODELS
 
-
-load_dotenv()
-
 app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = True
 CORS(app)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ['DATABASE_URL'].replace("postgres://", "postgresql://"))
-app.config['SQLALCHEMY_ECHO'] = False
+
+# app.config['SQLALCHEMY_DATABASE_URI'] = (
+#     os.environ['DATABASE_URL'].replace("postgres://", "postgresql://"))
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
-app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+# app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
 # Setting up jwt
 app.config["JWT_SECRET_KEY"] = os.environ['SECRET_KEY']
@@ -46,7 +47,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["JWT_IDENTITY_CLAIM"] = "user_uid"
 
 connect_db(app)
-db.create_all()
+# db.create_all()
 
 app.register_blueprint(auth_routes)
 app.register_blueprint(user_routes)
