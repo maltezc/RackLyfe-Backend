@@ -112,7 +112,7 @@ def list_books_of_user(user_uid):
     """
 
     user = User.query.get_or_404(user_uid)
-    books = user.books
+    books = user.listings
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)

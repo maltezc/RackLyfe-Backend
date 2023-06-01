@@ -207,7 +207,7 @@ book1 = Listing(
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
 )
-user1.books.append(book1)
+user1.listings.append(book1)
 
 bookImage1 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
@@ -226,7 +226,7 @@ book2 = Listing(
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.UNAVAILABLE,
 )
-user1.books.append(book2)
+user1.listings.append(book2)
 
 bookImage2 = ListingImage(
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
@@ -254,7 +254,7 @@ book3 = Listing(
     status=ListingStatusEnum.AVAILABLE
 )
 # book2.owner = user2
-user2.books.append(book3)
+user2.listings.append(book3)
 
 bookImage3 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"

@@ -2,7 +2,7 @@
 
 # run these tests like:
 #
-# python -m unittest test_user_model.py
+# python -m unittest test_model.py
 
 
 import os
@@ -12,21 +12,28 @@ from mnb_backend import app
 from unittest import TestCase
 from flask_bcrypt import Bcrypt
 
-from mnb_backend.database import db, connect_db
+from mnb_backend.database import db
 from mnb_backend.users.models import User
+from mnb_backend.config import DATABASE_URL_TEST
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
 # before we import our app, since that will have already
 # connected to the database
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_uri'
 
-from mnb_backend.config import DATABASE_URL_TEST
 
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_TEST
 app.config["TESTING"] = True
 app.config["SQLALCHEMY_ECHO"] = False
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-os.environ['DATABASE_URL'] = DATABASE_URL_TEST
+# os.environ['DATABASE_URL'] = DATABASE_URL_TEST
+print(os.environ['DATABASE_URL'])
+print("engine: ", db.engine)
+print("engine: ", db.engine.url.database)
+print("DATABASE_URL_TEST: ", DATABASE_URL_TEST)
+print("SQLALCHEMY_DATABASE_URI: ", app.config["SQLALCHEMY_DATABASE_URI"])
+
 
 # Now we can import app
 
@@ -40,10 +47,11 @@ bcrypt = Bcrypt()
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
 
-connect_db(app)
+# connect_db(app)
 
 db.drop_all()
 db.create_all()
+breakpoint()
 
 
 class UserModelTestCase(TestCase):
@@ -58,14 +66,16 @@ class UserModelTestCase(TestCase):
                            )
 
         u1 = User(
-            username="u1",
+            firstname="testFirstname",
+            lastname="testLastname",
             email="u1@email.com",
             password=hashed_password,
             # image_url=None,
         )
 
         u2 = User(
-            username="u2",
+            firstname="testFirstname",
+            lastname="testLastname",
             email="u2@email.com",
             password=hashed_password,
             # image_url=None,

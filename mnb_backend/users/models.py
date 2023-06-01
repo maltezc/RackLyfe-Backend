@@ -68,7 +68,7 @@ class User(db.Model):
 
     profile_image = db.relationship('UserImage', back_populates='user', uselist=False, lazy=True, cascade='delete-orphan')
 
-    books = db.relationship('Book', back_populates='owner', uselist=True, lazy=True, cascade='delete-orphan')
+    listings = db.relationship('Listing', back_populates='owner', uselist=True, lazy=True, cascade='delete-orphan')
 
     renting_reservations = db.relationship('Reservation', back_populates='renter',
                                            uselist=True)  # TODO: need to figure this out.
