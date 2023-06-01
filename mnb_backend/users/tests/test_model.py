@@ -6,16 +6,21 @@
 
 
 import os
+os.environ['FLASK_ENV'] = 'test'
+breakpoint()
 from sqlalchemy.exc import IntegrityError
 from mnb_backend import app
 
 from unittest import TestCase
 from flask_bcrypt import Bcrypt
 
-from mnb_backend.database import db
+from mnb_backend.database import db, connect_db
 from mnb_backend.users.models import User
-from mnb_backend.config import DATABASE_URL_TEST
+from geoalchemy2 import Geometry
+# from mnb_backend.config import DATABASE_URL_TEST
+from mnb_backend.config import TestConfig
 
+breakpoint()
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
 # before we import our app, since that will have already
@@ -23,17 +28,24 @@ from mnb_backend.config import DATABASE_URL_TEST
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_uri'
 
 
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_TEST
-app.config["TESTING"] = True
-app.config["SQLALCHEMY_ECHO"] = False
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# os.environ['DATABASE_URL'] = DATABASE_URL_TEST
-print(os.environ['DATABASE_URL'])
-print("engine: ", db.engine)
-print("engine: ", db.engine.url.database)
-print("DATABASE_URL_TEST: ", DATABASE_URL_TEST)
-print("SQLALCHEMY_DATABASE_URI: ", app.config["SQLALCHEMY_DATABASE_URI"])
+# app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_TEST
 
+# app.config["TESTING"] = True
+# app.config["SQLALCHEMY_ECHO"] = False
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# os.environ['DATABASE_URL'] = DATABASE_URL_TEST
+# print(os.environ['DATABASE_URL'])
+# print("engine: ", db.engine)
+# print("engine: ", db.engine.url.database)
+# print("DATABASE_URL_TEST: ", DATABASE_URL_TEST)
+# print("SQLALCHEMY_DATABASE_URI: ", app.config["SQLALCHEMY_DATABASE_URI"])
+
+# app.config.from_object(TestConfig)
+# db = SQLAlchemy(app)
+
+
+breakpoint()
 
 # Now we can import app
 
@@ -50,8 +62,9 @@ bcrypt = Bcrypt()
 # connect_db(app)
 
 db.drop_all()
-db.create_all()
+
 breakpoint()
+db.create_all()
 
 
 class UserModelTestCase(TestCase):

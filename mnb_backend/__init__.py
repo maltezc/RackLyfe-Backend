@@ -6,7 +6,8 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from mnb_backend.database import connect_db
-from mnb_backend.config import DATABASE_URL
+# from mnb_backend.config import
+from mnb_backend.config import DevelopmentConfig, TestConfig, ProductionConfig
 
 from mnb_backend.auth.routes import auth_routes
 from mnb_backend.users.routes import user_routes
@@ -23,11 +24,20 @@ from mnb_backend.searches.routes import searches_routes
 
 
 # TODO: CREATE REVIEWS ROUTES / MODELS
-os.environ['DATABASE_URL'] = "postgresql:///warbler_test"
+# os.environ['DATABASE_URL'] = "postgresql:///warbler_test"
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+if os.environ.get('FLASK_ENV') == 'test':
+    app.config.from_object(TestConfig)
+# elif os.environ.get('FLASK_ENV') == 'prod':
+#     app.config.from_object(ProductionConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
+
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 CORS(app)
@@ -48,6 +58,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
 app.config["JWT_IDENTITY_CLAIM"] = "user_uid"
 
 # TODO: LOOK AT SARAH'S SOLUTION FOR WARBLER FOR IDEAS ON HOW TO RESOLVE DUPOLICATE SQLALCHEMY INSTANCES RUNNING ISSUE.
+breakpoint()
 connect_db(app)
 # db.create_all()
 
