@@ -2,68 +2,26 @@
 
 # run these tests like:
 #
-# python -m unittest test_model.py
+# FLASK_ENV=test python3 -m unittest discover -v
 
 
 import os
-os.environ['FLASK_ENV'] = 'test'
-breakpoint()
+
+from mnb_backend.enums import UserStatusEnums
+
 from sqlalchemy.exc import IntegrityError
 from mnb_backend import app
 
 from unittest import TestCase
 from flask_bcrypt import Bcrypt
 
-from mnb_backend.database import db, connect_db
+from mnb_backend.database import db
 from mnb_backend.users.models import User
-from geoalchemy2 import Geometry
-# from mnb_backend.config import DATABASE_URL_TEST
-from mnb_backend.config import TestConfig
-
-breakpoint()
-# BEFORE we import our app, let's set an environmental variable
-# to use a different database for tests (we need to do this
-# before we import our app, since that will have already
-# connected to the database
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_uri'
-
-
-# app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL_TEST
-
-# app.config["TESTING"] = True
-# app.config["SQLALCHEMY_ECHO"] = False
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# os.environ['DATABASE_URL'] = DATABASE_URL_TEST
-# print(os.environ['DATABASE_URL'])
-# print("engine: ", db.engine)
-# print("engine: ", db.engine.url.database)
-# print("DATABASE_URL_TEST: ", DATABASE_URL_TEST)
-# print("SQLALCHEMY_DATABASE_URI: ", app.config["SQLALCHEMY_DATABASE_URI"])
-
-# app.config.from_object(TestConfig)
-# db = SQLAlchemy(app)
-
-
-breakpoint()
-
-# Now we can import app
-
-# from app import app
-# from mnb_backend import app
 
 # instantiate Bcrypt to create hashed passwords for test data
 bcrypt = Bcrypt()
 
-# Create our tables (we do this here, so we only create the tables
-# once for all tests --- in each test, we'll delete the data
-# and create fresh new clean test data
-
-# connect_db(app)
-
 db.drop_all()
-
-breakpoint()
 db.create_all()
 
 
@@ -71,6 +29,7 @@ class UserModelTestCase(TestCase):
     def setUp(self):
         """
         Create test client, add sample data."""
+
         User.query.delete()
 
         hashed_password = (bcrypt
@@ -79,18 +38,21 @@ class UserModelTestCase(TestCase):
                            )
 
         u1 = User(
-            firstname="testFirstname",
-            lastname="testLastname",
             email="u1@email.com",
             password=hashed_password,
+            firstname="testFirstname",
+            lastname="testLastname",
+            status=UserStatusEnums.ACTIVE,
+
             # image_url=None,
         )
 
         u2 = User(
-            firstname="testFirstname",
-            lastname="testLastname",
             email="u2@email.com",
             password=hashed_password,
+            firstname="u2Firstname",
+            lastname="u2Lastname",
+            status=UserStatusEnums.ACTIVE,
             # image_url=None,
         )
 
@@ -103,78 +65,96 @@ class UserModelTestCase(TestCase):
         self.client = app.test_client()
 
     def tearDown(self):
+        """Clean up any fouled transaction."""
         db.session.rollback()
 
     def test_user_model(self):
-        u1 = User.query.get(self.u1_id)
+        u1 = db.session.get(User, self.u1_id)
 
         # User should have no messages & no followers
-        self.assertEqual(len(u1.messages), 0)
-        self.assertEqual(len(u1.followers), 0)
-
-    # #################### Following tests
-
-    # def test_user_follows(self):
-    #     u1 = User.query.get(self.u1_id)
-    #     u2 = User.query.get(self.u2_id)
-    #
-    #     u1.following.append(u2)
-    #     db.session.commit()
-    #
-    #     self.assertEqual(u2.following, [])
-    #     self.assertEqual(u2.followers, [u1])
-    #     self.assertEqual(u1.followers, [])
-    #     self.assertEqual(u1.following, [u2])
-    #
-    # def test_is_following(self):
-    #     u1 = User.query.get(self.u1_id)
-    #     u2 = User.query.get(self.u2_id)
-    #
-    #     u1.following.append(u2)
-    #     db.session.commit()
-    #
-    #     self.assertTrue(u1.is_following(u2))
-    #     self.assertFalse(u2.is_following(u1))
-    #
-    # def test_is_followed_by(self):
-    #     u1 = User.query.get(self.u1_id)
-    #     u2 = User.query.get(self.u2_id)
-    #
-    #     u1.following.append(u2)
-    #     db.session.commit()
-    #
-    #     self.assertTrue(u2.is_followed_by(u1))
-    #     self.assertFalse(u1.is_followed_by(u2))
-
-    # #################### Signup Tests
+        self.assertEqual(len(u1.sent_messages), 0)
+        self.assertEqual(len(u1.received_messages), 0)
 
     def test_valid_signup(self):
-        u3 = User.signup("u3", "u3@email.com", "password", None)
+        u3 = User.signup("u3@email.com", "password", "u3firstname", "u3lastname", UserStatusEnums.ACTIVE)
 
-        self.assertEqual(u3.username, "u3")
+        # self.assertEqual(u3.username, "u3")
         self.assertEqual(u3.email, "u3@email.com")
         self.assertNotEqual(u3.password, "password")
+        self.assertEqual(u3.firstname, "u3firstname")
+        self.assertEqual(u3.lastname, "u3lastname")
+        self.assertEqual(u3.status, UserStatusEnums.ACTIVE)
         # Bcrypt strings should start with $2b$
         self.assertTrue(u3.password.startswith("$2b$"))
 
     def test_invalid_signup(self):
         # Assert that user signup raises an integrity error when we make a user
-        # with the same username
+        # with the same email
 
         with self.assertRaises(IntegrityError):
-            User.signup("u1", "u1@email.com", "password", None)
+            User.signup("u1@email.com", "password", "u1FirstName", "u1lastname", UserStatusEnums.ACTIVE)
             db.session.commit()
+
+    def test_serialize_user_object(self):
+        """Test serializing a user object to JSON format"""
+
+        # Arrange
+        email = "testuser@example.com"
+        password = "password123"
+        firstname = "Test"
+        lastname = "User"
+        status = UserStatusEnums.ACTIVE
+
+        user = User.signup(email, password, firstname, lastname, status)
+
+        # Act
+        serialized_user = user.serialize()
+
+        # Assert
+        expected_output = {
+            "id": user.id,
+            "status": status.value,
+            "email": email,
+            "firstname": firstname,
+            "lastname": lastname,
+            "is_admin": False,
+            "image_url": None,
+            "preferred_trade_location": None,
+            "user_rating": 5.0,
+            "user_image": None,
+            "address": None
+        }
+        self.assertEqual(serialized_user, expected_output)
+
+    def test_serialize_user_object_missing_related_objects(self):
+        """Test serializing a user object with missing related objects"""
+
+        # Arrange
+        email = "testuser@example.com"
+        password = "password123"
+        firstname = "Test"
+        lastname = "User"
+        status = UserStatusEnums.ACTIVE
+
+        user = User.signup(email, password, firstname, lastname, status)
+
+        # Act
+        serialized_user = user.serialize()
+
+        # Assert
+        self.assertIsNone(serialized_user["address"])
+        self.assertIsNone(serialized_user["user_image"])
 
     # #################### Authentication Tests
 
     def test_valid_authentication(self):
-        u1 = User.query.get(self.u1_id)
+        u1 = db.session.get(User, self.u1_id)
 
-        u = User.authenticate("u1", "password")
+        u = User.authenticate("u1@email.com", "password")
         self.assertEqual(u, u1)
 
     def test_invalid_username(self):
         self.assertFalse(User.authenticate("bad-username", "password"))
 
     def test_wrong_password(self):
-        self.assertFalse(User.authenticate("u1", "bad-password"))
+        self.assertFalse(User.authenticate("u1@email.com", "bad-password"))

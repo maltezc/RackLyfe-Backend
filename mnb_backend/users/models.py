@@ -50,7 +50,8 @@ class User(db.Model):
         default=False
     )
 
-    address = db.relationship('Address', uselist=False, back_populates='user', lazy=True, cascade='delete-orphan')
+    address = db.relationship('Address', uselist=False, back_populates='user', lazy=True, cascade='delete, '
+                                                                                                  'delete-orphan')
 
     image_url = db.Column(
         db.Text,
@@ -66,9 +67,12 @@ class User(db.Model):
         default=5.0
     )
 
-    profile_image = db.relationship('UserImage', back_populates='user', uselist=False, lazy=True, cascade='delete-orphan')
+    profile_image = db.relationship('UserImage', back_populates='user', uselist=False, lazy=True, cascade='delete, '
+                                                                                                          'delete'
+                                                                                                          '-orphan')
 
-    listings = db.relationship('Listing', back_populates='owner', uselist=True, lazy=True, cascade='delete-orphan')
+    listings = db.relationship('Listing', back_populates='owner', uselist=True, lazy=True, cascade='delete, '
+                                                                                                   'delete-orphan')
 
     renting_reservations = db.relationship('Reservation', back_populates='renter',
                                            uselist=True)  # TODO: need to figure this out.
