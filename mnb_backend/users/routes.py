@@ -13,7 +13,7 @@ user_routes = Blueprint('user_routes', __name__)
 
 # region USERS List ENDPOINTS START
 
-@user_routes.get("/api/users")
+@user_routes.get("/")
 def list_users():
     """Return all users in system.
 
@@ -29,7 +29,7 @@ def list_users():
     return jsonify(users=serialized)
 
 
-@user_routes.get('/api/users/<int:user_uid>')
+@user_routes.get('/<int:user_uid>')
 def show_user(user_uid):
     """Show user profile.
 
@@ -42,7 +42,7 @@ def show_user(user_uid):
     return jsonify(user=user)
 
 
-@user_routes.patch('/api/users/<int:user_uid>')
+@user_routes.patch('/<int:user_uid>')
 @jwt_required()
 def update_user(user_uid):
     """ update user information
@@ -56,8 +56,8 @@ def update_user(user_uid):
         user = User.query.get_or_404(user_uid)
         data = request.json
         # TODO: ADD "CHANGE PASSWORD FEATURE LATER"
-        user.email = data['email'],
-        user.location = data['location'],
+        user.firstname = data['firstname'],
+        user.lastname = data['lastname'],
 
         db.session.add(user)
         db.session.commit()
@@ -67,7 +67,7 @@ def update_user(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@user_routes.patch('/api/users/<int:user_uid>/toggle_status')
+@user_routes.patch('/<int:user_uid>/toggle_status')
 @jwt_required()
 def toggle_user_status(user_uid):
     """ Toggles_user's activity_status """
@@ -89,7 +89,7 @@ def toggle_user_status(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@user_routes.delete('/api/users/delete/<int:user_uid>')
+@user_routes.delete('/delete/<int:user_uid>')
 @jwt_required()
 def delete_user(user_uid):
     """Delete user. """

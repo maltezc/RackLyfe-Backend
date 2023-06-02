@@ -54,7 +54,7 @@ connect_db(app)
 # TODO: ADD REVIEWS ROUTES
 # TODO: SET UP ROUTES TO HANDLE UPDATED url_prefix UPDATE FOR ALL ROUTES
 app.register_blueprint(auth_routes, url_prefix='/api/auth')
-app.register_blueprint(user_routes, url_prefix='/api/user')
+app.register_blueprint(user_routes, url_prefix='/api/users')
 app.register_blueprint(user_images_routes, url_prefix='/api/user_images')
 app.register_blueprint(addresses_routes, url_prefix='/api/addresses')
 app.register_blueprint(listings_routes, url_prefix='/api/listings')
