@@ -1,7 +1,8 @@
 # noinspection PyUnresolvedReferences
 from __init__ import db
 
-from mnb_backend.enums import BookConditionEnum, RentalDurationEnum, ListingStatusEnum, ReservationStatusEnum, PriceEnums, UserStatusEnums
+from mnb_backend.enums import ListingConditionEnum, RentalDurationEnum, ListingStatusEnum, ReservationStatusEnum, \
+    PriceEnums, UserStatusEnums
 from datetime import datetime, timedelta
 
 from mnb_backend.addresses.models import State, Address, Location, City, ZipCode
@@ -201,12 +202,12 @@ book1 = Listing(
     author="Patrick Rothfuss",
     isbn=9780756405892,
     genre="",
-    condition=BookConditionEnum.FAIR,
+    condition=ListingConditionEnum.FAIR,
     rate_price=PriceEnums.FOUR,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
 )
-user1.books.append(book1)
+user1.listings.append(book1)
 
 bookImage1 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
@@ -220,12 +221,12 @@ book2 = Listing(
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
-    condition=BookConditionEnum.LIKE_NEW,
+    condition=ListingConditionEnum.LIKE_NEW,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.UNAVAILABLE,
 )
-user1.books.append(book2)
+user1.listings.append(book2)
 
 bookImage2 = ListingImage(
     image_url="https://books.google.com/books/content?id=wrOQLV6xB-wC&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig"
@@ -247,13 +248,13 @@ book3 = Listing(
     author="Isaac Asimov",
     isbn=9780553900347,
     genre="",
-    condition=BookConditionEnum.USED,
+    condition=ListingConditionEnum.USED,
     rate_price=PriceEnums.THREE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE
 )
 # book2.owner = user2
-user2.books.append(book3)
+user2.listings.append(book3)
 
 bookImage3 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -271,7 +272,7 @@ book4 = Listing(
     author="Alfred Lansing",
     isbn=9780753809877,
     genre="",
-    condition=BookConditionEnum.FAIR,
+    condition=ListingConditionEnum.FAIR,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE
@@ -305,7 +306,7 @@ reservation1 = Reservation(
     total=total1,
 )
 reservation1.renter = user2
-reservation1.book = book1
+reservation1.listing = book1
 
 start_date2 = datetime(2023, 5, 25, 12, 1)
 timedelta2 = timedelta(weeks=2)

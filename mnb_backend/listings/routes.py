@@ -128,6 +128,6 @@ def delete_listing(listing_uid):
         db.session.delete(listing)
         db.session.commit()
 
-        return jsonify("Book successfully deleted"), 200
+        return jsonify("Listing successfully deleted"), 200
 
     return jsonify({"error": "not authorized"}), 401

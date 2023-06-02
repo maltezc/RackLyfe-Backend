@@ -48,7 +48,7 @@ def get_all_users_in_zipcode(zipcode):
 
 
 # region Book Queries by geography
-def get_all_books_in_city(city):
+def get_all_listings_in_city(city):
     """ Gets all books of a city"""
 
     books = Listing.query \
@@ -60,7 +60,7 @@ def get_all_books_in_city(city):
     return books
 
 
-def get_all_books_in_state(state):
+def get_all_listings_in_state(state):
     """ Gets all books of a city"""
 
     books = Listing.query \
@@ -85,7 +85,7 @@ def get_all_books_in_zipcode(code):
     return books
 
 
-def basic_book_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
+def basic_listing_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
     """ Performs basic searches based off the information provided """
 
     books = Listing.query
@@ -133,10 +133,10 @@ def books_within_radius(latitude, longitude, radius, logged_in_user_uid, book_ti
     if book_author is not None:
         books = books.filter(Listing.author.ilike(f"%{book_author}%"))
 
-    books_nearby = books.join(Address).join(Location).filter(
+    listings_nearby = books.join(Address).join(Location).filter(
         func.ST_DistanceSphere(Location.point, point) <= radius_m)
 
-    return books_nearby.all()
+    return listings_nearby.all()
 
 
 def locations_within_radius(latitude, longitude, radius):

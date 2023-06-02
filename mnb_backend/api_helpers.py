@@ -150,26 +150,25 @@ def aux_make_thumbnail_manual(file):
     img.show()
 
 
-def db_add_listing_image(user_id, book_uid, image_url):
-    """ Posts book_image to db while in try block and returns serialized if successful, returns an error if not. """
+def db_add_listing_image(user_id, listing_uid, image_url):
+    """ Posts listing_image to db while in try block and returns serialized if successful, returns an error if not. """
 
     try:
-        book_image = ListingImage(
-            # book_owner_uid=user_id,
-            book_id=book_uid,
+        listing_image = ListingImage(
+            listing_id=listing_uid,
             image_url=image_url,
         )
-        db.session.add(book_image)
+        db.session.add(listing_image)
         db.session.commit()
 
-        return book_image
+        return listing_image
     except Exception as error:
         print("Error", error)
-        return jsonify({"error": "Failed to add book_image"}), 401
+        return jsonify({"error": "Failed to add listing_image"}), 401
 
 
 def db_post_listing(user_id, title, author, isbn, condition, rate_price, rate_schedule):
-    """ Posts book to aws while in try block and returns serialized if successful, returns an error if not.
+    """ Posts listing to aws while in try block and returns serialized if successful, returns an error if not.
     """
 
     price_enums_dict = {
@@ -189,7 +188,7 @@ def db_post_listing(user_id, title, author, isbn, condition, rate_price, rate_sc
 
     # need to somehow take a  for a price
     try:
-        book = Listing(
+        listing = Listing(
             owner_id=user_id,
             title=title,
             author=author,
@@ -199,13 +198,13 @@ def db_post_listing(user_id, title, author, isbn, condition, rate_price, rate_sc
             rate_schedule=rate_schedule,
         )
 
-        db.session.add(book)
+        db.session.add(listing)
         db.session.commit()
 
-        return book
+        return listing
     except Exception as error:
-        print("Error, Failed in aws_post_book: ", error)
-        return jsonify({"error": "Failed to add book"}), 401
+        print("Error, Failed in aws_post_listing: ", error)
+        return jsonify({"error": "Failed to add listing"}), 401
 
 
 # TODO: write function to re-thumbnail entire AWS bucket
@@ -215,7 +214,7 @@ def db_add_user_image(user_id, image_url):
 
     try:
         user_image = UserImage(
-            # book_owner_uid=user_id,
+            # listing_owner_uid=user_id,
 
             image_url=image_url,
         )
@@ -231,4 +230,4 @@ def db_add_user_image(user_id, image_url):
         return user_image
     except Exception as error:
         print("Error", error)
-        return jsonify({"error": "Failed to add book_image"}), 401
+        return jsonify({"error": "Failed to add listing_image"}), 401

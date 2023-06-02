@@ -6,7 +6,7 @@ from mnb_backend.addresses.models import Address, City
 from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
 from mnb_backend.util_filters import get_all_books_in_zipcode, get_all_users_in_city, get_all_users_in_state, \
-    get_all_users_in_zipcode, get_all_books_in_city, get_all_books_in_state, basic_book_search, books_within_radius, \
+    get_all_users_in_zipcode, get_all_listings_in_city, get_all_listings_in_state, basic_listing_search, books_within_radius, \
     locations_within_radius
 
 searches_routes = Blueprint('searches_routes', __name__)
@@ -15,10 +15,10 @@ searches_routes = Blueprint('searches_routes', __name__)
 # region Search Endpoints
 @searches_routes.get("/search")
 def search():
-    """ Searches book properties for matched or similar values.
+    """ Searches listing properties for matched or similar values.
 
     Returns JSON like:
-        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+        {listings: {listing_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
 
     # query_string = request.query_string
@@ -26,7 +26,7 @@ def search():
     # endurance
     # 94108
 
-    # logged_in_user_uid, book_title, book_author, city, state, zipcode
+    # logged_in_user_uid, listing_title, listing_author, city, state, zipcode
     title = request.args.get('title')
     author = request.args.get('author')
     isbn = request.args.get('isbn')
@@ -48,17 +48,17 @@ def search():
     state_users = get_all_users_in_state("CA")
     zipcode_users = get_all_users_in_zipcode("94547")
     users = User.query.join(Address).join(City).filter(City.city_name == "Hercules").all()
-    city_books = get_all_books_in_city("Hercules")
-    state_books = get_all_books_in_state("CA")
-    zipcode_books = get_all_books_in_zipcode("94547")
-    all_books = Listing.query.all()
-    searched_books = basic_book_search(1, title, author, city, state, zipcode)
+    city_listings = get_all_listings_in_city("Hercules")
+    state_listings = get_all_listings_in_state("CA")
+    zipcode_listings = get_all_books_in_zipcode("94547")
+    all_listings = Listing.query.all()
+    searched_listings = basic_listing_search(1, title, author, city, state, zipcode)
 
-    serialized = [book.serialize() for book in searched_books]
-    return jsonify(books=serialized)
+    serialized = [listing.serialize() for listing in searched_listings]
+    return jsonify(listings=serialized)
 
 
-@searches_routes.get("/api/search/books_nearby")
+@searches_routes.get("/api/search/listings_nearby")
 def list_nearby_books():
     """ Shows all books nearby
 
@@ -112,7 +112,7 @@ def list_books_of_user(user_uid):
     """
 
     user = User.query.get_or_404(user_uid)
-    books = user.books
+    books = user.listings
     serialized = [book.serialize() for book in books]
 
     return jsonify(books=serialized)
@@ -141,7 +141,7 @@ def show_books_by_city():
 
     city = request.args.get('city')  # mandatory
 
-    books = get_all_books_in_city(city)
+    books = get_all_listings_in_city(city)
 
     serialized = [book.serialize() for book in books]
     return jsonify(books=serialized)
@@ -157,7 +157,7 @@ def show_books_by_state():
 
     state = request.args.get('state')  # mandatory
 
-    books = get_all_books_in_state(state)
+    books = get_all_listings_in_state(state)
 
     serialized = [book.serialize() for book in books]
     return jsonify(books=serialized)

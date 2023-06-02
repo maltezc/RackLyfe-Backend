@@ -28,14 +28,14 @@ def admin_required(f):
     return decorated_function
 
 
-def is_book_owner_or_is_reservation_booker_or_is_admin(func):
+def is_listing_owner_or_is_reservation_booker_or_is_admin(func):
     """
-    Decorator to ensure user is book owner or reservation booker"""
+    Decorator to ensure user is listing owner or reservation booker"""
 
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
-        Wrapper function to ensure user is authorized to perform action on book"""
+        Wrapper function to ensure user is authorized to perform action on listing"""
         reservation_id = kwargs.get('reservation_id')
         reservation = Reservation.query.get_or_404(reservation_id)
 
@@ -51,12 +51,12 @@ def is_book_owner_or_is_reservation_booker_or_is_admin(func):
 
 def is_reservation_booker(func):
     """
-    Decorator to ensure user is authorized to perform action on book"""
+    Decorator to ensure user is authorized to perform action on listing"""
 
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
-        Wrapper function to ensure user is authorized to perform action on book"""
+        Wrapper function to ensure user is authorized to perform action on listing"""
         reservation_id = kwargs.get('reservation_id')
         reservation = Reservation.query.get_or_404(reservation_id)
 
@@ -72,12 +72,12 @@ def is_reservation_booker(func):
 
 def is_reservation_listing_owner(func):
     """
-    Decorator to ensure user is authorized to perform action on book"""
+    Decorator to ensure user is authorized to perform action on listing"""
 
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
-        Wrapper function to ensure user is authorized to perform action on book"""
+        Wrapper function to ensure user is authorized to perform action on listing"""
         reservation_id = kwargs.get('reservation_id')
         reservation = Reservation.query.get_or_404(reservation_id)
 
@@ -93,12 +93,12 @@ def is_reservation_listing_owner(func):
 
 def is_message_sender_receiver_or_admin(func):
     """
-    Decorator to ensure user is authorized to perform action on book"""
+    Decorator to ensure user is authorized to perform action on listing"""
 
     @wraps(func)
     def decorated_function(*args, **kwargs):
         """
-        Wrapper function to ensure user is authorized to perform action on book"""
+        Wrapper function to ensure user is authorized to perform action on listing"""
         message_id = kwargs.get('message_id')
         message = Message.query.get_or_404(message_id)
 

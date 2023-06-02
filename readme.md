@@ -20,6 +20,8 @@ aws_secret_access_key=your_aws_secret_key
 7) in your terminal run `flask run -p 5001`
 
 ### How to run tests
+FLASK_ENV=test python3 -m unittest discover
+NOTE: must sent environment variable to test for db.engine to use mnb_test database. Otherwise will use mnb database
 
 ### TODOs / Aspirations
 
