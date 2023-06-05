@@ -36,12 +36,12 @@ class User(db.Model):
     )
 
     firstname = db.Column(
-        db.Text,
+        db.String(20),
         nullable=False,
     )
 
     lastname = db.Column(
-        db.Text,
+        db.String(20),
         nullable=False,
     )
 
@@ -114,6 +114,7 @@ class User(db.Model):
 
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
+        # TODO: CREATE HELPERS FOR EMAIL, & NAME VERIFICATION /^[a-z ,.'-]+$/i
         user = User(
             email=email,
             password=hashed_pwd,

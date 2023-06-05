@@ -1,4 +1,6 @@
 """Test case for user routes"""
+# FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k class
+# EXAMPLE: FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k UpdateSpecificUserTestCase
 
 from unittest import TestCase
 
@@ -254,3 +256,87 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.json['user']['lastname'], 'Doe')
 
 #     TODO: add tests for the update path route and continue with the rest
+
+    def test_update_user_not_authenticated(self):
+        with app.test_client() as client:
+            # create a user
+            user = User.signup(
+                email='test@test.com',
+                password='password',
+                firstname='Test',
+                lastname='User',
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.commit()
+
+            # attempt to update the user's information without authentication
+            data = {
+                'firstname': 'John',
+                'lastname': 'Doe'
+            }
+            response = client.patch(f'/api/users/{user.id}', json=data)
+
+            # check that the response is an error message and the user information has not been updated
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.json['msg'], 'Missing Authorization Header')
+
+    def test_update_user_not_authorized(self):
+        with app.test_client() as client:
+            # create two users
+            user1 = User.signup(
+                email='test1@test.com',
+                password='password',
+                firstname='Test',
+                lastname='User',
+                status=UserStatusEnums.ACTIVE
+            )
+            user2 = User.signup(
+                email='test2@test.com',
+                password='password',
+                firstname='Test',
+                lastname='User',
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.commit()
+
+            # authenticate user1
+            access_token = create_access_token(identity=user1.id)
+
+            # attempt to update user2's information
+            data = {
+                'firstname': 'John',
+                'lastname': 'Doe'
+            }
+            response = client.patch(f'api/users/{user2.id}', json=data,
+                                    headers={'Authorization': f'Bearer {access_token}'})
+
+            # check that the response is an error message and the user information has not been updated
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.json['error'], 'not authorized')
+
+    def test_update_user_invalid_data(self):
+        with app.test_client() as client:
+            # create a user
+            user = User.signup(
+                email='test@test.com',
+                password='password',
+                firstname='Test',
+                lastname='User',
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.commit()
+
+            # authenticate the user
+            access_token = create_access_token(identity=user.id)
+
+            # attempt to update the user's information with invalid data
+            data = {
+                'firstname': 1234,
+                'lastname': 'Doe'
+            }
+            response = client.patch(f'/api/users/{user.id}', json=data, headers={'Authorization': f'Bearer {access_token}'})
+
+            breakpoint()
+            # check that the response is an error message and the user information has not been updated
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json['error'], 'Invalid data provided')
