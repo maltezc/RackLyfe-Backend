@@ -1,5 +1,5 @@
 # noinspection PyUnresolvedReferences
-from __init__ import db
+from mnb_backend.database import db
 
 from mnb_backend.enums import ListingConditionEnum, RentalDurationEnum, ListingStatusEnum, ReservationStatusEnum, \
     PriceEnums, UserStatusEnums
@@ -88,10 +88,14 @@ user1 = User(
     lastname="lastname1",
 )
 
+db.session.add(user1)
+breakpoint()
 user1Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
-db.session.add_all([user1, user1Image])
+db.session.add(user1Image)
+# db.session.add_all([user1, user1Image])
+db.session.commit()
 user1.profile_image = user1Image
 
 address1 = Address(street_address="164 Glenwood")
@@ -202,7 +206,7 @@ book1 = Listing(
     author="Patrick Rothfuss",
     isbn=9780756405892,
     genre="",
-    condition=ListingConditionEnum.FAIR,
+    # condition=ListingConditionEnum.FAIR,
     rate_price=PriceEnums.FOUR,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
@@ -221,7 +225,7 @@ book2 = Listing(
     author="J.K. Rowling, Olly Moss ",
     isbn=9781781100486,
     genre="",
-    condition=ListingConditionEnum.LIKE_NEW,
+    # condition=ListingConditionEnum.LIKE_NEW,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.UNAVAILABLE,
@@ -248,7 +252,7 @@ book3 = Listing(
     author="Isaac Asimov",
     isbn=9780553900347,
     genre="",
-    condition=ListingConditionEnum.USED,
+    # condition=ListingConditionEnum.USED,
     rate_price=PriceEnums.THREE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE
@@ -272,7 +276,7 @@ book4 = Listing(
     author="Alfred Lansing",
     isbn=9780753809877,
     genre="",
-    condition=ListingConditionEnum.FAIR,
+    # condition=ListingConditionEnum.FAIR,
     rate_price=PriceEnums.ONE,
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE

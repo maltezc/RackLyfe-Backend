@@ -13,7 +13,7 @@ searches_routes = Blueprint('searches_routes', __name__)
 
 
 # region Search Endpoints
-@searches_routes.get("/search")
+@searches_routes.get("/")
 def search():
     """ Searches listing properties for matched or similar values.
 
