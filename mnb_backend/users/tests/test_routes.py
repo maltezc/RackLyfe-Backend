@@ -25,10 +25,10 @@ class UserBaseViewTestCase(TestCase):
         Create test client, add sample data."""
         User.query.delete()
 
-        u1 = User.signup("u1@email.com", "password", "u1firstname", "u1firstname", UserStatusEnums.ACTIVE)
-        u2 = User.signup("u2@email.com", "password", "u2firstname", "u2firstname", UserStatusEnums.ACTIVE)
-        u3 = User.signup("u3@email.com", "password", "u3firstname", "u3firstname", UserStatusEnums.ACTIVE)
-        u4 = User.signup("u4@email.com", "password", "u4firstname", "u4firstname", UserStatusEnums.ACTIVE)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
+        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
+        u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
+        u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
 
         db.session.add_all([u1, u2, u3, u4])
         db.session.commit()
@@ -255,7 +255,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.json['user']['firstname'], 'John')
             self.assertEqual(response.json['user']['lastname'], 'Doe')
 
-#     TODO: add tests for the update path route and continue with the rest
+    #     TODO: add tests for the update path route and continue with the rest
 
     def test_update_user_not_authenticated(self):
         with app.test_client() as client:
@@ -317,6 +317,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
     def test_update_user_invalid_data(self):
         with app.test_client() as client:
             # create a user
+
             user = User.signup(
                 email='test@test.com',
                 password='password',
@@ -334,9 +335,26 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 'firstname': 1234,
                 'lastname': 'Doe'
             }
-            response = client.patch(f'/api/users/{user.id}', json=data, headers={'Authorization': f'Bearer {access_token}'})
+            response = client.patch(f'/api/users/{user.id}', json=data,
+                                    headers={'Authorization': f'Bearer {access_token}'})
 
-            breakpoint()
             # check that the response is an error message and the user information has not been updated
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.json['error'], 'Invalid data provided')
+            self.assertEqual(response.json['error'], 'invalid firstname')
+
+
+class DeleteSpecificUserTestCase(UserBaseViewTestCase):
+
+    def test_delete_user_authenticated_and_authorized(self):
+        with app.test_client() as client:
+            # create a user
+            user = User.signup(
+        # TODO: add tests for the delete/deactivate path route and continue with the rest
+
+
+class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
+
+        def test_deactivate_user_authenticated_and_authorized(self):
+            with app.test_client() as client:
+                # create a user
+                user = User.signup(

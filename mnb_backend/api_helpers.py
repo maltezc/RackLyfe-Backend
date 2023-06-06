@@ -231,3 +231,6 @@ def db_add_user_image(user_id, image_url):
     except Exception as error:
         print("Error", error)
         return jsonify({"error": "Failed to add listing_image"}), 401
+
+
+

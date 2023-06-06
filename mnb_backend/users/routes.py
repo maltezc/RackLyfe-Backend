@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from mnb_backend.database import db
 from mnb_backend.users.models import User
+from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
 
 root_views = Blueprint('user_views', __name__)
 
@@ -51,13 +52,23 @@ def update_user(user_uid):
         {user: user_uid, email, firstname, lastname, image_url, location, owned_books, reservations}
     """
 
+    # TODO: ADD "CHANGE PASSWORD FEATURE LATER"
     current_user = get_jwt_identity()
     if current_user == user_uid:
         user = User.query.get_or_404(user_uid)
         data = request.json
-        # TODO: ADD "CHANGE PASSWORD FEATURE LATER"
-        user.firstname = data['firstname'],
-        user.lastname = data['lastname'],
+        firstname = data['firstname']
+        lastname = data['lastname']
+
+        if is_valid_name(firstname):
+            user.firstname = firstname
+        else:
+            return jsonify({"error": "invalid firstname"}), 400
+
+        if is_valid_name(lastname):
+            user.lastname = lastname
+        else:
+            return jsonify({"error": "invalid lastname"}), 400
 
         db.session.add(user)
         db.session.commit()

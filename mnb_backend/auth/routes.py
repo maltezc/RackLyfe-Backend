@@ -16,7 +16,7 @@ auth_routes = Blueprint('auth_routes', __name__)
 
 # region AUTH ENDPOINTS START
 
-@auth_routes.route("/api/auth/login", methods=["POST"])
+@auth_routes.route("/login", methods=["POST"])
 def login():
     """Handle user login.
     Returns JSON like:
@@ -32,7 +32,7 @@ def login():
     return jsonify(token=token, user=user.serialize()), 200
 
 
-@auth_routes.post("/api/auth/signup_admin")
+@auth_routes.post("/signup_admin")
 @jwt_required()
 @admin_required
 def create_admin_user():
@@ -58,7 +58,7 @@ def create_admin_user():
         return jsonify({"error": "Failed to signup"}), 424
 
 
-@auth_routes.post("/api/auth/signup")
+@auth_routes.post("/signup")
 def create_user():
     """Add user, and return data about new user.
     Returns JSON like:

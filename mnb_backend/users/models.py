@@ -5,6 +5,8 @@ from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums, enum_serializer
 from sqlalchemy import Enum as SQLAlchemyEnum
 
+from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
+
 bcrypt = Bcrypt()
 
 
@@ -115,18 +117,30 @@ class User(db.Model):
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
         # TODO: CREATE HELPERS FOR EMAIL, & NAME VERIFICATION /^[a-z ,.'-]+$/i
-        user = User(
-            email=email,
-            password=hashed_pwd,
-            firstname=firstname,
-            lastname=lastname,
-            status=status,
-        )
 
-        db.session.add(user)
-        db.session.commit()
+        if is_valid_name(firstname) is False:
+            raise ValueError("Invalid firstname")
+        if is_valid_name(lastname) is False:
+            raise ValueError("Invalid lastname")
+        if is_valid_email(email) is False:
+            raise ValueError("Invalid email")
 
-        return user
+        try:
+            user = User(
+                email=email,
+                password=hashed_pwd,
+                firstname=firstname,
+                lastname=lastname,
+                status=status,
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+            return user
+        except:
+            db.session.rollback()
+            return "Failed to create user"
 
     @classmethod
     def authenticate(cls, email, password):
