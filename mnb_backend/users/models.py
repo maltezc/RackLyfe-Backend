@@ -132,6 +132,7 @@ class User(db.Model):
                 firstname=firstname,
                 lastname=lastname,
                 status=status,
+                is_admin=is_admin
             )
 
             db.session.add(user)
@@ -165,6 +166,6 @@ class User(db.Model):
 
     def __repr__(self):
         return f"< User #{self.id}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, " \
-               f"is_admin: {self.is_admin} >"
+               f"Status: {self.status}, is_admin: {self.is_admin} >"
 
 # endregion

@@ -1,11 +1,14 @@
 """Test case for user routes"""
+import os
 # FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k class
 # EXAMPLE: FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k UpdateSpecificUserTestCase
 
 from unittest import TestCase
+from string import ascii_lowercase
+import string
 
 from flask_jwt_extended import create_access_token
-
+# os.environ['FLASK_DEBUG'] = 'test'
 from mnb_backend import app
 from mnb_backend.users.models import User
 from mnb_backend.database import db
@@ -83,7 +86,10 @@ class UserListShowTestCase(UserBaseViewTestCase):
             db.session.query(User).delete()
             db.session.commit()
 
-            for i in range(10):
+            # for c in ascii_lowercase:
+
+            for i in string.ascii_lowercase[:10]:
+            # for i in range(10):
                 User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', UserStatusEnums.ACTIVE)
 
             response = client.get('/api/users/')
@@ -345,16 +351,241 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
 
 class DeleteSpecificUserTestCase(UserBaseViewTestCase):
 
-    def test_delete_user_authenticated_and_authorized(self):
-        with app.test_client() as client:
-            # create a user
-            user = User.signup(
-        # TODO: add tests for the delete/deactivate path route and continue with the rest
+    #  Tests that a user can be deleted when authorized.
+    def test_delete_user_happy_path(self):
+        """Test that a user can be deleted when authorized"""
+
+        # Create a user to be deleted
+        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        db.session.add(user)
+        db.session.commit()
+
+        # Login as the user to be deleted
+        access_token = create_access_token(identity=user.id)
+
+        # Delete the user
+        response = self.client.delete(f'/api/users/{user.id}', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that the user was deleted
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, "User successfully deleted")
+
+    #  Tests that an admin can delete any user.
+    def test_delete_user_admin(self):
+        """Test that an admin can delete any user"""
+
+        # Create an admin user
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
+
+        # Create a user to be deleted
+        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        db.session.add(user)
+        db.session.commit()
+
+        # Login as the admin
+        access_token = create_access_token(identity=admin.id)
+
+        # Delete the user
+        response = self.client.delete(f'/api/users/{user.id}', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that the user was deleted
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, "User successfully deleted")
+
+    #  Tests that an error message is returned when the user ID does not exist.
+    def test_delete_user_nonexistent_id(self):
+        """Test that an error message is returned when the user ID does not exist"""
+
+        # Create an admin user
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
+
+        # Login as the admin
+        access_token = create_access_token(identity=admin.id)
+
+        # Delete a nonexistent user
+        response = self.client.delete('/api/users/999', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that an error message is returned
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json, {"error": "User not found"})
+
+    #  Tests that an error message is returned when the user is not authorized to delete the user.
+    def test_delete_user_unauthorized(self):
+        """Test that an error message is returned when the user is not authorized to delete the user"""
+
+        # Create a user to be deleted
+        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        db.session.add(user)
+        db.session.commit()
+
+        # Create another user who is not authorized to delete the first user
+        other_user = User.signup('other@test.com', 'password', 'Other', 'User', UserStatusEnums.ACTIVE)
+        db.session.add(other_user)
+        db.session.commit()
+
+        # Login as the other user
+        access_token = create_access_token(identity=other_user.id)
+
+        # Try to delete the first user
+        response = self.client.delete(f'/api/users/{user.id}', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that an error message is returned
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json, {"error": "not authorized"})
+
+    #  Tests deleting a user when there are multiple users in the database.
+    def test_delete_user_multiple_users(self):
+        """Test deleting a user when there are multiple users in the database"""
+
+        # Create an admin user
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
+
+        # Create multiple users to be deleted
+        user1 = User.signup('test1@test.com', 'password', 'Test', 'UserA', UserStatusEnums.ACTIVE)
+        user2 = User.signup('test2@test.com', 'password', 'Test', 'UserB', UserStatusEnums.ACTIVE)
+        db.session.add_all([user1, user2])
+        db.session.commit()
+
+        # Login as the admin
+        access_token = create_access_token(identity=admin.id)
+
+        # Delete the users
+        response1 = self.client.delete(f'/api/users/{user1.id}', headers={'Authorization': f'Bearer {access_token}'})
+        response2 = self.client.delete(f'/api/users/{user2.id}', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that the users were deleted
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response1.json, "User successfully deleted")
+        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response2.json, "User successfully deleted")
 
 
 class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
+    # Generated by CodiumAI
 
-        def test_deactivate_user_authenticated_and_authorized(self):
-            with app.test_client() as client:
-                # create a user
-                user = User.signup(
+    def test_toggle_user_status_auth_success(self):
+        # Happy path test
+        with app.test_client() as client:
+            # Create a user
+            user = User.signup(
+                email="test@test.com",
+                password="password",
+                firstname="John",
+                lastname="Doe",
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Authenticate the user
+            access_token = create_access_token(identity=user.id)
+
+            # Toggle the user's status
+            response = client.patch(f"/api/users/{user.id}/toggle_status",
+                                    headers={"Authorization": f"Bearer {access_token}"})
+
+            # Check that the response is successful and the user's status has been toggled
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json["user"]["status"], "Inactive")
+
+    #  Tests that a user cannot toggle another user's status when authenticated.
+    def test_toggle_user_status_auth_fail(self):
+        # Edge case test: user cannot toggle another user's status
+        with app.test_client() as client:
+            # Create two users
+            user1 = User.signup(
+                email="test1@test.com",
+                password="password",
+                firstname="John",
+                lastname="Doe",
+                status=UserStatusEnums.ACTIVE
+            )
+            user2 = User.signup(
+                email="test2@test.com",
+                password="password",
+                firstname="Jane",
+                lastname="Doe",
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.add_all([user1, user2])
+            db.session.commit()
+
+            # Authenticate user1
+            access_token = create_access_token(identity=user1.id)
+
+            # Try to toggle user2's status
+            response = client.patch(f"/api/users/{user2.id}/toggle_status",
+                                    headers={"Authorization": f"Bearer {access_token}"})
+
+            # Check that the response is unauthorized and the user's status has not been toggled
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(user2.status, UserStatusEnums.ACTIVE)
+
+    #  Tests that an error message is returned when a user that does not exist in the database is provided.
+    def test_toggle_user_status_user_not_exist(self):
+        # Edge case test: error message returned when user does not exist
+        with app.test_client() as client:
+            # Authenticate a user
+            access_token = create_access_token(identity=1)
+
+            # Try to toggle a non-existent user's status
+            response = client.patch("/api/users/999/toggle_status",
+                                    headers={"Authorization": f"Bearer {access_token}"})
+
+            # Check that the response is not found and no changes have been made to the database
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(User.query.filter_by(status=UserStatusEnums.INACTIVE).count(), 0)
+
+    #  Tests that the database is updated correctly when a user's status is toggled.
+    def test_toggle_user_status_database_changes(self):
+        # General behavior test: database is updated correctly when user's status is toggled
+        with app.test_client() as client:
+            # Create a user
+            user = User.signup(
+                email="test@test.com",
+                password="password",
+                firstname="John",
+                lastname="Doe",
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Authenticate the user
+            access_token = create_access_token(identity=user.id)
+
+            # Toggle the user's status
+            response = client.patch(f"/api/users/{user.id}/toggle_status",
+                                    headers={"Authorization": f"Bearer {access_token}"})
+
+            # Check that the response is successful and the database has been updated correctly
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(User.query.filter_by(status=UserStatusEnums.INACTIVE).count(), 1)
+
+    #  Tests that an error message is returned when a user is not authenticated.
+    def test_toggle_user_status_not_authenticated(self):
+        # Edge case test: error message returned when user is not authenticated
+        with app.test_client() as client:
+            # Create a user
+            user = User.signup(
+                email="test@test.com",
+                password="password",
+                firstname="John",
+                lastname="Doe",
+                status=UserStatusEnums.ACTIVE
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Try to toggle the user's status without authentication
+            response = client.patch(f"/api/users/{user.id}/toggle_status")
+
+            # Check that the response is unauthorized and the user's status has not been changed
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(user.status, UserStatusEnums.ACTIVE)

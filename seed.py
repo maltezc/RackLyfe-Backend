@@ -181,7 +181,7 @@ db.session.add(zipcode2)
 address3.zipcode = zipcode2
 
 user4 = User(
-    email="admin1@gmail.com",
+    email="admin1@email.com",
     password="$2b$12$AZH7virni5jlTTiGgEg4zu3lSvAw68qVEfSIOjJ3RqtbJbdW/Oi5q",
     status=UserStatusEnums.ACTIVE,
     firstname="admin1",
