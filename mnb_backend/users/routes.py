@@ -1,10 +1,14 @@
 """Routes for users blueprint."""
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from sqlalchemy.exc import IntegrityError
 
+from mnb_backend.api_helpers import upload_to_aws
 from mnb_backend.database import db
+from mnb_backend.decorators import admin_required
 from mnb_backend.enums import UserStatusEnums
+from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
 
@@ -14,6 +18,82 @@ user_routes = Blueprint('user_routes', __name__)
 
 
 # region USERS List ENDPOINTS START
+
+@user_routes.post("/signup")
+def create_user():
+    """Add user, and return data about new user.
+    Returns JSON like:
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
+
+    profile_image = request.form.get('profile_image')
+
+    email = request.form.get('email')
+
+    # check if email already exists
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"error": "Email already taken"}), 400
+
+    try:
+        user = User.signup(
+            email=request.form.get('email'),
+            status=UserStatusEnums.ACTIVE,
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
+        )
+
+        token = create_access_token(identity=user.id)
+        print("jsonify token: ", jsonify(token=token))
+
+        if profile_image is not None:
+            [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+            user_image = UserImage(
+                image_url=url,
+                user_uid=user.id
+            )
+            db.session.add(user_image)
+            db.session.commit()
+
+            return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
+
+        return jsonify(token=token, user=user.serialize()), 201
+
+    except IntegrityError:
+        # if an IntegrityError occurs, it might be due to the email not being unique
+        db.session.rollback()
+        return jsonify({"error": "Email already taken"}), 400
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to signup"}), 424
+
+
+@user_routes.post("/signup_admin")
+@jwt_required()
+@admin_required
+def create_admin_user():
+    """Add admin user, and return data about new user.
+    Returns JSON like:
+        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
+
+    try:
+        user = User.signup(
+            email=request.form.get('email'),
+            password=request.form.get('password'),
+            firstname=request.form.get('firstname'),
+            lastname=request.form.get('lastname'),
+            status=UserStatusEnums.ACTIVE,
+            is_admin=True,
+        )
+
+        token = create_access_token(identity=user.id)
+
+        return jsonify(token=token, user=user.serialize()), 201
+
+    except Exception as error:
+        print("Error", error)
+        return jsonify({"error": "Failed to signup"}), 424
+
 
 @user_routes.get("/")
 def list_users():
@@ -119,7 +199,6 @@ def delete_user(user_uid):
 
     current_user = User.query.get_or_404(current_user_id)
     if current_user_id == user_uid or current_user.is_admin:
-
         db.session.delete(user_to_delete)
         db.session.commit()
 

@@ -3,16 +3,13 @@
 from unittest import TestCase
 
 from mnb_backend.enums import UserStatusEnums
+from mnb_backend.user_images.tests.setup import UserModelTestCase
 from mnb_backend.users.models import User
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.database import db
-from mnb_backend import app
 from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt()
-
-db.drop_all()
-db.create_all()
 
 """
 Code Analysis
@@ -30,40 +27,6 @@ Fields:
 - user: relationship to the User class, back_populates to the profile_image attribute
 - image_url: text, the URL of the user's profile image
 """
-
-
-class UserModelTestCase(TestCase):
-
-    def setUp(self):
-        """
-        Create test client, add sample data."""
-
-        UserImage.query.delete()
-        User.query.delete()
-
-        hashed_password = (bcrypt
-                           .generate_password_hash("password")
-                           .decode('UTF-8')
-                           )
-
-        u1 = User(
-            email="u1@email.com",
-            password=hashed_password,
-            firstname="testFirstname",
-            lastname="testLastname",
-            status=UserStatusEnums.ACTIVE,
-
-            # image_url=None,
-        )
-        db.session.add(u1)
-        db.session.commit()
-
-        self.u1_id = u1.id
-        self.client = app.test_client()
-
-    def tearDown(self):
-        """Clean up any fouled transaction."""
-        db.session.rollback()
 
 
 class TestUserImage(UserModelTestCase):

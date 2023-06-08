@@ -89,7 +89,6 @@ user1 = User(
 )
 
 db.session.add(user1)
-breakpoint()
 user1Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )

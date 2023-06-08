@@ -1,11 +1,14 @@
 """Models for Users"""
 from flask_bcrypt import Bcrypt
+from sqlalchemy.exc import IntegrityError
+
 from mnb_backend.database import db
 
 from mnb_backend.enums import UserStatusEnums, enum_serializer
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
+from mnb_backend.errors import EmailAlreadyExistsError
 
 bcrypt = Bcrypt()
 
@@ -116,14 +119,16 @@ class User(db.Model):
 
         hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
 
-        # TODO: CREATE HELPERS FOR EMAIL, & NAME VERIFICATION /^[a-z ,.'-]+$/i
-
         if is_valid_name(firstname) is False:
             raise ValueError("Invalid firstname")
         if is_valid_name(lastname) is False:
             raise ValueError("Invalid lastname")
         if is_valid_email(email) is False:
             raise ValueError("Invalid email")
+
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            raise EmailAlreadyExistsError("Email already exists")
 
         try:
             user = User(
