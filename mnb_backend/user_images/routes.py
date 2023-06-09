@@ -50,9 +50,9 @@ def get_current_user_image():
     return jsonify(user_image=user_image.serialize()), 200
 
 
-@user_images_routes.patch("/api/user_image/<int:user_image_id>")
+@user_images_routes.patch("/current/")
 @jwt_required()
-def update_user_image(user_image_id):
+def update_user_image():
     """ Updates image to the currently logged-in user
     Returns JSON like:
         {user_image: {user_image_uid, image_url, user_uid}}"""
@@ -60,7 +60,8 @@ def update_user_image(user_image_id):
     try:
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        user_image = UserImage.query.get_or_404(user_image_id)
+        user_image = user.profile_image
+        # user_image = UserImage.query.get_or_404(user_image_id)
 
         if user.id == user_image.user.id:
             profile_image = request.files.get("profile_image")
@@ -82,9 +83,9 @@ def update_user_image(user_image_id):
         return jsonify({"error": "Failed to update image"}), 424
 
 
-@user_images_routes.delete("/api/user_image/<int:user_image_id>")
+@user_images_routes.delete("/current/")
 @jwt_required()
-def delete_user_image(user_image_id):
+def delete_user_image():
     """ Returns JSON like:
         {user_image: {user_image_uid, image_url, user_uid}}
     """
@@ -92,7 +93,7 @@ def delete_user_image(user_image_id):
     try:
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
-        user_image = UserImage.query.get_or_404(user_image_id)
+        user_image = user.profile_image
 
         if user.id == user_image.user.id or user.is_admin:
             aws_delete_image(user_image.image_url)

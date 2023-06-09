@@ -101,7 +101,8 @@ class TestGetCurrentUserImage(UserModelTestCase):
 
         # make a request to add the user image
         with app.test_client() as client:
-            image_created = client.post("/api/user_images/", headers={"Authorization": f"Bearer {access_token}"}, data={"profile_image": test_image})
+            image_created = client.post("/api/user_images/", headers={"Authorization": f"Bearer {access_token}"},
+                                        data={"profile_image": test_image})
 
             response = client.get("/api/user_images/current/", headers={"Authorization": f"Bearer {access_token}"})
 
@@ -111,3 +112,61 @@ class TestGetCurrentUserImage(UserModelTestCase):
             self.assertIn("id", response.json["user_image"])
             self.assertIn("image_url", response.json["user_image"])
             self.assertIn("user_id", response.json["user_image"])
+
+
+class TestUpdateUserImage(UserModelTestCase):
+    def test_update_user_image_happy(self):
+        # create a test user
+        u1 = db.session.get(User, self.u1_id)
+
+        # log in as the test user
+        access_token = create_access_token(identity=u1.id)
+
+        # create a test image file
+        test_image = BytesIO(b"test image data")
+        test_image.name = "test_image.jpg"
+
+        # make a request to add the user image
+        with app.test_client() as client:
+            image_created = client.post("/api/user_images/", headers={"Authorization": f"Bearer {access_token}"},
+                                        data={"profile_image": test_image})
+
+            # create a test image file
+            test_image = BytesIO(b"test image data")
+            test_image.name = "test_image.jpg"
+
+            response = client.patch("/api/user_images/current/", headers={"Authorization": f"Bearer {access_token}"},
+                                  data={"profile_image": test_image})
+
+            # check that the response is successful and contains the expected data
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("user_image", response.json)
+            self.assertIn("id", response.json["user_image"])
+            self.assertIn("image_url", response.json["user_image"])
+            self.assertIn("user_id", response.json["user_image"])
+
+
+class TestDeleteUserImage(UserModelTestCase):
+    def test_delete_user_image_happy(self):
+        # create a test user
+        u1 = db.session.get(User, self.u1_id)
+
+        # log in as the test user
+        access_token = create_access_token(identity=u1.id)
+
+        # create a test image file
+        test_image = BytesIO(b"test image data")
+        test_image.name = "test_image.jpg"
+
+        # make a request to add the user image
+        with app.test_client() as client:
+            image_created = client.post("/api/user_images/", headers={"Authorization": f"Bearer {access_token}"},
+                                        data={"profile_image": test_image})
+
+            response = client.delete("/api/user_images/current/", headers={"Authorization": f"Bearer {access_token}"})
+
+            # check that the response is successful and contains the expected data
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("id", response.json["user"])
+            self.assertIn("image_url", response.json["user"])
+            self.assertIn("user_image", response.json["user"])

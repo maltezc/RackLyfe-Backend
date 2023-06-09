@@ -339,8 +339,6 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.json['user']['firstname'], 'John')
             self.assertEqual(response.json['user']['lastname'], 'Doe')
 
-    #     TODO: add tests for the update path route and continue with the rest
-
     def test_update_user_not_authenticated(self):
         with app.test_client() as client:
             # create a user

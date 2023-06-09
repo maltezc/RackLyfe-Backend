@@ -80,7 +80,7 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         }
         self.assertEqual(serialized_user, expected_output)
 
-    def test_serialize_user_object_missing_related_objects(self):
+    def test_serialize_user_object_missing_related_objects(self): # TODO: REMOVE THIS TEST. ITS REDUNDANT
         """Test serializing a user object with missing related objects"""
 
         # Arrange
@@ -99,6 +99,7 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         self.assertIsNone(serialized_user["address"])
         self.assertIsNone(serialized_user["user_image"])
 
+    # TODO: MOVE BELOW TESTS TO AUTHENTICATION FOLDER
     # #################### Authentication Tests
 
     def test_valid_authentication(self):
