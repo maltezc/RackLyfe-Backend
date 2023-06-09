@@ -1,4 +1,3 @@
-
 from flask import abort, jsonify
 from flask_jwt_extended import get_jwt_identity
 from functools import wraps
@@ -6,6 +5,27 @@ from functools import wraps
 from mnb_backend.messages.models import Message
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
+
+
+def user_address_required(f):
+    """
+    Decorator to ensure user has address"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        """
+        Wrapper function to ensure user has address"""
+
+        current_user_id = get_jwt_identity()
+
+        user = User.query.get(current_user_id)
+        if not user:
+            abort(400)
+        if not user.address:
+            return jsonify({"error": "Not authorized. Address required."}), 403
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def admin_required(f):

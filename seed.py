@@ -93,13 +93,11 @@ user1Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
 db.session.add(user1Image)
-# db.session.add_all([user1, user1Image])
 db.session.commit()
 user1.profile_image = user1Image
 
 address1 = Address(street_address="164 Glenwood")
 db.session.add(address1)
-# user1.address = address1
 address1.user = user1
 
 location1 = Location(point='POINT(-122.28195023589687 38.006370860286694)')
@@ -112,7 +110,6 @@ city1 = City(
 db.session.add(city1)
 
 address1.city = city1
-# city1.addresses.append(address1)
 
 city1.state = State.query.filter(State.state_abbreviation == "CA").first()
 
@@ -198,7 +195,7 @@ db.session.commit()
 
 # region books---------------------------------------------
 
-book1 = Listing(
+listing1 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
@@ -210,13 +207,13 @@ book1 = Listing(
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
 )
-user1.listings.append(book1)
+user1.listings.append(listing1)
 
 bookImage1 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
 )
-book1.images.append(bookImage1)
+listing1.images.append(bookImage1)
 
 book2 = Listing(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
@@ -242,7 +239,7 @@ bookImage2a = ListingImage(
 )
 book2.images.append(bookImage2a)
 
-db.session.add_all([book1, bookImage1, book2, bookImage2, bookImage2a])
+db.session.add_all([listing1, bookImage1, book2, bookImage2, bookImage2a])
 
 book3 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -298,7 +295,7 @@ db.session.add_all([book4, bookImage4])
 
 start_date1 = datetime(2023, 5, 20, 12, 1)
 timedelta1 = timedelta(weeks=5)
-total1 = book1.rate_price.value * (timedelta1.days/7)
+total1 = listing1.rate_price.value * (timedelta1.days / 7)
 reservation1 = Reservation(
     # id="1",
     reservation_date_created=datetime.utcnow(),
@@ -309,7 +306,7 @@ reservation1 = Reservation(
     total=total1,
 )
 reservation1.renter = user2
-reservation1.listing = book1
+reservation1.listing = listing1
 
 start_date2 = datetime(2023, 5, 25, 12, 1)
 timedelta2 = timedelta(weeks=2)

@@ -3,14 +3,17 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from mnb_backend.database import db
-from mnb_backend.api_helpers import db_post_listing, aws_upload_image, db_add_listing_image
+from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
+from mnb_backend.decorators import user_address_required
 from mnb_backend.listings.models import Listing
+from mnb_backend.listings.helpers import db_post_listing
 
 listings_routes = Blueprint('listings_routes', __name__)
 
 
-@listings_routes.post("/api/listings")
+@listings_routes.post("/")
 @jwt_required()
+@user_address_required
 def create_listing():
     """Add listing, and return data about new listing.
 
