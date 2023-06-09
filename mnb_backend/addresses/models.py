@@ -41,7 +41,7 @@ class Address(db.Model):
     )
     zipcode = db.relationship('ZipCode', back_populates="addresses", uselist=False)
 
-    location = db.relationship('Location', back_populates="address", uselist=False)
+    location = db.relationship('Location', back_populates="address", uselist=False, cascade='delete')
 
     def __repr__(self):
         return f"< Address #{self.id}, Street Address: {self.street_address}, Apt Number: {self.apt_number}, " \

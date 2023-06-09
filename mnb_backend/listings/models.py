@@ -86,7 +86,7 @@ class Listing(db.Model):
     def __repr__(self):
         return f"< Listing #{self.id}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
-               f"Condition: {self.condition}, Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
+               f"Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
 
 
 # endregion
