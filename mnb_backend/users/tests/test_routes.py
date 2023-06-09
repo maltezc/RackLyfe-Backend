@@ -1,52 +1,130 @@
 """Test case for user routes"""
-import os
 # FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k class
 # EXAMPLE: FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k UpdateSpecificUserTestCase
 
-from unittest import TestCase
-from string import ascii_lowercase
 import string
 
 from flask_jwt_extended import create_access_token
+
 # os.environ['FLASK_DEBUG'] = 'test'
 from mnb_backend import app
-from mnb_backend.users.models import User
 from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums
-
-from flask_bcrypt import Bcrypt
-
-bcrypt = Bcrypt()
-
-db.drop_all()
-db.create_all()
+from mnb_backend.users.models import User
+from mnb_backend.users.tests.setup import UserBaseViewTestCase
 
 
-class UserBaseViewTestCase(TestCase):
-    def setUp(self):
-        """
-        Create test client, add sample data."""
-        User.query.delete()
+class UserCreateTestCase(UserBaseViewTestCase):
+    def test_create_user_returns_correct_json(self):
+        with app.test_client() as client:
+            response = client.post('/api/users/signup', data=dict(
+                email='johndoe@email.com',
+                password='password',
+                firstname='TestA',
+                lastname='UserA',
+            ))
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
-        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
-        u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
-        u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
+            data = response.get_json()
 
-        db.session.add_all([u1, u2, u3, u4])
-        db.session.commit()
+            self.assertIsInstance(data, dict)
+            self.assertIn('user', data)
+            self.assertIsInstance(data['user'], dict)
+            self.assertTrue(all(key in data['user'] for key in
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'is_admin', 'image_url',
+                                 'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
-        self.u1_id = u1.id
-        self.u2_id = u2.id
-        self.u3_id = u3.id
-        self.u4_id = u4.id
+    def test_create_user_duplicate_email_returns_400(self):
+        with app.test_client() as client:
+            u1 = db.session.get(User, self.u1_id)
 
-        self.client = app.test_client()
+            response = client.post('/api/users/signup', data=dict(
+                email=u1.email,
+                password='password',
+                firstname='TestA',
+                lastname='UserA',
+            ))
 
-    def tearDown(self):
-        """
-        Rollback any failed session transactions"""
-        db.session.rollback()
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.get_json()['error'], 'Email already taken')
+
+    def test_create_user_returns_status_code_201(self):
+        with app.test_client() as client:
+            response = client.post('/api/users/signup', data=dict(
+                email="JohnDoe@email.com",
+                password='password',
+                firstname='TestA',
+                lastname='UserA',
+            ))
+
+            self.assertEqual(response.status_code, 201)
+
+
+class UserCreateAdminTestCase(UserBaseViewTestCase):
+    def test_create_admin_returns_correct_json(self):
+        with app.test_client() as client:
+            # create a test user
+            admin1 = db.session.get(User, self.uAdmin_id)
+
+            # log in as the test user
+            access_token = create_access_token(identity=admin1.id)
+
+            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
+                                   data=dict(
+                                       email="admin2@email.com",
+                                       password='password',
+                                       firstname='TestA',
+                                       lastname='UserA',
+                                   ))
+
+            data = response.get_json()
+
+            self.assertIsInstance(data, dict)
+            self.assertIn('user', data)
+            self.assertEqual(data['user']['is_admin'], True)
+            self.assertIsInstance(data['user'], dict)
+            self.assertTrue(all(key in data['user'] for key in
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'is_admin', 'image_url',
+                                 'preferred_trade_location', 'user_rating', 'user_image', 'address']))
+
+    def test_create_admin_returns_status_code_201(self):
+        with app.test_client() as client:
+            # create a test user
+            admin1 = db.session.get(User, self.uAdmin_id)
+
+            # log in as the test user
+            access_token = create_access_token(identity=admin1.id)
+
+            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
+                                   data=dict(
+                                       email="JohnDoeAdmin@email.com",
+                                       password='password',
+                                       firstname='TestA',
+                                       lastname='UserA',
+                                   ))
+
+            data = response.get_json()
+
+            self.assertEqual(response.status_code, 201)
+
+    def test_create_admin_returns_status_code_401(self):
+        with app.test_client() as client:
+            # create a test user
+            admin1 = db.session.get(User, self.u1_id)
+
+            # log in as the test user
+            access_token = create_access_token(identity=admin1.id)
+
+            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
+                                   data=dict(
+                                       email="JohnDoeAdmin@email.com",
+                                       password='password',
+                                       firstname='TestA',
+                                       lastname='UserA',
+                                   ))
+
+            data = response.get_json()
+
+            self.assertEqual(response.status_code, 403)
 
 
 class UserListShowTestCase(UserBaseViewTestCase):
@@ -89,7 +167,7 @@ class UserListShowTestCase(UserBaseViewTestCase):
             # for c in ascii_lowercase:
 
             for i in string.ascii_lowercase[:10]:
-            # for i in range(10):
+                # for i in range(10):
                 User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', UserStatusEnums.ACTIVE)
 
             response = client.get('/api/users/')
@@ -260,8 +338,6 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json['user']['firstname'], 'John')
             self.assertEqual(response.json['user']['lastname'], 'Doe')
-
-    #     TODO: add tests for the update path route and continue with the rest
 
     def test_update_user_not_authenticated(self):
         with app.test_client() as client:

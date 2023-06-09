@@ -1,73 +1,23 @@
 """User model tests."""
+from sqlalchemy.exc import IntegrityError
 
 # run these tests like:
 #
 # FLASK_ENV=test python3 -m unittest discover -v
 
 
-import os
-
-from mnb_backend.enums import UserStatusEnums
-
-from sqlalchemy.exc import IntegrityError
 from mnb_backend import app
-
-from unittest import TestCase
-from flask_bcrypt import Bcrypt
-
+from mnb_backend.auth.tests.setup import UserModelTestCase
 from mnb_backend.database import db
+from mnb_backend.enums import UserStatusEnums
+from mnb_backend.errors import EmailAlreadyExistsError
 from mnb_backend.users.models import User
 
+
 # instantiate Bcrypt to create hashed passwords for test data
-bcrypt = Bcrypt()
-
-db.drop_all()
-db.create_all()
 
 
-class UserModelTestCase(TestCase):
-    def setUp(self):
-        """
-        Create test client, add sample data."""
-
-        User.query.delete()
-
-        hashed_password = (bcrypt
-                           .generate_password_hash("password")
-                           .decode('UTF-8')
-                           )
-
-        u1 = User(
-            email="u1@email.com",
-            password=hashed_password,
-            firstname="testFirstname",
-            lastname="testLastname",
-            status=UserStatusEnums.ACTIVE,
-
-            # image_url=None,
-        )
-
-        u2 = User(
-            email="u2@email.com",
-            password=hashed_password,
-            firstname="u2Firstname",
-            lastname="u2Lastname",
-            status=UserStatusEnums.ACTIVE,
-            # image_url=None,
-        )
-
-        db.session.add_all([u1, u2])
-        db.session.commit()
-
-        self.u1_id = u1.id
-        self.u2_id = u2.id
-
-        self.client = app.test_client()
-
-    def tearDown(self):
-        """Clean up any fouled transaction."""
-        db.session.rollback()
-
+class UserAuthAndSignupTestCase(UserModelTestCase):
     def test_user_model(self):
         u1 = db.session.get(User, self.u1_id)
 
@@ -76,24 +26,28 @@ class UserModelTestCase(TestCase):
         self.assertEqual(len(u1.received_messages), 0)
 
     def test_valid_signup(self):
-        u3 = User.signup("u3@email.com", "password", "u3firstname", "u3lastname", UserStatusEnums.ACTIVE)
+        u3 = User.signup("uC@email.com", "password", "uCfirstname", "uClastname", UserStatusEnums.ACTIVE)
 
         # self.assertEqual(u3.username, "u3")
-        self.assertEqual(u3.email, "u3@email.com")
+        self.assertEqual(u3.email, "uC@email.com")
         self.assertNotEqual(u3.password, "password")
-        self.assertEqual(u3.firstname, "u3firstname")
-        self.assertEqual(u3.lastname, "u3lastname")
+        self.assertEqual(u3.firstname, "uCfirstname")
+        self.assertEqual(u3.lastname, "uClastname")
         self.assertEqual(u3.status, UserStatusEnums.ACTIVE)
         # Bcrypt strings should start with $2b$
         self.assertTrue(u3.password.startswith("$2b$"))
 
-    def test_invalid_signup(self):
-        # Assert that user signup raises an integrity error when we make a user
-        # with the same email
+    def test_signup_duplicate_email(self):
+        # Create the first user
+        user1 = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
 
-        with self.assertRaises(IntegrityError):
-            User.signup("u1@email.com", "password", "u1FirstName", "u1lastname", UserStatusEnums.ACTIVE)
-            db.session.commit()
+        # Attempt to create a second user with the same email
+        with self.assertRaises(EmailAlreadyExistsError):
+            User.signup('test@test.com', 'password2', 'TestB', 'UserB', UserStatusEnums.ACTIVE)
+
+            # Ensure that only one user was added to the database
+            users = User.query.all()
+            self.assertEqual(len(users), 1)
 
     def test_serialize_user_object(self):
         """Test serializing a user object to JSON format"""
@@ -126,7 +80,7 @@ class UserModelTestCase(TestCase):
         }
         self.assertEqual(serialized_user, expected_output)
 
-    def test_serialize_user_object_missing_related_objects(self):
+    def test_serialize_user_object_missing_related_objects(self): # TODO: REMOVE THIS TEST. ITS REDUNDANT
         """Test serializing a user object with missing related objects"""
 
         # Arrange
@@ -145,16 +99,17 @@ class UserModelTestCase(TestCase):
         self.assertIsNone(serialized_user["address"])
         self.assertIsNone(serialized_user["user_image"])
 
+    # TODO: MOVE BELOW TESTS TO AUTHENTICATION FOLDER
     # #################### Authentication Tests
 
     def test_valid_authentication(self):
         u1 = db.session.get(User, self.u1_id)
 
-        u = User.authenticate("u1@email.com", "password")
+        u = User.authenticate("uA@email.com", "password")
         self.assertEqual(u, u1)
 
     def test_invalid_username(self):
         self.assertFalse(User.authenticate("bad-username", "password"))
 
     def test_wrong_password(self):
-        self.assertFalse(User.authenticate("u1@email.com", "bad-password"))
+        self.assertFalse(User.authenticate("uA@email.com", "bad-password"))
