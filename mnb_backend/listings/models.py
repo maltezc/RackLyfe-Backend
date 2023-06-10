@@ -24,7 +24,7 @@ class Listing(db.Model):
 
     primary_image_url = db.Column(
         db.Text,
-        nullable=False,
+        # nullable=False,
     )
 
     images = db.Relationship("ListingImage", back_populates="listing", uselist=True)
@@ -110,6 +110,11 @@ class Listing(db.Model):
         except:
             db.session.rollback()
             return "Failed to create listing."
+
+
+    # TODO: USE LISTING_MUST_HAVE_IMAGE IN ORDER TO CREATE LIST
+
+
 
     def __repr__(self):
         return f"< Listing #{self.id}, " \

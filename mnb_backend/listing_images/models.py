@@ -34,6 +34,9 @@ class ListingImage(db.Model):
             "image_url": self.image_url,
         }
 
+    # TODO: CREATE CLASS METHOD CREATE_IMAGE
+
+
     def __repr__(self):
         return f"< Listing Image #{self.id}, ImageUrl: {self.image_url} >"
 
