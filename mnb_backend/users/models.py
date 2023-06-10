@@ -89,8 +89,8 @@ class User(db.Model):
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
 
-        address = self.address.serialize() if self.address else None
-        user_image = self.profile_image.serialize() if self.profile_image else None
+        address_serialized = self.address.serialize() if self.address else None
+        user_image_serialized = self.profile_image.serialize() if self.profile_image else None
 
         return {
             "id": self.id,
@@ -102,8 +102,8 @@ class User(db.Model):
             "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating,
-            "user_image": user_image,
-            "address": address
+            "user_image": user_image_serialized,
+            "address": address_serialized
         }
 
     @classmethod

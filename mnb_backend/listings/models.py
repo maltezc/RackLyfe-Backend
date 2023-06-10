@@ -83,10 +83,37 @@ class Listing(db.Model):
             "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
+    @classmethod
+    def create_listing(cls, owner, primary_image_url, title, author, isbn, genre, rate_price, rate_schedule, status):
+        """
+        Creates a listing object and adds it to the database."""
+        try:
+            listing = cls(
+                owner=owner,
+                primary_image_url=primary_image_url,
+                title=title,
+                author=author,
+                isbn=isbn,
+                genre=genre,
+                rate_price=rate_price,
+                rate_schedule=rate_schedule,
+                status=status
+            )
+            db.session.add(listing)
+            db.session.commit()
+
+            owner.listings.append(listing)
+            db.session.commit()
+
+            return listing
+
+        except:
+            db.session.rollback()
+            return "Failed to create listing."
+
     def __repr__(self):
         return f"< Listing #{self.id}, " \
                f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
                f"Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
-
 
 # endregion

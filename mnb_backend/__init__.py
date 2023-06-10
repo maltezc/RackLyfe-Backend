@@ -14,6 +14,7 @@ from mnb_backend.user_images.routes import user_images_routes
 from mnb_backend.addresses.routes import addresses_routes
 
 from mnb_backend.listings.routes import listings_routes
+from mnb_backend.listings.helper_routes import listings_helper_routes
 from mnb_backend.listing_images.routes import listing_images_routes
 from mnb_backend.reservations.routes import reservations_routes
 
@@ -58,6 +59,7 @@ app.register_blueprint(user_routes, url_prefix='/api/users')
 app.register_blueprint(user_images_routes, url_prefix='/api/user_images')
 app.register_blueprint(addresses_routes, url_prefix='/api/addresses')
 app.register_blueprint(listings_routes, url_prefix='/api/listings')
+# app.register_blueprint(listings_helper_routes, url_prefix='/api/listings_helpers')
 app.register_blueprint(listing_images_routes, url_prefix='/api/listing_images')
 app.register_blueprint(reservations_routes, url_prefix='/api/reservations')
 app.register_blueprint(messages_routes, url_prefix='/api/messages')

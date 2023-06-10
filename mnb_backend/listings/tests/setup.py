@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from mnb_backend import app
 from mnb_backend.addresses.models import Address, Location, City, State, ZipCode
+from mnb_backend.addresses.states import states
 from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums
 from mnb_backend.listings.models import Listing
@@ -19,10 +20,18 @@ class ListingBaseViewTestCase(TestCase):
         Location.query.delete()
         Address.query.delete()  # This should come before ZipCode
         ZipCode.query.delete()
+        State.query.delete()
         City.query.delete()
         User.query.delete()
 
         db.session.commit()  # Commit after deletion
+
+
+
+        # Insert all states into the database
+        for state_data in states:
+            state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
+            db.session.add(state)
 
 
         # ZipCode.query.delete()

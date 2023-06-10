@@ -7,6 +7,7 @@ from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
 from mnb_backend.listings.models import Listing
 from mnb_backend.listings.helpers import db_post_listing
+from mnb_backend.users.models import User
 
 listings_routes = Blueprint('listings_routes', __name__)
 
@@ -57,7 +58,53 @@ def create_listing():
             return jsonify({"error": f"Failed to add listing and listing image: {error}", }), 401
 
 
-@listings_routes.patch('/api/listings/<int:listing_uid>')
+@listings_routes.get('/current')
+@jwt_required()
+def get_listings_of_current_user():
+    """Show books of specified user.
+
+    Returns JSON like:
+        {books: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get_or_404(current_user_id)
+
+    listings = current_user.listings
+    serialized = [listing.serialize() for listing in listings]
+
+    return jsonify(listings=serialized)
+
+
+# TODO: GET SPECIFIC LISTING
+@listings_routes.get('/<int:book_uid>')
+def show_book_by_id(book_uid):
+    """Return information on a specific book.
+
+    Returns JSON like:
+        {book: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
+    """
+    listing = Listing.query.get_or_404(book_uid)
+    serialized = listing.serialize()
+
+    return jsonify(listing=serialized)
+
+
+@listings_routes.get("/user/<int:user_id>")
+def get_listings_of_specific_user(user_id):
+    """
+    Gets listings of current user
+    """
+
+    user = User.query.get_or_404(user_id)
+
+    listings = user.listings
+    serialized = [listing.serialize() for listing in listings]
+
+    return jsonify(listings=serialized)
+
+
+@listings_routes.patch('/<int:listing_uid>')
 @jwt_required()
 def update_listing(listing_uid):
     """ Update listing information
