@@ -26,20 +26,10 @@ class ListingBaseViewTestCase(TestCase):
 
         db.session.commit()  # Commit after deletion
 
-
-
         # Insert all states into the database
         for state_data in states:
             state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
             db.session.add(state)
-
-
-        # ZipCode.query.delete()
-        # City.query.delete()
-        # Location.query.delete()
-        # Listing.query.delete()
-        # Address.query.delete()
-        # User.query.delete() # TODO: FAILING HERE. CHECK CASCADE DELETE IN MODELS. NOT SURE WHAT ELSE TO CHECK.
 
         u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
         # u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)

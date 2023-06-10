@@ -77,14 +77,14 @@ def get_listings_of_current_user():
 
 
 # TODO: GET SPECIFIC LISTING
-@listings_routes.get('/<int:book_uid>')
-def show_book_by_id(book_uid):
+@listings_routes.get('/<int:listing_id>')
+def get_specific_listing(listing_id):
     """Return information on a specific book.
 
     Returns JSON like:
         {book: {book_uid, owner_id, orig_image_url, small_image_url, title, author, isbn, genre, condition, price, reservations}, ...}
     """
-    listing = Listing.query.get_or_404(book_uid)
+    listing = Listing.query.get_or_404(listing_id)
     serialized = listing.serialize()
 
     return jsonify(listing=serialized)
