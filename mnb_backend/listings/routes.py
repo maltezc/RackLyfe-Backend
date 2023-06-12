@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from mnb_backend.database import db
 from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
+from mnb_backend.enums import ListingStatusEnum
 from mnb_backend.listings.models import Listing
 from mnb_backend.listings.helpers import db_post_listing
 from mnb_backend.users.models import User
@@ -37,21 +38,39 @@ def create_listing():
             rate_price = int(request.form.get("rate_price"))
             rate_schedule = request.form.get("rate_schedule")
 
+            curren_user = User.query.get_or_404(current_user_id)
+
+            listing = Listing.create_listing(
+                owner=curren_user,
+                title=title,
+                author=author,
+                isbn=isbn,
+                genre="",
+                status=ListingStatusEnum.AVAILABLE,
+                # condition=condition,
+                rate_price=rate_price,
+                rate_schedule=rate_schedule,
+                images=images,
+
+
+            )
+
             # post listing to db
-            listing_posted = db_post_listing(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
-
-            images_posted = []
-            # post image to aws
-
-            for image in images:
-                image_url = aws_upload_image(images[image])
-                # post image to database
-                image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
-                images_posted.append(image_element.serialize())
+            # listing_posted = db_post_listing(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
+            #
+            # images_posted = []
+            # # post image to aws
+            #
+            # for image in images:
+            #     image_url = aws_upload_image(images[image])
+            #     # post image to database
+            #     image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
+            #     images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary listing image here but then its pinging the db twice for the patch request
 
-            return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
+            return jsonify(listing=listing.serialize()), 201
+            # return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
             print("Error", error)

@@ -37,9 +37,8 @@ class CreateListingTestCase(ListingBaseViewTestCase):
                                    data=json_data)
 
             # Assert
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 201)
             self.assertEqual(len(u1.listings), 1)
-            self.assertEqual(response.json['user']['firstname'], 'John')
 
     # def test_create_listing_sad(self):
 

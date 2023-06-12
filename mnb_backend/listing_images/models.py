@@ -1,5 +1,6 @@
 """Listing Images Model"""
 from mnb_backend.database import db
+# from mnb_backend import app
 
 
 # region listing image
@@ -34,11 +35,26 @@ class ListingImage(db.Model):
             "image_url": self.image_url,
         }
 
-    # TODO: CREATE CLASS METHOD CREATE_IMAGE
+    @classmethod
+    def create_listing_image(cls, listing, image_url):
+        """
+        Creates an image_listing in the database."""
+        try:
+            listing_image = ListingImage(
+                listing_id=listing.id,
+                image_url=image_url
+            )
 
+            db.session.add(listing_image)
+            db.session.commit()
+
+            return listing_image
+        except Exception as error:
+            print("Error", error)
+            db.session.rollback()
+            return "Failed to create listing image."
 
     def __repr__(self):
-        return f"< Listing Image #{self.id}, ImageUrl: {self.image_url} >"
-
+        return f"< Listing Image #{self.id}, ImageUrl: {self.image_url}, Listing: {self.listing}>"
 
 # endregion

@@ -1,7 +1,12 @@
 """Models for listings"""
+from flask import jsonify
+
+from mnb_backend.api_helpers import aws_upload_image
 from mnb_backend.database import db
 from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, ListingStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
+
+from mnb_backend.listing_images.models import ListingImage
 
 
 # region Listings
@@ -24,7 +29,7 @@ class Listing(db.Model):
 
     primary_image_url = db.Column(
         db.Text,
-        # nullable=False,
+        nullable=True
     )
 
     images = db.Relationship("ListingImage", back_populates="listing", uselist=True)
@@ -84,20 +89,35 @@ class Listing(db.Model):
         }
 
     @classmethod
-    def create_listing(cls, owner, primary_image_url, title, author, isbn, genre, rate_price, rate_schedule, status):
+    def create_listing(cls, owner, title, author, isbn, genre, rate_price, rate_schedule, status,
+                       primary_image_url=None, images=None):
         """
         Creates a listing object and adds it to the database."""
+
+        price_enums_dict = {
+            100: PriceEnums.ONE,
+            200: PriceEnums.TWO,
+            300: PriceEnums.THREE,
+            400: PriceEnums.FOUR,
+            500: PriceEnums.FIVE,
+            600: PriceEnums.SIX,
+            700: PriceEnums.SEVEN,
+            800: PriceEnums.EIGHT,
+            900: PriceEnums.NINE,
+            1000: PriceEnums.TEN,
+        }
+
         try:
-            listing = cls(
+            listing = Listing(
                 owner=owner,
-                primary_image_url=primary_image_url,
                 title=title,
                 author=author,
                 isbn=isbn,
                 genre=genre,
-                rate_price=rate_price,
-                rate_schedule=rate_schedule,
-                status=status
+                rate_price=price_enums_dict[rate_price],
+                rate_schedule=RentalDurationEnum.WEEKLY,
+                status=ListingStatusEnum.AVAILABLE,
+                primary_image_url=primary_image_url
             )
             db.session.add(listing)
             db.session.commit()
@@ -105,16 +125,33 @@ class Listing(db.Model):
             owner.listings.append(listing)
             db.session.commit()
 
+            # TODO: bring this to routes
+            # if images is not None:
+            #     if len(images) > 0:
+            #         for i, image in enumerate(images.values()):
+            #
+            #             # add to aws first
+            #             image_url = aws_upload_image(image)
+            #
+            #             if i == 0:
+            #                 listing.primary_image_url += image_url
+            #
+            #             # post image to database
+            #             ListingImage.create_listing_image(listing, image_url)
+
+                    # image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
+                    # images_posted.append(image_element.serialize())
+
+                    # then set db objects with urls created.
+
             return listing
 
-        except:
+        except Exception as error:
+            print("Error", error)
             db.session.rollback()
-            return "Failed to create listing."
-
+            return jsonify(error="Failed to create listing.")
 
     # TODO: USE LISTING_MUST_HAVE_IMAGE IN ORDER TO CREATE LIST
-
-
 
     def __repr__(self):
         return f"< Listing #{self.id}, " \

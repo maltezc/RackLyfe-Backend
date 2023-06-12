@@ -13,7 +13,7 @@ from flask import jsonify
 from mnb_backend.database import db
 from mnb_backend.enums import PriceEnums
 from mnb_backend.listing_images.models import ListingImage
-from mnb_backend.listings.models import Listing
+# from mnb_backend.listings.models import Listing
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 
