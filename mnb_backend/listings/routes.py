@@ -51,8 +51,6 @@ def create_listing():
                 rate_price=rate_price,
                 rate_schedule=rate_schedule,
                 images=images,
-
-
             )
 
             # post listing to db
@@ -134,20 +132,19 @@ def update_listing(listing_uid):
     Authorization: must be owner of listing
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
     listing = Listing.query.get_or_404(listing_uid)
-    print("listing owner", listing.owner_username)
-    if current_user == listing.owner_username:
+
+    if current_user_id == listing.owner_id:
         data = request.json
 
-        listing.orig_image_url = data['orig_image_url'],
-        listing.small_image_url = data['small_image_url'],
-        listing.title = data['title'],
-        listing.author = data['author'],
-        listing.isbn = data['isbn'],
-        listing.genre = data['genre'],
-        listing.condition = data['condition'],
-        listing.price = data['price'],
+        # Update the listing attributes
+        listing.title = data.get('title', listing.title),
+        listing.author = data.get('author', listing.author),
+        listing.isbn = data.get('isbn', listing.isbn),
+        listing.genre = data.get('genre', listing.genre),
+        # listing.condition = data.get('condition', listing.condition),
+        # listing.rate_price = data.get('rate_price', listing.rate_price.value),
 
         db.session.add(listing)
         db.session.commit()
@@ -157,20 +154,20 @@ def update_listing(listing_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@listings_routes.patch('/api/users/<int:user_uid>/listings/<int:listing_uid>/toggle_status')
+@listings_routes.patch('/toggle_status/<int:listing_uid>')
 @jwt_required()
-def toggle_listing_status(user_uid, listing_uid):
+def toggle_listing_status(listing_uid):
     """ Toggles listing availability status. """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
+    listing = Listing.query.get_or_404(listing_uid)
 
-    if current_user == user_uid:
-        listing = Listing.query.get_or_404(listing_uid)
+    if current_user_id == listing.owner_id:
 
-        if listing.status == "Available":
-            listing.status = "Checked Out"
+        if listing.status == ListingStatusEnum.AVAILABLE:
+            listing.status = ListingStatusEnum.UNAVAILABLE
         else:
-            listing.status = "Available"
+            listing.status = ListingStatusEnum.AVAILABLE
 
         db.session.add(listing)
         db.session.commit()
@@ -180,7 +177,7 @@ def toggle_listing_status(user_uid, listing_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@listings_routes.delete('/api/listings/<int:listing_uid>')
+@listings_routes.delete('/<int:listing_uid>')
 @jwt_required()
 def delete_listing(listing_uid):
     """ update listing information
@@ -191,9 +188,9 @@ def delete_listing(listing_uid):
     Authorization: must be owner of listing
     """
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
     listing = Listing.query.get_or_404(listing_uid)
-    if current_user == listing.owner_id:
+    if current_user_id == listing.owner_id:
         db.session.delete(listing)
         db.session.commit()
 

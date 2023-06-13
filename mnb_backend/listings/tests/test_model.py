@@ -6,7 +6,6 @@ from mnb_backend.listings.models import Listing
 from mnb_backend.listings.tests.setup import ListingBaseViewTestCase
 from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums, PriceEnums, RentalDurationEnum, ListingStatusEnum
-from mnb_backend.errors import EmailAlreadyExistsError
 from mnb_backend.users.models import User
 
 
@@ -37,7 +36,7 @@ class CreateListingTestCase(ListingBaseViewTestCase):
                 author=author,
                 isbn=isbn,
                 genre=genre,
-                rate_price=PriceEnums.FOUR,
+                rate_price=400,
                 rate_schedule=RentalDurationEnum.WEEKLY,
                 status=ListingStatusEnum.AVAILABLE,
             )
@@ -73,7 +72,7 @@ class GetListingTestCase(ListingBaseViewTestCase):
                 author=author,
                 isbn=isbn,
                 genre=genre,
-                rate_price=PriceEnums.FOUR,
+                rate_price=300,
                 rate_schedule=RentalDurationEnum.WEEKLY,
                 status=ListingStatusEnum.AVAILABLE,
             )
