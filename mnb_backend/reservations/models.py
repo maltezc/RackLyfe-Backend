@@ -85,6 +85,8 @@ class Reservation(db.Model):
             "listing_renter": self.renter.serialize(),
         }
 
+
+
     def __repr__(self):
         return f"< Reservation # {self.id}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
                f"EndDate: {self.end_date}, Status: {self.status}, Duration: {self.duration}, " \

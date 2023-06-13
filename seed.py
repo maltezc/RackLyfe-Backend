@@ -1,3 +1,4 @@
+from mnb_backend.addresses.states import states
 # noinspection PyUnresolvedReferences
 from mnb_backend.database import db
 
@@ -21,58 +22,7 @@ db.create_all()
 # region create dummy users----------------------------------------
 
 
-states = [
-    {'name': 'Alabama', 'abbreviation': 'AL'},
-    {'name': 'Alaska', 'abbreviation': 'AK'},
-    {'name': 'Arizona', 'abbreviation': 'AZ'},
-    {'name': 'Arkansas', 'abbreviation': 'AR'},
-    {'name': 'California', 'abbreviation': 'CA'},
-    {'name': 'Colorado', 'abbreviation': 'CO'},
-    {'name': 'Connecticut', 'abbreviation': 'CT'},
-    {'name': 'Delaware', 'abbreviation': 'DE'},
-    {'name': 'Florida', 'abbreviation': 'FL'},
-    {'name': 'Georgia', 'abbreviation': 'GA'},
-    {'name': 'Hawaii', 'abbreviation': 'HI'},
-    {'name': 'Idaho', 'abbreviation': 'ID'},
-    {'name': 'Illinois', 'abbreviation': 'IL'},
-    {'name': 'Indiana', 'abbreviation': 'IN'},
-    {'name': 'Iowa', 'abbreviation': 'IA'},
-    {'name': 'Kansas', 'abbreviation': 'KS'},
-    {'name': 'Kentucky', 'abbreviation': 'KY'},
-    {'name': 'Louisiana', 'abbreviation': 'LA'},
-    {'name': 'Maine', 'abbreviation': 'ME'},
-    {'name': 'Maryland', 'abbreviation': 'MD'},
-    {'name': 'Massachusetts', 'abbreviation': 'MA'},
-    {'name': 'Michigan', 'abbreviation': 'MI'},
-    {'name': 'Minnesota', 'abbreviation': 'MN'},
-    {'name': 'Mississippi', 'abbreviation': 'MS'},
-    {'name': 'Missouri', 'abbreviation': 'MO'},
-    {'name': 'Montana', 'abbreviation': 'MT'},
-    {'name': 'Nebraska', 'abbreviation': 'NE'},
-    {'name': 'Nevada', 'abbreviation': 'NV'},
-    {'name': 'New Hampshire', 'abbreviation': 'NH'},
-    {'name': 'New Jersey', 'abbreviation': 'NJ'},
-    {'name': 'New Mexico', 'abbreviation': 'NM'},
-    {'name': 'New York', 'abbreviation': 'NY'},
-    {'name': 'North Carolina', 'abbreviation': 'NC'},
-    {'name': 'North Dakota', 'abbreviation': 'ND'},
-    {'name': 'Ohio', 'abbreviation': 'OH'},
-    {'name': 'Oklahoma', 'abbreviation': 'OK'},
-    {'name': 'Oregon', 'abbreviation': 'OR'},
-    {'name': 'Pennsylvania', 'abbreviation': 'PA'},
-    {'name': 'Rhode Island', 'abbreviation': 'RI'},
-    {'name': 'South Carolina', 'abbreviation': 'SC'},
-    {'name': 'South Dakota', 'abbreviation': 'SD'},
-    {'name': 'Tennessee', 'abbreviation': 'TN'},
-    {'name': 'Texas', 'abbreviation': 'TX'},
-    {'name': 'Utah', 'abbreviation': 'UT'},
-    {'name': 'Vermont', 'abbreviation': 'VT'},
-    {'name': 'Virginia', 'abbreviation': 'VA'},
-    {'name': 'Washington', 'abbreviation': 'WA'},
-    {'name': 'West Virginia', 'abbreviation': 'WV'},
-    {'name': 'Wisconsin', 'abbreviation': 'WI'},
-    {'name': 'Wyoming', 'abbreviation': 'WY'}
-]
+
 
 # Insert all states into the database
 for state_data in states:
@@ -93,13 +43,11 @@ user1Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/aiony-haust-3TLl_97HNJo-unsplash.jpg"
 )
 db.session.add(user1Image)
-# db.session.add_all([user1, user1Image])
 db.session.commit()
 user1.profile_image = user1Image
 
 address1 = Address(street_address="164 Glenwood")
 db.session.add(address1)
-# user1.address = address1
 address1.user = user1
 
 location1 = Location(point='POINT(-122.28195023589687 38.006370860286694)')
@@ -112,7 +60,6 @@ city1 = City(
 db.session.add(city1)
 
 address1.city = city1
-# city1.addresses.append(address1)
 
 city1.state = State.query.filter(State.state_abbreviation == "CA").first()
 
@@ -198,7 +145,7 @@ db.session.commit()
 
 # region books---------------------------------------------
 
-book1 = Listing(
+listing1 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="The Name of the Wind",
@@ -210,13 +157,13 @@ book1 = Listing(
     rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
 )
-user1.listings.append(book1)
+user1.listings.append(listing1)
 
 bookImage1 = ListingImage(
     image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
               "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
 )
-book1.images.append(bookImage1)
+listing1.images.append(bookImage1)
 
 book2 = Listing(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
@@ -242,7 +189,7 @@ bookImage2a = ListingImage(
 )
 book2.images.append(bookImage2a)
 
-db.session.add_all([book1, bookImage1, book2, bookImage2, bookImage2a])
+db.session.add_all([listing1, bookImage1, book2, bookImage2, bookImage2a])
 
 book3 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
@@ -298,7 +245,7 @@ db.session.add_all([book4, bookImage4])
 
 start_date1 = datetime(2023, 5, 20, 12, 1)
 timedelta1 = timedelta(weeks=5)
-total1 = book1.rate_price.value * (timedelta1.days/7)
+total1 = listing1.rate_price.value * (timedelta1.days / 7)
 reservation1 = Reservation(
     # id="1",
     reservation_date_created=datetime.utcnow(),
@@ -309,7 +256,7 @@ reservation1 = Reservation(
     total=total1,
 )
 reservation1.renter = user2
-reservation1.listing = book1
+reservation1.listing = listing1
 
 start_date2 = datetime(2023, 5, 25, 12, 1)
 timedelta2 = timedelta(weeks=2)

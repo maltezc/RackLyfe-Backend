@@ -55,8 +55,7 @@ class User(db.Model):
         default=False
     )
 
-    address = db.relationship('Address', uselist=False, back_populates='user', lazy=True, cascade='delete, '
-                                                                                                  'delete-orphan')
+    address = db.relationship('Address', uselist=False, back_populates='user', cascade='delete')
 
     image_url = db.Column(
         db.Text,
@@ -72,20 +71,17 @@ class User(db.Model):
         default=5.0
     )
 
-    profile_image = db.relationship('UserImage', back_populates='user', uselist=False, lazy=True, cascade='delete, '
-                                                                                                          'delete'
-                                                                                                          '-orphan')
+    profile_image = db.relationship('UserImage', back_populates='user', uselist=False, lazy=True, cascade='delete')
 
-    listings = db.relationship('Listing', back_populates='owner', uselist=True, lazy=True, cascade='delete, '
-                                                                                                   'delete-orphan')
+    listings = db.relationship('Listing', back_populates='owner', uselist=True, lazy=True, cascade='delete')
 
     renting_reservations = db.relationship('Reservation', back_populates='renter',
-                                           uselist=True)  # TODO: need to figure this out.
+                                           uselist=True, cascade='delete')  # TODO: need to figure this out.
 
     sent_messages = db.relationship('Message', back_populates='sender', foreign_keys='Message.sender_uid', lazy=True,
-                                    uselist=True)
+                                    uselist=True, cascade='delete')
     received_messages = db.relationship('Message', back_populates='recipient', foreign_keys='Message.recipient_uid',
-                                        lazy=True, uselist=True)
+                                        lazy=True, uselist=True, cascade='delete')
 
     def serialize(self):
         """ returns self """
@@ -93,8 +89,8 @@ class User(db.Model):
         # TODO: check out marshmellow suggested by David for serializing:
         #  https://flask-marshmallow.readthedocs.io/en/latest/
 
-        address = self.address.serialize() if self.address else None
-        user_image = self.profile_image.serialize() if self.profile_image else None
+        address_serialized = self.address.serialize() if self.address else None
+        user_image_serialized = self.profile_image.serialize() if self.profile_image else None
 
         return {
             "id": self.id,
@@ -106,8 +102,8 @@ class User(db.Model):
             "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating,
-            "user_image": user_image,
-            "address": address
+            "user_image": user_image_serialized,
+            "address": address_serialized
         }
 
     @classmethod
