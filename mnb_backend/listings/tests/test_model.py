@@ -5,7 +5,8 @@ from mnb_backend.addresses.models import Address
 from mnb_backend.listings.models import Listing
 from mnb_backend.listings.tests.setup import ListingBaseViewTestCase
 from mnb_backend.database import db
-from mnb_backend.enums import UserStatusEnums, PriceEnums, RentalDurationEnum, ListingStatusEnum
+from mnb_backend.enums import UserStatusEnums, PriceEnums, RentalDurationEnum, ListingStatusEnum, RackMountTypeEnum, \
+    RackActivityTypeEnum
 from mnb_backend.users.models import User
 
 
@@ -23,21 +24,20 @@ class CreateListingTestCase(ListingBaseViewTestCase):
             a1 = db.session.get(Address, self.a1_id)
 
             primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
-            title = "The Name of the Wind"
-            author = "Patrick Rothfuss"
-            isbn = 9780756405892
-            genre = "Fantasy"
+            title = "Large Cargo basket"
+            rack_mount_type = RackMountTypeEnum.ROOF,
+            activity_type = RackActivityTypeEnum.CARGOBASKET,
+            rate_price = 2000,
 
             # Create a listing
             listing1 = Listing.create_listing(
                 owner=u1,
                 primary_image_url=primary_image_url,
                 title=title,
-                author=author,
-                isbn=isbn,
-                genre=genre,
-                rate_price=400,
-                rate_schedule=RentalDurationEnum.WEEKLY,
+                mount_type=rack_mount_type,
+                activity_type=activity_type,
+                rate_price=2000,
+                # rate_schedule=RentalDurationEnum.WEEKLY,
                 status=ListingStatusEnum.AVAILABLE,
             )
 
@@ -59,21 +59,20 @@ class GetListingTestCase(ListingBaseViewTestCase):
 
             primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3" \
                                 "&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
-            title = "The Name of the Wind"
-            author = "Patrick Rothfuss"
-            isbn = 9780756405892
-            genre = "Fantasy"
+            title = "Small Ski Rack"
+            rack_mount_type = RackMountTypeEnum.ROOF,
+            activity_type = RackActivityTypeEnum.SKISSNOWBOARD,
+            rate_price = 1000,
 
             # Create a listing
             listing1 = Listing.create_listing(
                 owner=u1,
                 primary_image_url=primary_image_url,
                 title=title,
-                author=author,
-                isbn=isbn,
-                genre=genre,
-                rate_price=300,
-                rate_schedule=RentalDurationEnum.WEEKLY,
+                mount_type=rack_mount_type,
+                activity_type=activity_type,
+                rate_price=1500,
+                # rate_schedule=RentalDurationEnum.WEEKLY,
                 status=ListingStatusEnum.AVAILABLE,
             )
 
@@ -85,11 +84,10 @@ class GetListingTestCase(ListingBaseViewTestCase):
                 "owner": listing1.owner.serialize(),
                 "primary_image_url": listing1.primary_image_url,
                 "title": listing1.title,
-                "author": listing1.author,
-                "isbn": listing1.isbn,
-                "genre": listing1.genre,
+                "rack_mount_type": listing1.mount_type,
+                "activity_type": listing1.activity_type,
                 "rate_price": listing1.rate_price.value,
-                "rate_schedule": listing1.rate_schedule.value,
+                # "rate_schedule": listing1.rate_schedule.value,
                 "status": listing1.status.value,
                 "reservations": []
             })

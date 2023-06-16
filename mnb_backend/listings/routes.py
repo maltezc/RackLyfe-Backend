@@ -33,18 +33,17 @@ def create_listing():
             images = request.files
             title = request.form.get("title")
             activity_type = request.form.get("activity_type")
-            rack_mount_type = request.form.get("rack_mount_type")
+            rack_mount_type = request.form.get("mount_type")
             rate_price = int(request.form.get("rate_price"))
             # rate_schedule = request.form.get("rate_schedule")
 
-            curren_user = User.query.get_or_404(current_user_id)
+            current_user = User.query.get_or_404(current_user_id)
 
             listing = Listing.create_listing(
-                owner=curren_user,
+                owner=current_user,
                 title=title,
                 activity_type=activity_type,
-                rack_mount_type=rack_mount_type,
-                status=ListingStatusEnum.AVAILABLE,
+                mount_type=rack_mount_type,
                 rate_price=rate_price,
                 images=images,
             )
@@ -62,8 +61,9 @@ def create_listing():
             #     images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary listing image here but then its pinging the db twice for the patch request
+            serialized = listing.serialize()
 
-            return jsonify(listing=listing.serialize()), 201
+            return jsonify(listing=serialized), 201
             # return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
@@ -137,7 +137,7 @@ def update_listing(listing_uid):
         # Update the listing attributes
         listing.title = data.get('title', listing.title),
         listing.activity_type = data.get('activity_type'), listing.activity_type
-        listing.rack_mount_type = data.get('rack_mount_type'), listing.rack_mount_type
+        listing.mount_type = data.get('rack_mount_type'), listing.mount_type
         # listing.condition = data.get('condition', listing.condition),
         listing.rate_price = data.get('rate_price', listing.rate_price.value),
 

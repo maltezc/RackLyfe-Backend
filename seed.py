@@ -3,7 +3,7 @@ from mnb_backend.addresses.states import states
 from mnb_backend.database import db
 
 from mnb_backend.enums import ListingConditionEnum, RentalDurationEnum, ListingStatusEnum, ReservationStatusEnum, \
-    PriceEnums, UserStatusEnums
+    PriceEnums, UserStatusEnums, RackMountTypeEnum, RackActivityTypeEnum
 from datetime import datetime, timedelta
 
 from mnb_backend.addresses.models import State, Address, Location, City, ZipCode
@@ -148,13 +148,12 @@ db.session.commit()
 listing1 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
-    title="The Name of the Wind",
-    author="Patrick Rothfuss",
-    isbn=9780756405892,
-    genre="",
+    title="Large Cargo Basket",
+    rack_mount_type=RackMountTypeEnum.ROOF,
+    activity_type=RackActivityTypeEnum.CARGOBASKET,
     # condition=ListingConditionEnum.FAIR,
-    rate_price=PriceEnums.FOUR,
-    rate_schedule=RentalDurationEnum.WEEKLY,
+    rate_price=2000,
+    # rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE,
 )
 user1.listings.append(listing1)
@@ -167,13 +166,11 @@ listing1.images.append(listingImage1)
 
 listing2 = Listing(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
-    title="Harry Potter and the Sorcerer's Stone",
-    author="J.K. Rowling, Olly Moss ",
-    isbn=9781781100486,
-    genre="",
-    # condition=ListingConditionEnum.LIKE_NEW,
-    rate_price=PriceEnums.ONE,
-    rate_schedule=RentalDurationEnum.WEEKLY,
+    title="Yakima Bicycle Rack",
+    rack_mount_type=RackMountTypeEnum.ROOF,
+    activity_type=RackActivityTypeEnum.BICYCLE,
+    rate_price=1000,
+    # rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.UNAVAILABLE,
 )
 user1.listings.append(listing2)
@@ -194,13 +191,12 @@ db.session.add_all([listing1, listingImage1, listing2, listingImage2, listingIma
 listing3 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
                       "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
-    title="Foundation",
-    author="Isaac Asimov",
-    isbn=9780553900347,
-    genre="",
+    title="Snowboard rack",
+    rack_mount_type=RackMountTypeEnum.ROOF,
+    activity_type=RackActivityTypeEnum.SKISSNOWBOARD,
+    rate_price=1500,
     # condition=ListingConditionEnum.USED,
-    rate_price=PriceEnums.THREE,
-    rate_schedule=RentalDurationEnum.WEEKLY,
+    # rate_schedule=RentalDurationEnum.WEEKLY,
     status=ListingStatusEnum.AVAILABLE
 )
 user2.listings.append(listing3)
@@ -216,13 +212,10 @@ db.session.add_all([listing3, listingImage3])
 listing4 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
                       "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
-    title="Endurance Shackleton's Incredible Voyage",
-    author="Alfred Lansing",
-    isbn=9780753809877,
-    genre="",
-    # condition=ListingConditionEnum.FAIR,
-    rate_price=PriceEnums.ONE,
-    rate_schedule=RentalDurationEnum.WEEKLY,
+    title="Small Cargo Basket",
+    rack_mount_type=RackMountTypeEnum.ROOF,
+    activity_type=RackActivityTypeEnum.CARGOBASKET,
+    rate_price=1000,
     status=ListingStatusEnum.AVAILABLE
 )
 listing4.owner = user3

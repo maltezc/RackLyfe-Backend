@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token
 
 from mnb_backend import app
 from mnb_backend.database import db
-from mnb_backend.enums import ListingStatusEnum
+from mnb_backend.enums import ListingStatusEnum, RackMountTypeEnum, RackActivityTypeEnum
 from mnb_backend.listings.models import Listing
 from mnb_backend.listings.tests.setup import ListingBaseViewTestCase
 from mnb_backend.users.models import User
@@ -20,7 +20,6 @@ db.create_all()
 listings_root = "/api/listings"
 
 
-
 class CreateListingTestCase(ListingBaseViewTestCase):
     def test_create_listing_happy(self):
         # Arrange
@@ -33,11 +32,11 @@ class CreateListingTestCase(ListingBaseViewTestCase):
         test_image.name = "test_image.jpg"
         # data = {"profile_image": test_image}
         json_data = {
-            "title": "testTitle",
-            "author": "testAuthor",
-            "isbn": 9780756405892,
+            "title": "Large Roof Cargo Basket",
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             # "condition":"",
-            "rate_price": 400,
+            "rate_price": 2000,
             "image1": test_image,
             # "image2":ListingStatusEnum.AVAILABLE,
         }
@@ -83,7 +82,6 @@ class GetSpecificListingOfCurrentUserTestCase(ListingBaseViewTestCase):
             self.assertEqual(data["listing"]["title"], listing_data["title"])
 
 
-
 class GetListingsOfCurrentUserTestCase(ListingBaseViewTestCase):
     def test_get_listings_of_current_user_happy(self):
         u1 = db.session.get(User, self.u1_id)
@@ -123,7 +121,6 @@ class GetListingsOfCurrentUserTestCase(ListingBaseViewTestCase):
             self.assertEqual(len(data['listings']), 2)
 
 
-
 class GetListingOfSpecificUser(ListingBaseViewTestCase):
     def test_get_listings_of_specific_user_happy(self):
         u1 = db.session.get(User, self.u1_id)
@@ -161,7 +158,6 @@ class GetListingOfSpecificUser(ListingBaseViewTestCase):
             self.assertEqual(len(data['listings']), 2)
             self.assertEqual(data["listings"][0]["owner_id"], u1.id)
             self.assertEqual(data["listings"][1]["owner_id"], u1.id)
-
 
 
 class UpdateListingTestCase(ListingBaseViewTestCase):
@@ -255,7 +251,8 @@ class DeleteListingTestCase(ListingBaseViewTestCase):
 
             data_delete = response_delete.get_json()
 
-            response_current_user_listings = client.get(f"{listings_root}/current", headers={"Authorization": f"Bearer {access_token}"})
+            response_current_user_listings = client.get(f"{listings_root}/current",
+                                                        headers={"Authorization": f"Bearer {access_token}"})
             data_get_current = response_current_user_listings.get_json()
 
             self.assertEqual(response_delete.status_code, 200)

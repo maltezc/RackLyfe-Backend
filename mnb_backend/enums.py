@@ -75,7 +75,7 @@ class RackActivityTypeEnum(Enum):
 
     BICYCLE = "Bicycle"
     CARGOBASKET = "Cargo Basket"
-    SKISNOWBOARD = "Skis / Snowboard"
+    SKISSNOWBOARD = "Skis / Snowboard"
 
 
 class StatesEnum(Enum):

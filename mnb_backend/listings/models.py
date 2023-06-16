@@ -40,21 +40,20 @@ class Listing(db.Model):
         nullable=False
     )
 
-    activity_type = db.Column(
-        SQLAlchemyEnum(RackActivityTypeEnum, name='rack_activity_type_enum'),
+    mount_type = db.Column(
+        SQLAlchemyEnum(RackMountTypeEnum, name='rack_mount_enum'),
         nullable=False
     )
 
-    rack_type = db.Column(
-        SQLAlchemyEnum(RackMountTypeEnum, name='rack_type_enum'),
-        nullabe=False
+    activity_type = db.Column(
+        SQLAlchemyEnum(RackActivityTypeEnum, name='rack_activity_type_enum'),
+        nullable=False
     )
 
     rate_price = db.Column(
         db.Integer,
         nullable=False
     )
-
 
     # Standardize to per Day only
     # rate_schedule = db.Column(
@@ -63,6 +62,12 @@ class Listing(db.Model):
 
     status = db.Column(
         SQLAlchemyEnum(ListingStatusEnum, name='listing_status_enum'),
+        nullable=False
+    )
+
+    record_complete = db.Column(
+        db.Boolean,
+        default=False,
         nullable=False
     )
 
@@ -77,25 +82,28 @@ class Listing(db.Model):
             "owner": self.owner.serialize(),
             "primary_image_url": self.primary_image_url,
             "title": self.title,
-            "activity_type": self.activity_type,
-            "rack_type": self.rack_type,
+            "activity_type": enum_serializer(self.activity_type),
+            "rack_type": enum_serializer(self.mount_type),
             "rate_price": self.rate_price,
             "status": enum_serializer(self.status),
             "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
     @classmethod
-    def create_listing(cls, owner, title, activity_type, rack_mount_type, rate_price, status,
+    def create_listing(cls, owner, title, activity_type, mount_type, rate_price,
                        primary_image_url=None, images=None):
         """
         Creates a listing object and adds it to the database."""
 
         try:
+            mount_type_enum = RackMountTypeEnum[mount_type.upper()]
+            activity_type_enum = RackActivityTypeEnum[activity_type.upper().replace(" ", "").replace("/","")]
+
             listing = Listing(
                 owner=owner,
                 title=title,
-                activity_typ=activity_type,
-                rack_typ=rack_mount_type,
+                mount_type=mount_type_enum,
+                activity_type=activity_type_enum,
                 rate_price=rate_price,
                 status=ListingStatusEnum.AVAILABLE,
                 primary_image_url=primary_image_url
@@ -136,7 +144,7 @@ class Listing(db.Model):
 
     def __repr__(self):
         return f"< Listing #{self.id}, " \
-               f"Title: {self.title}, ActivityType: {self.activity_type}, RackMountType: {self.rack_mount_type} " \
-               f"Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
+               f"Title: {self.title}, ActivityType: {self.activity_type}, RackMountType: {self.mount_type} " \
+               f"Price: {self.rate_price}, Status: {self.status} >"
 
 # endregion
