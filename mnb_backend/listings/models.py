@@ -82,8 +82,8 @@ class Listing(db.Model):
             "owner": self.owner.serialize(),
             "primary_image_url": self.primary_image_url,
             "title": self.title,
+            "mount_type": enum_serializer(self.mount_type),
             "activity_type": enum_serializer(self.activity_type),
-            "rack_type": enum_serializer(self.mount_type),
             "rate_price": self.rate_price,
             "status": enum_serializer(self.status),
             "reservations": [reservation.serialize() for reservation in self.reservations]
