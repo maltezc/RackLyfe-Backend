@@ -20,7 +20,7 @@ db.create_all()
 listings_root = "/api/listings"
 
 
-# TODO: create_listing
+
 class CreateListingTestCase(ListingBaseViewTestCase):
     def test_create_listing_happy(self):
         # Arrange
@@ -83,7 +83,7 @@ class GetSpecificListingOfCurrentUserTestCase(ListingBaseViewTestCase):
             self.assertEqual(data["listing"]["title"], listing_data["title"])
 
 
-# TODO: get_listings_of_current_user
+
 class GetListingsOfCurrentUserTestCase(ListingBaseViewTestCase):
     def test_get_listings_of_current_user_happy(self):
         u1 = db.session.get(User, self.u1_id)
@@ -123,7 +123,7 @@ class GetListingsOfCurrentUserTestCase(ListingBaseViewTestCase):
             self.assertEqual(len(data['listings']), 2)
 
 
-# TODO: get_listings_of_specific_user
+
 class GetListingOfSpecificUser(ListingBaseViewTestCase):
     def test_get_listings_of_specific_user_happy(self):
         u1 = db.session.get(User, self.u1_id)
@@ -163,7 +163,7 @@ class GetListingOfSpecificUser(ListingBaseViewTestCase):
             self.assertEqual(data["listings"][1]["owner_id"], u1.id)
 
 
-# TODO: update_listing
+
 class UpdateListingTestCase(ListingBaseViewTestCase):
     def test_update_listing_happy(self):
         u1 = db.session.get(User, self.u1_id)

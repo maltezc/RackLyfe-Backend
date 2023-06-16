@@ -32,24 +32,20 @@ def create_listing():
         try:
             images = request.files
             title = request.form.get("title")
-            author = request.form.get("author")
-            isbn = int(request.form.get("isbn"))
-            condition = request.form.get("condition")
+            activity_type = request.form.get("activity_type")
+            rack_mount_type = request.form.get("rack_mount_type")
             rate_price = int(request.form.get("rate_price"))
-            rate_schedule = request.form.get("rate_schedule")
+            # rate_schedule = request.form.get("rate_schedule")
 
             curren_user = User.query.get_or_404(current_user_id)
 
             listing = Listing.create_listing(
                 owner=curren_user,
                 title=title,
-                author=author,
-                isbn=isbn,
-                genre="",
+                activity_type=activity_type,
+                rack_mount_type=rack_mount_type,
                 status=ListingStatusEnum.AVAILABLE,
-                # condition=condition,
                 rate_price=rate_price,
-                rate_schedule=rate_schedule,
                 images=images,
             )
 
@@ -140,11 +136,10 @@ def update_listing(listing_uid):
 
         # Update the listing attributes
         listing.title = data.get('title', listing.title),
-        listing.author = data.get('author', listing.author),
-        listing.isbn = data.get('isbn', listing.isbn),
-        listing.genre = data.get('genre', listing.genre),
+        listing.activity_type = data.get('activity_type'), listing.activity_type
+        listing.rack_mount_type = data.get('rack_mount_type'), listing.rack_mount_type
         # listing.condition = data.get('condition', listing.condition),
-        # listing.rate_price = data.get('rate_price', listing.rate_price.value),
+        listing.rate_price = data.get('rate_price', listing.rate_price.value),
 
         db.session.add(listing)
         db.session.commit()
