@@ -8,6 +8,7 @@ from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, L
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from mnb_backend.listing_images.models import ListingImage
+from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 
 
 # region Listings
@@ -96,8 +97,11 @@ class Listing(db.Model):
         Creates a listing object and adds it to the database."""
 
         try:
-            mount_type_enum = RackMountTypeEnum[mount_type.upper()]
-            activity_type_enum = RackActivityTypeEnum[activity_type.upper().replace(" ", "").replace("/","")]
+            mount_type_enum = get_mount_type_enum(mount_type)
+            # mount_type_enum = RackMountTypeEnum[mount_type.upper()]
+
+            activity_type_enum = get_activity_type_enum(activity_type)
+            # activity_type_enum = RackActivityTypeEnum[activity_type.upper().replace(" ", "").replace("/","")]
 
             listing = Listing(
                 owner=owner,

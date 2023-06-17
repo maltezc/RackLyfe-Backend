@@ -59,12 +59,10 @@ class GetSpecificListingOfCurrentUserTestCase(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle",
-            "author": "testAuthor",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
+            # "status": ListingStatusEnum.AVAILABLE
 
         }
         listing = Listing.create_listing(owner=u1, **listing_data)
@@ -90,24 +88,18 @@ class GetListingsOfCurrentUserTestCase(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle1",
-            "author": "testAuthor1",
-            "isbn": 9780756405892,
-            "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
-
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
+            "rate_price": 1000,
         }
         listing1 = Listing.create_listing(owner=u1, **listing_data)
 
         listing_data = {
             "title": "testTitle2",
-            "author": "testAuthor2",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
+
 
         }
         listing2 = Listing.create_listing(owner=u1, **listing_data)
@@ -129,25 +121,17 @@ class GetListingOfSpecificUser(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle1",
-            "author": "testAuthor1",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
-
         }
         listing1 = Listing.create_listing(owner=u1, **listing_data)
 
         listing_data = {
             "title": "testTitle2",
-            "author": "testAuthor2",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
-
         }
         listing2 = Listing.create_listing(owner=u1, **listing_data)
 
@@ -168,12 +152,9 @@ class UpdateListingTestCase(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle1",
-            "author": "testAuthor1",
-            "isbn": 9780756405892,
-            "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
+            "rate_price": 1000,
         }
         listing1 = Listing.create_listing(owner=u1, **listing_data)
 
@@ -183,11 +164,8 @@ class UpdateListingTestCase(ListingBaseViewTestCase):
 
         json_data = {
             "title": "updatedTitle",
-            "author": "updatedAuthor",
-            # "condition":"",
-            # "rate_price": 400,
-            # "image1": test_image,
-            # "image2":ListingStatusEnum.AVAILABLE,
+            "mount_type": RackMountTypeEnum.HITCH.value,
+            "activity_type": RackActivityTypeEnum.BICYCLE.value,
         }
         # TODO: COME BACK AND UPDATE AFTER MODELS CHANGE TO ROOFRACK
 
@@ -207,12 +185,9 @@ class ToggleListingStatus(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle1",
-            "author": "testAuthor1",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
         }
         listing1 = Listing.create_listing(owner=u1, **listing_data)
         listing_original_status = listing1.status
@@ -236,12 +211,9 @@ class DeleteListingTestCase(ListingBaseViewTestCase):
         # Create a test listing for the user
         listing_data = {
             "title": "testTitle1",
-            "author": "testAuthor1",
-            "isbn": 9780756405892,
+            "mount_type": RackMountTypeEnum.ROOF.value,
+            "activity_type": RackActivityTypeEnum.SKISSNOWBOARD.value,
             "rate_price": 400,
-            "genre": "",
-            "rate_schedule": "Weekly",
-            "status": ListingStatusEnum.AVAILABLE
         }
         listing1 = Listing.create_listing(owner=u1, **listing_data)
 

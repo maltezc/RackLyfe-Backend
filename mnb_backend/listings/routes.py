@@ -6,8 +6,9 @@ from mnb_backend.database import db
 from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
 from mnb_backend.enums import ListingStatusEnum
+from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 from mnb_backend.listings.models import Listing
-from mnb_backend.listings.helpers import db_post_listing
+# from mnb_backend.listings.helpers import db_post_listing
 from mnb_backend.users.models import User
 
 listings_routes = Blueprint('listings_routes', __name__)
@@ -134,12 +135,21 @@ def update_listing(listing_uid):
     if current_user_id == listing.owner_id:
         data = request.json
 
+        mount_type_value = listing.mount_type
+        if "mount_type" in data:
+            updated_mount_type = data['mount_type']
+            mount_type_value = get_mount_type_enum(updated_mount_type)
+
+        activity_type_value = listing.activity_type
+        if "activity_type" in data:
+            updated_activity_type = data['activity_type']
+            activity_type_value = get_activity_type_enum(updated_activity_type)
+
         # Update the listing attributes
         listing.title = data.get('title', listing.title),
-        listing.activity_type = data.get('activity_type'), listing.activity_type
-        listing.mount_type = data.get('rack_mount_type'), listing.mount_type
-        # listing.condition = data.get('condition', listing.condition),
-        listing.rate_price = data.get('rate_price', listing.rate_price.value),
+        listing.mount_type = mount_type_value
+        listing.activity_type = activity_type_value
+        listing.rate_price = data.get('rate_price', listing.rate_price)
 
         db.session.add(listing)
         db.session.commit()
