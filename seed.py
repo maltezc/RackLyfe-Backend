@@ -17,12 +17,9 @@ from mnb_backend.users.models import User
 db.drop_all()
 db.create_all()
 
-# db.Table("User").drop()
+
 
 # region create dummy users----------------------------------------
-
-
-
 
 # Insert all states into the database
 for state_data in states:
@@ -102,7 +99,7 @@ user3 = User(
 user3Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
 )
-db.session.add(user3, user3Image)
+db.session.add_all([user3, user3Image])
 user3.profile_image = user3Image
 
 address3 = Address(street_address="655 E Drachman St")
@@ -120,6 +117,7 @@ db.session.add(city2)
 address3.city = city2
 
 state2 = State.query.filter(State.state_abbreviation == "AZ").first()
+
 city2.state = state2
 
 zipcode2 = ZipCode(code=85705)
@@ -149,7 +147,7 @@ listing1 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl"
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="Large Cargo Basket",
-    rack_mount_type=RackMountTypeEnum.ROOF,
+    mount_type=RackMountTypeEnum.ROOF,
     activity_type=RackActivityTypeEnum.CARGOBASKET,
     # condition=ListingConditionEnum.FAIR,
     rate_price=2000,
@@ -167,7 +165,7 @@ listing1.images.append(listingImage1)
 listing2 = Listing(
     primary_image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/d08b4b4c-a199-4537-8bd7-01dcc60c105d",
     title="Yakima Bicycle Rack",
-    rack_mount_type=RackMountTypeEnum.ROOF,
+    mount_type=RackMountTypeEnum.ROOF,
     activity_type=RackActivityTypeEnum.BICYCLE,
     rate_price=1000,
     # rate_schedule=RentalDurationEnum.WEEKLY,
@@ -192,7 +190,7 @@ listing3 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1"
                       "&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Snowboard rack",
-    rack_mount_type=RackMountTypeEnum.ROOF,
+    mount_type=RackMountTypeEnum.ROOF,
     activity_type=RackActivityTypeEnum.SKISSNOWBOARD,
     rate_price=1500,
     # condition=ListingConditionEnum.USED,
@@ -213,7 +211,7 @@ listing4 = Listing(
     primary_image_url="https://books.google.com/books/publisher/content?id=oDBnAgAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul"
                       "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Small Cargo Basket",
-    rack_mount_type=RackMountTypeEnum.ROOF,
+    mount_type=RackMountTypeEnum.ROOF,
     activity_type=RackActivityTypeEnum.CARGOBASKET,
     rate_price=1000,
     status=ListingStatusEnum.AVAILABLE
@@ -235,7 +233,7 @@ db.session.add_all([listing4, listingImage4])
 
 start_date1 = datetime(2023, 5, 20, 12, 1)
 timedelta1 = timedelta(weeks=5)
-total1 = listing1.rate_price.value * (timedelta1.days / 7)
+total1 = listing1.rate_price * (timedelta1.days / 7)
 reservation1 = Reservation(
     # id="1",
     reservation_date_created=datetime.utcnow(),
@@ -250,7 +248,7 @@ reservation1.listing = listing1
 
 start_date2 = datetime(2023, 5, 25, 12, 1)
 timedelta2 = timedelta(weeks=2)
-total2 = listing2.rate_price.value * (timedelta2.days / 7)
+total2 = listing2.rate_price * (timedelta2.days / 7)
 reservation2 = Reservation(
     # id="2",
     reservation_date_created=datetime.utcnow(),
@@ -266,7 +264,7 @@ listing2.reservations.append(reservation2)
 
 start_date3 = datetime(2023, 5, 15, 12, 1)
 timedelta3 = timedelta(weeks=3)
-total3 = listing3.rate_price.value * (timedelta3.days / 7)
+total3 = listing3.rate_price * (timedelta3.days / 7)
 reservation3 = Reservation(
     reservation_date_created=datetime.utcnow(),
     start_date=start_date3,
@@ -289,23 +287,29 @@ db.session.commit()
 
 message1 = Message(
     # message_uid=1,
-    reservation_uid=1,
-    sender_uid=1,
-    recipient_uid=2,
+    reservation_uid=reservation1.id,
+    sender_uid=user1.id,
+    recipient_uid=user2.id,
     message_text="hello",
     # timestamp="Wed, 01 Feb 2023 12:01:00 GMT"
 )
+db.session.add(message1)
+
 user1.sent_messages.append(message1)
+db.session.commit()
+
 
 message2 = Message(
     # message_uid=2,
-    reservation_uid=1,
-    sender_uid=2,
-    recipient_uid=1,
+    reservation_uid=reservation1.id,
+    sender_uid=user2.id,
+    recipient_uid=user1.id,
     message_text="hola",
-    # timestamp="Wed, 02 Feb 2023 12:01:00 GMT"
+    # timestamp="Thur, 02 Feb 2023 12:01:00 GMT"
 )
+db.session.add(message2)
 user2.sent_messages.append(message2)
+db.session.commit()
 
 
 # message1 = Message(
@@ -335,7 +339,7 @@ user2.sent_messages.append(message2)
 #     timestamp="Thu, 02 Feb 2023 12:11:00 GMT"
 # )
 
-db.session.add_all([message1, message2])
+# db.session.add_all([message1, message2])
 db.session.commit()
 
 # endregion
