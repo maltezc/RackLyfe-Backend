@@ -3,10 +3,12 @@ from flask import jsonify
 
 from mnb_backend.api_helpers import aws_upload_image
 from mnb_backend.database import db
-from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, ListingStatusEnum
+from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, ListingStatusEnum, RackMountTypeEnum, \
+    RackActivityTypeEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from mnb_backend.listing_images.models import ListingImage
+from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 
 
 # region Listings
@@ -39,31 +41,34 @@ class Listing(db.Model):
         nullable=False
     )
 
-    author = db.Column(
-        db.Text,
+    mount_type = db.Column(
+        SQLAlchemyEnum(RackMountTypeEnum, name='rack_mount_enum'),
         nullable=False
     )
 
-    isbn = db.Column(
-        db.BigInteger,
+    activity_type = db.Column(
+        SQLAlchemyEnum(RackActivityTypeEnum, name='rack_activity_type_enum'),
         nullable=False
-    )
-
-    genre = db.Column(
-        db.Text,
     )
 
     rate_price = db.Column(
-        SQLAlchemyEnum(PriceEnums, name='rental_price_enum'),
-        nullable=False  # select from $1-$10 / week
+        db.Integer,
+        nullable=False
     )
 
-    rate_schedule = db.Column(
-        SQLAlchemyEnum(RentalDurationEnum, name='rental_duration_enum'),
-    )
+    # Standardize to per Day only
+    # rate_schedule = db.Column(
+    #     SQLAlchemyEnum(RentalDurationEnum, name='rental_duration_enum'),
+    # )
 
     status = db.Column(
         SQLAlchemyEnum(ListingStatusEnum, name='listing_status_enum'),
+        nullable=False
+    )
+
+    record_complete = db.Column(
+        db.Boolean,
+        default=False,
         nullable=False
     )
 
@@ -78,44 +83,32 @@ class Listing(db.Model):
             "owner": self.owner.serialize(),
             "primary_image_url": self.primary_image_url,
             "title": self.title,
-            "author": self.author,
-            "isbn": self.isbn,
-            "genre": self.genre,
-            # "condition": enum_serializer(self.condition),
-            "rate_price": enum_serializer(self.rate_price),
-            "rate_schedule": enum_serializer(self.rate_schedule),
+            "mount_type": enum_serializer(self.mount_type),
+            "activity_type": enum_serializer(self.activity_type),
+            "rate_price": self.rate_price,
             "status": enum_serializer(self.status),
             "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
     @classmethod
-    def create_listing(cls, owner, title, author, isbn, genre, rate_price, rate_schedule, status,
+    def create_listing(cls, owner, title, activity_type, mount_type, rate_price,
                        primary_image_url=None, images=None):
         """
         Creates a listing object and adds it to the database."""
 
-        price_enums_dict = {
-            100: PriceEnums.ONE,
-            200: PriceEnums.TWO,
-            300: PriceEnums.THREE,
-            400: PriceEnums.FOUR,
-            500: PriceEnums.FIVE,
-            600: PriceEnums.SIX,
-            700: PriceEnums.SEVEN,
-            800: PriceEnums.EIGHT,
-            900: PriceEnums.NINE,
-            1000: PriceEnums.TEN,
-        }
-
         try:
+            mount_type_enum = get_mount_type_enum(mount_type)
+            # mount_type_enum = RackMountTypeEnum[mount_type.upper()]
+
+            activity_type_enum = get_activity_type_enum(activity_type)
+            # activity_type_enum = RackActivityTypeEnum[activity_type.upper().replace(" ", "").replace("/","")]
+
             listing = Listing(
                 owner=owner,
                 title=title,
-                author=author,
-                isbn=isbn,
-                genre=genre,
-                rate_price=price_enums_dict[rate_price],
-                rate_schedule=RentalDurationEnum.WEEKLY,
+                mount_type=mount_type_enum,
+                activity_type=activity_type_enum,
+                rate_price=rate_price,
                 status=ListingStatusEnum.AVAILABLE,
                 primary_image_url=primary_image_url
             )
@@ -139,10 +132,10 @@ class Listing(db.Model):
             #             # post image to database
             #             ListingImage.create_listing_image(listing, image_url)
 
-                    # image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
-                    # images_posted.append(image_element.serialize())
+            # image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
+            # images_posted.append(image_element.serialize())
 
-                    # then set db objects with urls created.
+            # then set db objects with urls created.
 
             return listing
 
@@ -151,11 +144,11 @@ class Listing(db.Model):
             db.session.rollback()
             return jsonify(error="Failed to create listing.")
 
-    # TODO: USE LISTING_MUST_HAVE_IMAGE IN ORDER TO CREATE LIST
+    # TODO: listing must have in order to be shown but
 
     def __repr__(self):
         return f"< Listing #{self.id}, " \
-               f"Title: {self.title}, Author: {self.author}, ISBN: {self.isbn}, Genre: {self.genre}, " \
-               f"Price: {self.rate_price}, Schedule: {self.rate_schedule}, Status: {self.status} >"
+               f"Title: {self.title}, ActivityType: {self.activity_type}, RackMountType: {self.mount_type} " \
+               f"Price: {self.rate_price}, Status: {self.status} >"
 
 # endregion

@@ -62,6 +62,22 @@ class ListingConditionEnum(Enum):
     USED = "Used"
 
 
+class RackMountTypeEnum(Enum):
+    """Enum for rack type: Hitch or Roof"""
+
+    ROOF = "Roof"
+    HITCH = "Hitch"
+
+
+class RackActivityTypeEnum(Enum):
+    """Enum for rack activity type: Bicycle, Cargo Basket, Ski/Snowboard, etc"""
+    # TODO: ADD FOR KAYAKs & others later.
+
+    BICYCLE = "Bicycle"
+    CARGOBASKET = "Cargo Basket"
+    SKISSNOWBOARD = "Skis / Snowboard"
+
+
 class StatesEnum(Enum):
     """ Enum for states """
 

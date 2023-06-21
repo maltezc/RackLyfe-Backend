@@ -6,8 +6,9 @@ from mnb_backend.database import db
 from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
 from mnb_backend.enums import ListingStatusEnum
+from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 from mnb_backend.listings.models import Listing
-from mnb_backend.listings.helpers import db_post_listing
+# from mnb_backend.listings.helpers import db_post_listing
 from mnb_backend.users.models import User
 
 listings_routes = Blueprint('listings_routes', __name__)
@@ -32,24 +33,19 @@ def create_listing():
         try:
             images = request.files
             title = request.form.get("title")
-            author = request.form.get("author")
-            isbn = int(request.form.get("isbn"))
-            condition = request.form.get("condition")
+            activity_type = request.form.get("activity_type")
+            rack_mount_type = request.form.get("mount_type")
             rate_price = int(request.form.get("rate_price"))
-            rate_schedule = request.form.get("rate_schedule")
+            # rate_schedule = request.form.get("rate_schedule")
 
-            curren_user = User.query.get_or_404(current_user_id)
+            current_user = User.query.get_or_404(current_user_id)
 
             listing = Listing.create_listing(
-                owner=curren_user,
+                owner=current_user,
                 title=title,
-                author=author,
-                isbn=isbn,
-                genre="",
-                status=ListingStatusEnum.AVAILABLE,
-                # condition=condition,
+                activity_type=activity_type,
+                mount_type=rack_mount_type,
                 rate_price=rate_price,
-                rate_schedule=rate_schedule,
                 images=images,
             )
 
@@ -66,8 +62,9 @@ def create_listing():
             #     images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary listing image here but then its pinging the db twice for the patch request
+            serialized = listing.serialize()
 
-            return jsonify(listing=listing.serialize()), 201
+            return jsonify(listing=serialized), 201
             # return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
@@ -138,13 +135,21 @@ def update_listing(listing_uid):
     if current_user_id == listing.owner_id:
         data = request.json
 
+        mount_type_value = listing.mount_type
+        if "mount_type" in data:
+            updated_mount_type = data['mount_type']
+            mount_type_value = get_mount_type_enum(updated_mount_type)
+
+        activity_type_value = listing.activity_type
+        if "activity_type" in data:
+            updated_activity_type = data['activity_type']
+            activity_type_value = get_activity_type_enum(updated_activity_type)
+
         # Update the listing attributes
         listing.title = data.get('title', listing.title),
-        listing.author = data.get('author', listing.author),
-        listing.isbn = data.get('isbn', listing.isbn),
-        listing.genre = data.get('genre', listing.genre),
-        # listing.condition = data.get('condition', listing.condition),
-        # listing.rate_price = data.get('rate_price', listing.rate_price.value),
+        listing.mount_type = mount_type_value
+        listing.activity_type = activity_type_value
+        listing.rate_price = data.get('rate_price', listing.rate_price)
 
         db.session.add(listing)
         db.session.commit()

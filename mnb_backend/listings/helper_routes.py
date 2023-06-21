@@ -8,7 +8,7 @@ from mnb_backend.database import db
 from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
 from mnb_backend.listings.models import Listing
-from mnb_backend.listings.helpers import db_post_listing
+# from mnb_backend.listings.helpers import db_post_listing
 from mnb_backend.users.models import User
 
 listings_helper_routes = Blueprint('listing_helper_routes', __name__)
