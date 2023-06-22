@@ -1,4 +1,4 @@
-"""File for model tests"""
+"""File for listings model tests"""
 
 from mnb_backend import app
 from mnb_backend.addresses.models import Address
@@ -43,9 +43,7 @@ class CreateListingTestCase(ListingBaseViewTestCase):
                 title=title,
                 mount_type=rack_mount_type,
                 activity_type=activity_type,
-                rate_price=2000,
-                # rate_schedule=RentalDurationEnum.WEEKLY,
-                # status=ListingStatusEnum.AVAILABLE,
+                rate_price=rate_price,
             )
 
             db.session.add(listing1)
