@@ -7,11 +7,14 @@ from mnb_backend.database import db
 from mnb_backend.api_helpers import upload_to_aws
 from mnb_backend.listing_images.models import ListingImage
 from mnb_backend.listings.models import Listing
+from mnb_backend.users.models import User
 
 listing_images_routes = Blueprint('listing_images_routes', __name__)
 
+error_message_does_note_exist = "listing image does not exist"
 
-@listing_images_routes.post("/api/listings/<int:listing_uid>/images")
+
+@listing_images_routes.post("/listing/<int:listing_uid>")
 @jwt_required()
 def add_listing_image(listing_uid):
     """Add listing image, and return data about listing image.
@@ -22,22 +25,84 @@ def add_listing_image(listing_uid):
     # TODO: if we get an array of files, then we could do a list comprehension where
     # we use the helper function and add that to the table for each one in the comprehension
 
-    current_user = get_jwt_identity()
+    current_user_id = get_jwt_identity()
     listing = Listing.query.get_or_404(listing_uid)
-    if current_user == listing.owner_username:
-        file = request.files['file']
-        url = upload_to_aws(file)  # TODO: refactor to account for [orig_size_img, small_size_img]
 
-        listing_image = ListingImage(
-            listing_owner=current_user,
-            image_url=url
-        )
+    if current_user_id == listing.owner.id:
+        files = request.files
 
-        db.session.add(listing_image)
-        db.session.commit()
+        errors = []
+        files_uploaded = []
 
-        return jsonify(listing_image=listing_image.serialize()), 201
+        for title, file in files.items():
+            if file.content_type == "image/jpeg":
+                url = upload_to_aws(file)
+
+                listing_image = ListingImage.create_listing_image(
+                    listing_id=listing_uid,
+                    image_url=url
+                )
+
+                db.session.add(listing_image)
+                db.session.commit()
+
+                files_uploaded.append(listing_image.serialize())
+
+            else:
+                errors.append({f"{file.filename}": file.content_type})
+
+        return jsonify(uploaded_results=files_uploaded, errors=errors)
 
     return jsonify({"error": "not authorized"}), 401
 
-# TODO: MAKE DELETE ROUTE FOR Listing IMAGE
+
+@listing_images_routes.get("/")
+def get_all_listing_images():
+    """gets all listing images
+
+    Returns JSON like:
+        {listing_images: [{id, listing_owner, image_url }...]}
+    """
+
+    listing_images = ListingImage.query.all()
+    serialized = [listing_image.serialize() for listing_image in listing_images]
+
+    return jsonify(listing_images=serialized)
+
+
+@listing_images_routes.get("/<int:listing_image_id>")
+def get_listing_image(listing_image_id):
+    """gets listing image
+
+    Returns JSON like:
+        {listing_image: {id, listing_owner, image_url }}
+    """
+
+    listing_image = ListingImage.query.get(listing_image_id)
+    if listing_image:
+        serialized = listing_image.serialize()
+        return jsonify(listing_image=serialized)
+
+    return jsonify({"error": error_message_does_note_exist}), 404
+
+
+@listing_images_routes.delete("/<int:listing_image_id>")
+@jwt_required()
+def delete_listing_image(listing_image_id):
+    """delete listing image"""
+
+    current_user_id = get_jwt_identity()
+    listing_image = ListingImage.query.get(listing_image_id)
+    if not listing_image:
+        return jsonify({"error": error_message_does_note_exist}), 404
+
+    user = User.query.get_or_404(current_user_id)
+    is_admin = user.is_admin
+
+    if current_user_id == listing_image.listing.owner.id or is_admin is True:
+        db.session.delete(listing_image)
+        db.session.commit()
+
+        return jsonify("Listing Image successfully deleted"), 200
+
+    return jsonify({"error": "not authorized"}), 401
