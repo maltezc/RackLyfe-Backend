@@ -7,54 +7,6 @@ from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
 from mnb_backend.reservations.models import Reservation
 
 
-def create_new_reservation(start_date, duration, listing_rate_schedule, listing, user):
-    """ Function for creating a reservation"""
-
-    total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
-
-    try:
-        reservation = Reservation(
-            reservation_date_created=datetime.utcnow(),
-            start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
-            duration=timedelta_duration,
-            end_date=start_date + timedelta_duration,
-            status=ReservationStatusEnum.PENDING,
-            total=total
-        )
-        reservation.listing = listing
-        reservation.renter = user
-
-        db.session.add(reservation)
-        db.session.commit()
-
-        return reservation
-
-    except Exception as e:
-        print(e)
-        db.session.rollback()
-        return jsonify({"error": "unable to create reservation"}), 400
-
-
-def attempt_reservation_update(reservation, start_date, duration):
-    """ Function for updating a reservation"""
-
-    total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration,
-                                                                      reservation.listing)
-    try:
-        reservation.start_date = start_date
-        reservation.duration = timedelta_duration
-        reservation.end_date = start_date + timedelta_duration
-        reservation.total = total
-        db.session.commit()
-
-        return reservation
-
-    except Exception as e:
-        print(e)
-        db.session.rollback()
-        return jsonify({"error": "unable to create reservation"}), 400
-
-
 def get_time_duration_and_total(listing_rate_schedule, duration, listing):
     """ Function for getting the timedelta duration and total price of a reservation"""
 

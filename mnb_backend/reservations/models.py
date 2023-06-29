@@ -1,10 +1,14 @@
 """Models for reservations"""
 from datetime import datetime
 
+from flask import jsonify
+
 from mnb_backend.database import db
 from mnb_backend.listings.models import Listing
 from mnb_backend.enums import enum_serializer, ReservationStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
+
+from mnb_backend.reservations.reservation_helpers import get_time_duration_and_total
 
 
 # region reservations
@@ -85,12 +89,57 @@ class Reservation(db.Model):
             "listing_renter": self.renter.serialize(),
         }
 
-
-
     def __repr__(self):
         return f"< Reservation # {self.id}, DateCreated: {self.reservation_date_created}, DateStart{self.start_date}, " \
                f"EndDate: {self.end_date}, Status: {self.status}, Duration: {self.duration}, " \
                f"Total: {self.total}>, CancellationReason: {self.cancellation_reason} >"
 
+    @classmethod
+    def create_new_reservation(cls, start_date, duration, listing_rate_schedule, listing, user):
+        """ Function for creating a reservation"""
+
+        total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
+
+        try:
+            reservation = Reservation(
+                reservation_date_created=datetime.utcnow(),
+                start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
+                duration=timedelta_duration,
+                end_date=start_date + timedelta_duration,
+                status=ReservationStatusEnum.PENDING,
+                total=total
+            )
+            reservation.listing = listing
+            reservation.renter = user
+
+            db.session.add(reservation)
+            db.session.commit()
+
+            return reservation
+
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return jsonify({"error": "unable to create reservation"}), 400
+
+    @classmethod
+    def attempt_reservation_update(cls, reservation, start_date, duration):
+        """ Function for updating a reservation"""
+
+        total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration,
+                                                                          reservation.listing)
+        try:
+            reservation.start_date = start_date
+            reservation.duration = timedelta_duration
+            reservation.end_date = start_date + timedelta_duration
+            reservation.total = total
+            db.session.commit()
+
+            return reservation
+
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return jsonify({"error": "unable to create reservation"}), 400
 
 # endregion

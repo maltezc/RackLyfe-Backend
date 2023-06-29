@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 # FLASK_ENV=test python3 -m unittest discover -v
 
 
-from mnb_backend import app
 from mnb_backend.auth.tests.setup import UserModelTestCase
 from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums
