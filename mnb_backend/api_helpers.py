@@ -95,7 +95,8 @@ def upload_to_aws(file):
         print("failed to upload thumbnail image: ", e)
         traceback.print_exc()
 
-    return [orig_image_url, small_image_url]
+    return orig_image_url
+    # return [orig_image_url, small_image_url]
 
 
 def resize_image(file):

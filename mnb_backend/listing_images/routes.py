@@ -4,7 +4,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from mnb_backend.database import db
 
-from mnb_backend.api_helpers import upload_to_aws
+from mnb_backend.api_helpers import aws_upload_image
 from mnb_backend.listing_images.models import ListingImage
 from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
@@ -36,7 +36,8 @@ def add_listing_image(listing_uid):
 
         for title, file in files.items():
             if file.content_type == "image/jpeg":
-                url = upload_to_aws(file)
+                url = aws_upload_image(file)
+                # url = upload_to_aws(file)
 
                 listing_image = ListingImage.create_listing_image(
                     listing_id=listing_uid,
@@ -51,7 +52,7 @@ def add_listing_image(listing_uid):
             else:
                 errors.append({f"{file.filename}": file.content_type})
 
-        return jsonify(uploaded_results=files_uploaded, errors=errors)
+        return jsonify(uploaded_results=files_uploaded, errors=errors), 201
 
     return jsonify({"error": "not authorized"}), 401
 

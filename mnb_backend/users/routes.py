@@ -47,7 +47,8 @@ def create_user():
         print("jsonify token: ", jsonify(token=token))
 
         if profile_image is not None:
-            [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+            url = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+            # [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
             user_image = UserImage(
                 image_url=url,
                 user_uid=user.id
