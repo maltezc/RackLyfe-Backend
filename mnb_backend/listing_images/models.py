@@ -36,12 +36,12 @@ class ListingImage(db.Model):
         }
 
     @classmethod
-    def create_listing_image(cls, listing, image_url):
+    def create_listing_image(cls, listing_id, image_url):
         """
         Creates an image_listing in the database."""
         try:
             listing_image = ListingImage(
-                listing_id=listing.id,
+                listing_id=listing_id,
                 image_url=image_url
             )
 
