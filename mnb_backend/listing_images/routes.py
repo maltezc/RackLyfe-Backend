@@ -34,6 +34,10 @@ def add_listing_image(listing_uid):
         errors = []
         files_uploaded = []
 
+        if len(files) == 0:
+            # if len(files.items()) is 0:
+            error_message = 'Image is required.'
+            return jsonify({'error': error_message}), 400
         for title, file in files.items():
             if file.content_type == "image/jpeg":
                 url = aws_upload_image(file)
@@ -51,6 +55,9 @@ def add_listing_image(listing_uid):
 
             else:
                 errors.append({f"{file.filename}": file.content_type})
+
+            if len(files_uploaded) == 0 and len(errors) > 0:
+                return jsonify({'error': "No files were uploaded because filetype was incorrect."}), 400
 
         return jsonify(uploaded_results=files_uploaded, errors=errors), 201
 
