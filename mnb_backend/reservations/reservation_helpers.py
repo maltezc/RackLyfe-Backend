@@ -4,20 +4,21 @@ from flask import jsonify
 
 from mnb_backend.database import db
 from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
-from mnb_backend.reservations.models import Reservation
+# from mnb_backend.reservations.models import Reservation
 
 
-def get_time_duration_and_total(listing_rate_schedule, duration, listing):
+def get_time_duration_and_total(duration, listing):
+# def get_time_duration_and_total(listing_rate_schedule, duration, listing):
     """ Function for getting the timedelta duration and total price of a reservation"""
 
     timedelta_duration = None
-    if listing_rate_schedule == RentalDurationEnum.DAILY:
-        timedelta_duration = timedelta(days=duration)
+    # if listing_rate_schedule == RentalDurationEnum.DAILY:
+    #     timedelta_duration = timedelta(days=duration)
+    #
+    # elif listing_rate_schedule == RentalDurationEnum.WEEKLY:
+    #     timedelta_duration = timedelta(weeks=duration)
+    #     duration = int(timedelta_duration.days / 7)
 
-    elif listing_rate_schedule == RentalDurationEnum.WEEKLY:
-        timedelta_duration = timedelta(weeks=duration)
-        duration = int(timedelta_duration.days / 7)
-    # TODO: HANDLE MONTHLY RENTAL DURATION
     total = duration * listing.rate_price.value
 
     return total, timedelta_duration, duration

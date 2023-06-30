@@ -7,7 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from mnb_backend.listings.models import Listing
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
-from mnb_backend.reservations.reservation_helpers import create_new_reservation, reservation_is_in_future, attempt_reservation_update, \
+from mnb_backend.reservations.reservation_helpers import reservation_is_in_future, \
     attempt_to_cancel_reservation, attempt_to_accept_reservation_request, attempt_to_decline_reservation_request
 
 from mnb_backend.decorators import is_reservation_listing_owner, is_listing_owner_or_is_reservation_booker_or_is_admin, \
@@ -41,9 +41,10 @@ def create_reservation(listing_uid):
         listing = Listing.query.get_or_404(listing_uid)
         start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
         duration = int(duration_in)
-        listing_rate_schedule = listing.rate_schedule
+        # listing_rate_schedule = listing.rate_schedule
 
-        reservation = create_new_reservation(start_date, duration, listing_rate_schedule, listing, user)
+        reservation = Reservation.create_new_reservation(start_date, duration, listing, user)
+        # reservation = Reservation.create_new_reservation(start_date, duration, listing_rate_schedule, listing, user)
 
         return jsonify(reservation=reservation.serialize()), 201
 
@@ -174,7 +175,7 @@ def update_reservation(reservation_id):
         start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
         int_duration = int(duration_in)
 
-        reservation = attempt_reservation_update(reservation, start_date, int_duration)
+        reservation = Reservation.attempt_reservation_update(reservation, start_date, int_duration)
 
         return jsonify(reservation=reservation.serialize()), 201
 

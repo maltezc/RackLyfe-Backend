@@ -95,10 +95,12 @@ class Reservation(db.Model):
                f"Total: {self.total}>, CancellationReason: {self.cancellation_reason} >"
 
     @classmethod
-    def create_new_reservation(cls, start_date, duration, listing_rate_schedule, listing, user):
+    def create_new_reservation(cls, start_date, duration, listing, user):
+    # def create_new_reservation(cls, start_date, duration, listing_rate_schedule, listing, user):
         """ Function for creating a reservation"""
 
-        total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
+        total, timedelta_duration, duration = get_time_duration_and_total(duration, listing)
+        # total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
 
         try:
             reservation = Reservation(
