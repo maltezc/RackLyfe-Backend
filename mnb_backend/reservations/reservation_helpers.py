@@ -4,71 +4,26 @@ from flask import jsonify
 
 from mnb_backend.database import db
 from mnb_backend.enums import RentalDurationEnum, ReservationStatusEnum
-from mnb_backend.reservations.models import Reservation
+# from mnb_backend.reservations.models import Reservation
 
 
-def create_new_reservation(start_date, duration, listing_rate_schedule, listing, user):
-    """ Function for creating a reservation"""
-
-    total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
-
-    try:
-        reservation = Reservation(
-            reservation_date_created=datetime.utcnow(),
-            start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
-            duration=timedelta_duration,
-            end_date=start_date + timedelta_duration,
-            status=ReservationStatusEnum.PENDING,
-            total=total
-        )
-        reservation.listing = listing
-        reservation.renter = user
-
-        db.session.add(reservation)
-        db.session.commit()
-
-        return reservation
-
-    except Exception as e:
-        print(e)
-        db.session.rollback()
-        return jsonify({"error": "unable to create reservation"}), 400
-
-
-def attempt_reservation_update(reservation, start_date, duration):
-    """ Function for updating a reservation"""
-
-    total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration,
-                                                                      reservation.listing)
-    try:
-        reservation.start_date = start_date
-        reservation.duration = timedelta_duration
-        reservation.end_date = start_date + timedelta_duration
-        reservation.total = total
-        db.session.commit()
-
-        return reservation
-
-    except Exception as e:
-        print(e)
-        db.session.rollback()
-        return jsonify({"error": "unable to create reservation"}), 400
-
-
-def get_time_duration_and_total(listing_rate_schedule, duration, listing):
+def get_time_duration_and_total(duration, listing):
+# def get_time_duration_and_total(listing_rate_schedule, duration, listing):
     """ Function for getting the timedelta duration and total price of a reservation"""
 
     timedelta_duration = None
-    if listing_rate_schedule == RentalDurationEnum.DAILY:
-        timedelta_duration = timedelta(days=duration)
+    # if listing_rate_schedule == RentalDurationEnum.DAILY:
+    #     timedelta_duration = timedelta(days=duration)
+    #
+    # elif listing_rate_schedule == RentalDurationEnum.WEEKLY:
+    #     timedelta_duration = timedelta(weeks=duration)
+    #     duration = int(timedelta_duration.days / 7)
 
-    elif listing_rate_schedule == RentalDurationEnum.WEEKLY:
-        timedelta_duration = timedelta(weeks=duration)
-        duration = int(timedelta_duration.days / 7)
-    # TODO: HANDLE MONTHLY RENTAL DURATION
-    total = duration * listing.rate_price.value
+    total = duration.days * listing.rate_price
+    # total = duration * listing.rate_price.value
 
-    return total, timedelta_duration, duration
+    return total, duration
+    # return total, timedelta_duration, duration
 
 
 def reservation_is_in_future(reservation):

@@ -36,7 +36,6 @@ def create_listing():
             activity_type = request.form.get("activity_type")
             rack_mount_type = request.form.get("mount_type")
             rate_price = int(request.form.get("rate_price"))
-            # rate_schedule = request.form.get("rate_schedule")
 
             current_user = User.query.get_or_404(current_user_id)
 
@@ -48,18 +47,6 @@ def create_listing():
                 rate_price=rate_price,
                 images=images,
             )
-
-            # post listing to db
-            # listing_posted = db_post_listing(current_user_id, title, author, isbn, condition, rate_price, rate_schedule)
-            #
-            # images_posted = []
-            # # post image to aws
-            #
-            # for image in images:
-            #     image_url = aws_upload_image(images[image])
-            #     # post image to database
-            #     image_element = db_add_listing_image(current_user_id, listing_posted.id, image_url)
-            #     images_posted.append(image_element.serialize())
 
             # TODO: might have to set primary listing image here but then its pinging the db twice for the patch request
             serialized = listing.serialize()
