@@ -1,5 +1,5 @@
 """Routes for reservations blueprint."""
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -20,7 +20,7 @@ reservations_routes = Blueprint('reservations_routes_routes', __name__)
 
 # region RESERVATIONS ENDPOINTS START
 
-@reservations_routes.post("/api/reservations/<int:listing_uid>")
+@reservations_routes.post("/<int:listing_uid>")
 @jwt_required()
 def create_reservation(listing_uid):
     """ Creates a reservation for the pool you're looking at if you are logged in
@@ -33,25 +33,28 @@ def create_reservation(listing_uid):
     user = User.query.get_or_404(current_user)
 
     if user:
-        data = request.json
+        data = request.form
 
-        start_date_in = data['start_date']
-        duration_in = data['duration']
+        start_date_in = data.get('start_date')
+        duration_in = data.get('duration')
+        renter_in = data.get('renter')
+
+        renter = User.query.get_or_404(renter_in)
 
         listing = Listing.query.get_or_404(listing_uid)
         start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
-        duration = int(duration_in)
-        # listing_rate_schedule = listing.rate_schedule
+        duration = timedelta(days=int(duration_in))
 
-        reservation = Reservation.create_new_reservation(start_date, duration, listing, user)
-        # reservation = Reservation.create_new_reservation(start_date, duration, listing_rate_schedule, listing, user)
+        reservation = Reservation.create_new_reservation(start_date, duration, listing, renter)
 
-        return jsonify(reservation=reservation.serialize()), 201
+        serialized = reservation.serialize()
+
+        return jsonify(reservation=serialized), 201
 
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.get("/api/reservations")
+@reservations_routes.get("/")
 def list_all_reservations():
     """Return all reservations in system.
 
@@ -64,7 +67,7 @@ def list_all_reservations():
     return jsonify(reservations=serialized)
 
 
-@reservations_routes.get("/api/reservations/<int:listing_uid>/upcoming")
+@reservations_routes.get("/<int:listing_uid>/upcoming")
 @jwt_required()
 def get_all_upcoming_reservations_for_listing(listing_uid):
     """ Gets all upcoming reservations associated with listing_uid
@@ -77,8 +80,10 @@ def get_all_upcoming_reservations_for_listing(listing_uid):
     current_user_id = get_jwt_identity()
 
     listing = Listing.query.get_or_404(listing_uid)
-    if listing.owner == current_user_id:
-        reservations = listing.reservations.filter(Reservation.start_date > datetime.now())
+    if listing.owner.id == current_user_id:
+        reservations = list(filter(lambda r: r.start_date > datetime.now(), listing.reservations))
+
+        # reservations = listing.reservations.filter(Reservation.start_date > datetime.now())
 
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
@@ -89,7 +94,7 @@ def get_all_upcoming_reservations_for_listing(listing_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.get("/api/reservations/<int:listing_uid>/past")
+@reservations_routes.get("/<int:listing_uid>/past")
 @jwt_required()
 def get_all_past_reservations_for_listing(listing_uid):
     """ Gets all past reservations associated with listing_uid
@@ -102,8 +107,8 @@ def get_all_past_reservations_for_listing(listing_uid):
     current_user_id = get_jwt_identity()
 
     listing = Listing.query.get_or_404(listing_uid)
-    if listing.owner == current_user_id:
-        reservations = listing.reservations.filter(Reservation.start_date < datetime.now())
+    if listing.owner.id == current_user_id:
+        reservations = list(filter(lambda r: r.start_date < datetime.now(), listing.reservations))
 
         serialized_reservations = ([reservation.serialize()
                                     for reservation in reservations])
@@ -114,7 +119,7 @@ def get_all_past_reservations_for_listing(listing_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.get("/api/reservations/user/<int:user_uid>")
+@reservations_routes.get("/user/<int:user_uid>")
 @jwt_required()
 def get_booked_reservations_for_user_uid(user_uid):
     """ Gets all reservations created by a user_uid
@@ -124,12 +129,15 @@ def get_booked_reservations_for_user_uid(user_uid):
 
     """
 
-    current_user = get_jwt_identity()
+    # TODO: NOT SURE IF THIS ROUTE IS NECESSARY. MIGHT BE AN ADMIN ROUTE. WILL NOT DO TESTING FOR IT YET.
+
+    current_user_id = get_jwt_identity()
 
     user = User.query.get_or_404(user_uid)
-    if user.id == current_user:
+
+    if user.id == current_user_id:
         reservations = (Reservation.query
-                        .filter(owner_id=current_user)
+                        .filter(owner_id=current_user_id)
                         .order_by(Reservation.start_date.desc()))
 
         serialized_reservations = ([reservation.serialize()
@@ -141,7 +149,7 @@ def get_booked_reservations_for_user_uid(user_uid):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.get("/api/reservations/<int:reservation_id>")
+@reservations_routes.get("/<int:reservation_id>")
 @jwt_required()
 @is_listing_owner_or_is_reservation_booker_or_is_admin
 def get_reservation(reservation_id):
@@ -157,7 +165,7 @@ def get_reservation(reservation_id):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.patch("/api/reservations/<int:reservation_id>")
+@reservations_routes.patch("/<int:reservation_id>")
 @jwt_required()
 @is_reservation_booker
 def update_reservation(reservation_id):
@@ -168,21 +176,22 @@ def update_reservation(reservation_id):
     is_in_future = reservation_is_in_future(reservation)
 
     if is_in_future:
-        data = request.json
-        start_date_in = data['start_date']
-        duration_in = data['duration']
+        data = request.form
+        start_date_in = data.get('start_date')
+        duration_in = data.get('duration')
 
         start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
         int_duration = int(duration_in)
+        duration = timedelta(days=int(duration_in))
 
-        reservation = Reservation.attempt_reservation_update(reservation, start_date, int_duration)
+        reservation = Reservation.attempt_reservation_update(reservation, start_date, duration)
 
         return jsonify(reservation=reservation.serialize()), 201
 
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.patch("/api/reservations/<int:reservation_id>/cancel")
+@reservations_routes.patch("/<int:reservation_id>/cancel")
 @jwt_required()
 @is_reservation_booker
 def cancel_reservation_request(reservation_id):
@@ -192,7 +201,7 @@ def cancel_reservation_request(reservation_id):
     current_user_id = get_jwt_identity()
     reservation = Reservation.query.get_or_404(reservation_id)
     is_in_future = reservation_is_in_future(reservation)
-    data = request.json
+    data = request.form
     cancellation_reason = data.get('cancellation_reason')
     reservation_status = reservation.status
     # TODO: CHECK USERS' CANCELLATION POLICY
@@ -205,7 +214,7 @@ def cancel_reservation_request(reservation_id):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.patch("/api/reservations/<int:reservation_id>/accept")
+@reservations_routes.patch("/<int:reservation_id>/accept")
 @jwt_required()
 @is_reservation_listing_owner
 def accept_reservation(reservation_id):
@@ -223,7 +232,7 @@ def accept_reservation(reservation_id):
     return jsonify({"error": "not authorized"}), 401
 
 
-@reservations_routes.patch("/api/reservations/<int:reservation_id>/decline")
+@reservations_routes.patch("/<int:reservation_id>/decline")
 @jwt_required()
 @is_reservation_listing_owner
 def decline_reservation(reservation_id):

@@ -1,5 +1,6 @@
 """Setup for User tests"""
 from unittest import TestCase
+from unittest.mock import patch
 
 from mnb_backend import app
 from mnb_backend.addresses.models import Address, Location, City, State, ZipCode
@@ -7,15 +8,18 @@ from mnb_backend.addresses.states import states
 from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums, RackMountTypeEnum, RackActivityTypeEnum
 from mnb_backend.listings.models import Listing
+from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
 
 
 class ReservationsBaseViewTestCase(TestCase):
+
     def setUp(self):
         """
         Create test client, add sample data."""
 
         # This order is important
+        Reservation.query.delete()
         Listing.query.delete()
         Location.query.delete()
         Address.query.delete()  # This should come before ZipCode

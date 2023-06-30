@@ -70,6 +70,9 @@ class Reservation(db.Model):
         db.String(500),
     )
 
+    # create upcoming filter property
+    # create past filter property
+
     def serialize(self):
         """ returns self """
 
@@ -96,7 +99,6 @@ class Reservation(db.Model):
 
     @classmethod
     def create_new_reservation(cls, start_date, duration, listing, user_renter):
-    # def create_new_reservation(cls, start_date, duration, listing_rate_schedule, listing, user):
         """ Function for creating a reservation"""
 
         if listing.owner.id == user_renter.id:
