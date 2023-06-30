@@ -19,9 +19,11 @@ def get_time_duration_and_total(duration, listing):
     #     timedelta_duration = timedelta(weeks=duration)
     #     duration = int(timedelta_duration.days / 7)
 
-    total = duration * listing.rate_price.value
+    total = duration.days * listing.rate_price
+    # total = duration * listing.rate_price.value
 
-    return total, timedelta_duration, duration
+    return total, duration
+    # return total, timedelta_duration, duration
 
 
 def reservation_is_in_future(reservation):

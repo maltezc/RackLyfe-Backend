@@ -66,12 +66,14 @@ class ReservationsBaseViewTestCase(TestCase):
         db.session.add(city1)
 
         address1.city = city1
+        address2.city = city1
 
         city1.state = State.query.filter(State.state_abbreviation == "CA").first()
 
         zipcode1 = ZipCode(code=94547)
         db.session.add(zipcode1)
         address1.zipcode = zipcode1
+        address2.zipcode = zipcode1
         db.session.commit()
 
         self.a1_id = address1.id

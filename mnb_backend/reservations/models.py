@@ -95,24 +95,30 @@ class Reservation(db.Model):
                f"Total: {self.total}>, CancellationReason: {self.cancellation_reason} >"
 
     @classmethod
-    def create_new_reservation(cls, start_date, duration, listing, user):
+    def create_new_reservation(cls, start_date, duration, listing, user_renter):
     # def create_new_reservation(cls, start_date, duration, listing_rate_schedule, listing, user):
         """ Function for creating a reservation"""
 
-        total, timedelta_duration, duration = get_time_duration_and_total(duration, listing)
-        # total, timedelta_duration, duration = get_time_duration_and_total(listing_rate_schedule, duration, listing)
+        if listing.owner.id == user_renter.id:
+            return jsonify({"error": "The owner cannot rent out their own item."}), 400
+
+        total, duration = get_time_duration_and_total(duration, listing)
+
+        # TODO: ADD CHECK FOR RENTER AND OWNER CANNOT BE THE SAME USER
 
         try:
             reservation = Reservation(
                 reservation_date_created=datetime.utcnow(),
                 start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
-                duration=timedelta_duration,
-                end_date=start_date + timedelta_duration,
+                duration=duration,
+                # duration=timedelta_duration,
+                end_date=start_date + duration,
+                # end_date=start_date + timedelta_duration,
                 status=ReservationStatusEnum.PENDING,
                 total=total
             )
             reservation.listing = listing
-            reservation.renter = user
+            reservation.renter = user_renter
 
             db.session.add(reservation)
             db.session.commit()
@@ -128,12 +134,15 @@ class Reservation(db.Model):
     def attempt_reservation_update(cls, reservation, start_date, duration):
         """ Function for updating a reservation"""
 
-        total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration,
-                                                                          reservation.listing)
+        # total, timedelta_duration, duration = get_time_duration_and_total(reservation.listing.rate_schedule, duration, reservation.listing)
+        total, duration = get_time_duration_and_total(duration, reservation.listing)
+
         try:
             reservation.start_date = start_date
-            reservation.duration = timedelta_duration
-            reservation.end_date = start_date + timedelta_duration
+            reservation.duration = duration
+            # reservation.duration = timedelta_duration
+            reservation.end_date = start_date + duration
+            # reservation.end_date = start_date + timedelta_duration
             reservation.total = total
             db.session.commit()
 
