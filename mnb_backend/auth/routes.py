@@ -28,6 +28,7 @@ def login():
     password = data['password']
 
     user = User.authenticate(email, password)
+    # TODO: SET UP CATCH FOR USER NOT FOUND
     token = create_access_token(identity=user.id)
 
     return jsonify(token=token, user=user.serialize()), 200
