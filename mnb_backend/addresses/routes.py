@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from mnb_backend.database import db
 
-from mnb_backend.addresses.address_helpers import set_retrieve_address
+from mnb_backend.addresses.route_helpers import set_retrieve_address
 from mnb_backend.addresses.models import Address
 from mnb_backend.users.models import User
 

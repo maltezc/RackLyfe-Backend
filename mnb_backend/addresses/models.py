@@ -1,5 +1,5 @@
 """Model for Address"""
-from mnb_backend.addresses.address_helpers import fuzz_coordinates
+from mnb_backend.addresses.model_helpers import fuzz_coordinates
 from mnb_backend.database import db
 from geoalchemy2 import Geometry
 
@@ -102,10 +102,6 @@ class Location(db.Model):
     def serialize(self):
         """ returns self """
 
-        # query = text(f"SELECT ST_X(point) as x, ST_Y(point) as y FROM {self.__tablename__} WHERE id = :id")
-        # result = db.session.execute(query, {"id": self.id}).fetchone()
-        # x, y = result.x, result.y if result else None, None
-
         stmt = select(func.ST_X(self.point).label("x"), func.ST_Y(self.point).label("y"))
         stmt = stmt.select_from(self.__table__).where(self.__table__.c.id == self.id)
         result = db.session.execute(stmt).fetchone()
@@ -121,10 +117,6 @@ class Location(db.Model):
             "fuzzed_point_y": fuzzed_lat,
             "point_x": x,
             "point_y": y,
-            # "point_x": self.point.x,
-            # "point_y": self.point.y,
-
-            # "point": self.point,
         }
 
 
