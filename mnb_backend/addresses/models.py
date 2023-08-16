@@ -1,6 +1,11 @@
 """Model for Address"""
+from mnb_backend.addresses.address_helpers import fuzz_coordinates
 from mnb_backend.database import db
 from geoalchemy2 import Geometry
+
+
+from sqlalchemy.sql import select
+from sqlalchemy import func
 
 
 # region Address
@@ -50,6 +55,8 @@ class Address(db.Model):
     def serialize(self):
         """ returns self """
 
+        print("location: ", self.location.serialize())
+
         return {
             "address_uid": self.id,
             "user_id": self.user_id,
@@ -57,6 +64,7 @@ class Address(db.Model):
             "apt_number": self.apt_number,
             "city": self.city.serialize(),
             "zipcode": self.zipcode.serialize(),
+            "location": self.location.serialize()
         }
 
 
@@ -64,6 +72,9 @@ class Address(db.Model):
 
 
 # region Location
+
+
+
 class Location(db.Model):
     """ User's geocoded Location point. """
 
@@ -91,9 +102,29 @@ class Location(db.Model):
     def serialize(self):
         """ returns self """
 
+        # query = text(f"SELECT ST_X(point) as x, ST_Y(point) as y FROM {self.__tablename__} WHERE id = :id")
+        # result = db.session.execute(query, {"id": self.id}).fetchone()
+        # x, y = result.x, result.y if result else None, None
+
+        stmt = select(func.ST_X(self.point).label("x"), func.ST_Y(self.point).label("y"))
+        stmt = stmt.select_from(self.__table__).where(self.__table__.c.id == self.id)
+        result = db.session.execute(stmt).fetchone()
+
+        x = result.x if result else None
+        y = result.y if result else None
+
+        fuzzed_lon, fuzzed_lat = fuzz_coordinates(y, x)
+
         return {
             "id": self.id,
-            "point": self.point,
+            "fuzzed_point_x": fuzzed_lon,
+            "fuzzed_point_y": fuzzed_lat,
+            "point_x": x,
+            "point_y": y,
+            # "point_x": self.point.x,
+            # "point_y": self.point.y,
+
+            # "point": self.point,
         }
 
 

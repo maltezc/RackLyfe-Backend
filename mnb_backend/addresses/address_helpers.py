@@ -2,8 +2,29 @@ from mnb_backend.database import db
 from mnb_backend.enums import StatesEnum
 from mnb_backend.addresses.models import State, City, ZipCode, Address, Location
 
+import random
+from geopy.distance import geodesic
+
 from mnb_backend.util_filters import geocode_address
 
+
+# region geofuzzer
+def fuzz_coordinates(y, x):
+    """
+    Fuzzes the coordinates of the location point by a random amount within a specified radius."""
+
+    # Calculate a random angle and distance within the specified radius
+    distance_in_meters = 200
+    random_angle = random.uniform(0, 360)  # Random angle in degrees
+    random_distance = random.uniform(0, distance_in_meters)
+
+    # Calculate the destination point based on angle and distance using geodesic
+    new_point = geodesic(kilometers=random_distance / 1000).destination((y, x), random_angle)
+
+    return new_point.longitude, new_point.latitude
+
+
+# endregion
 
 # region address helpers
 def retrieve_state(state_str):
