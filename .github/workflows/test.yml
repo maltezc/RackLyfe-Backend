@@ -10,7 +10,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        repository: maltezc/mnb-backend
+        repository: git@github.com:maltezc/mnb-backend.git
         ssh-strict: true
         persist-credentials: false
         fetch-depth: 1
