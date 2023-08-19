@@ -6,7 +6,7 @@ jobs:
   test:  # name of file
     runs-on: ubuntu-latest
 
-    steps:
+    steps: # steps to run
     - name: Checkout code
       uses: actions/checkout@v2
       with:
