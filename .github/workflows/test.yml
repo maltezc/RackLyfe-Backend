@@ -22,6 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+
       env:
         GIT_ACCESS_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
 
