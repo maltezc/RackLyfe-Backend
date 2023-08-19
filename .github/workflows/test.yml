@@ -10,7 +10,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        repository: https://github.com/maltezc/mnb-backend.git
+        repository: maltezc/mnb-backend
+#        repository: https://github.com/maltezc/mnb-backend.git
         fetch-depth: 1
         token: ${{ secrets.GIT_ACCESS_TOKEN }}
 
