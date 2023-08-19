@@ -33,6 +33,8 @@ jobs:
         echo "FLASK_APP=${{ secrets.FLASK_APP }}" >> $GITHUB_ENV
         echo "aws_access_key_id=${{ secrets.aws_access_key_id }}" >> $GITHUB_ENV
         echo "aws_secret_access_key=${{ secrets.aws_secret_access_key }}" >> $GITHUB_ENV
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
 
     - name: Run tests
       run: |
