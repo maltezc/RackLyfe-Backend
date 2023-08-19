@@ -14,6 +14,8 @@ jobs:
         ssh-strict: true
         persist-credentials: false
         fetch-depth: 1
+        ref: main   # Change 'main' to your repository's default branch name
+
 
     - name: Set up Python
       uses: actions/setup-python@v2
