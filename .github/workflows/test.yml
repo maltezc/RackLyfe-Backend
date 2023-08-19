@@ -10,7 +10,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       with:
-        repository: maltezc/mnb-backend
+        repository: https://github.com/maltezc/mnb-backend.git
 
     - name: Set up Python
       uses: actions/setup-python@v2
