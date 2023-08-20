@@ -9,8 +9,8 @@ jobs:
     steps: # steps to run
     - name: Checkout code
       uses: actions/checkout@v2
-#      with:
-#        repository: maltezc/mnb-backend
+      with:
+        repository: maltezc/mnb-backend
 #        fetch-depth: 1
 #        ssh-strict: true
 #        persist-credentials: false
