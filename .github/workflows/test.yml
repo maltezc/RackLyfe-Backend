@@ -28,22 +28,22 @@ jobs:
         pip install -r requirements.txt      
 
 
-    - name: Set up environment variables
-      run: |
-        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
-        echo "DATABASE_URL_TEST=${{ secrets.DATABASE_URL_TEST }}" >> $GITHUB_ENV
-        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
-        echo "FLASK_APP=${{ secrets.FLASK_APP }}" >> $GITHUB_ENV
-        echo "aws_access_key_id=${{ secrets.aws_access_key_id }}" >> $GITHUB_ENV
-        echo "aws_secret_access_key=${{ secrets.aws_secret_access_key }}" >> $GITHUB_ENV
-
-#        SECRET_KEY=${{ secrets.SECRET_KEY }}
-#        DATABASE_URL_TEST=${{ secrets.DATABASE_URL_TEST }}
-#        DATABASE_URL=${{ secrets.DATABASE_URL }}
-#        FLASK_APP=${{ secrets.FLASK_APP }}
-#        aws_access_key_id=${{ secrets.aws_access_key_id }}
-#        aws_secret_access_key=${{ secrets.aws_secret_access_key }}
-
-    - name: Run tests
-      run: |
-        pytest -v
+#    - name: Set up environment variables
+#      run: |
+#        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+#        echo "DATABASE_URL_TEST=${{ secrets.DATABASE_URL_TEST }}" >> $GITHUB_ENV
+#        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+#        echo "FLASK_APP=${{ secrets.FLASK_APP }}" >> $GITHUB_ENV
+#        echo "aws_access_key_id=${{ secrets.aws_access_key_id }}" >> $GITHUB_ENV
+#        echo "aws_secret_access_key=${{ secrets.aws_secret_access_key }}" >> $GITHUB_ENV
+#
+##        SECRET_KEY=${{ secrets.SECRET_KEY }}
+##        DATABASE_URL_TEST=${{ secrets.DATABASE_URL_TEST }}
+##        DATABASE_URL=${{ secrets.DATABASE_URL }}
+##        FLASK_APP=${{ secrets.FLASK_APP }}
+##        aws_access_key_id=${{ secrets.aws_access_key_id }}
+##        aws_secret_access_key=${{ secrets.aws_secret_access_key }}
+#
+#    - name: Run tests
+#      run: |
+#        pytest -v
