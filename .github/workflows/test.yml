@@ -6,6 +6,13 @@ jobs:
   test:  # name of file
     runs-on: ubuntu-latest
 
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5433  # Use the port number you've configured
+      DB_USER: chrismaltez
+      DB_PASSWORD: ${{ secrets.SECRET_KEY }}
+      DB_NAME: mnb_test
+
     steps: # steps to run
     - name: Checkout code
       uses: actions/checkout@v2
