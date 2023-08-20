@@ -88,25 +88,25 @@ def get_all_books_in_zipcode(code):
 def basic_listing_search(logged_in_user_uid, book_title, book_author, city, state, zipcode):
     """ Performs basic searches based off the information provided """
 
-    books = Listing.query
+    listings = Listing.query
     if logged_in_user_uid is not None:
-        books = books.join(User).filter(User.id != logged_in_user_uid)
+        listings = listings.join(User).filter(User.id != logged_in_user_uid)
     if book_title is not None:
-        books = books.filter(Listing.title.ilike(f"%{book_title}%"))
+        listings = listings.filter(Listing.title.ilike(f"%{book_title}%"))
     if book_author is not None:
-        books = books.filter(Listing.author.ilike(f"%{book_author}%"))
+        listings = listings.filter(Listing.author.ilike(f"%{book_author}%"))
     if city is not None or state is not None or zipcode is not None:
-        books = books.join(Address)
+        listings = listings.join(Address)
         if zipcode is not None:
-            books = books.join(ZipCode).filter(ZipCode.code.ilike(f"%{zipcode}%"))
+            listings = listings.join(ZipCode).filter(ZipCode.code.ilike(f"%{zipcode}%"))
         if city is not None:
-            books = books.join(City).filter(City.city_name.ilike(f"%{city}%"))
+            listings = listings.join(City).filter(City.city_name.ilike(f"%{city}%"))
         if city is not None and state is not None:
-            books = books.join(State).filter(State.state_abbreviation == state)
+            listings = listings.join(State).filter(State.state_abbreviation == state)
         elif state is not None:
-            books = books.join(City).join(State).filter(State.state_abbreviation == state)
+            listings = listings.join(City).join(State).filter(State.state_abbreviation == state)
 
-    return books.all()
+    return listings.all()
 
 
 # endregion

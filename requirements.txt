@@ -9,7 +9,6 @@ botocore==1.29.61
 click==8.1.3
 coverage==7.2.7
 decorator==5.1.1
-dotenv==0.0.5
 exceptiongroup==1.1.1
 executing==1.2.0
 flake8==6.0.0
@@ -33,7 +32,7 @@ jmespath==1.0.1
 MarkupSafe==2.1.2
 matplotlib-inline==0.1.6
 mccabe==0.7.0
--e git+https://github.com/maltezc/mnb-backend.git@5743c268a972767c66f6941762851551efbf2388#egg=mnb_backend
+-e git+https://maltezc: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@github.com/maltezc/mnb-backend.git@b1c02380ca6e4ca738b969135fcd1f01a4dd7ee7#egg=mnb_backend
 packaging==23.1
 parso==0.8.3
 pexpect==4.8.0
