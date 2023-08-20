@@ -14,7 +14,7 @@ jobs:
         fetch-depth: 1
         ssh-strict: true
         persist-credentials: false
-        token: $ {{ secrets.GIT_ACCESS_TOKEN}}
+        token: $ {{ secrets.GIT_PERSONAL_ACCESS_TOKEN}}
 #        ref: main   # Change 'main' to your repository's default branch name
 #        repository: https://github.com/maltezc/mnb-backend.git
 
