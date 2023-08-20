@@ -33,7 +33,6 @@ jmespath==1.0.1
 MarkupSafe==2.1.2
 matplotlib-inline==0.1.6
 mccabe==0.7.0
--e git+https://github.com/maltezc/mnb-backend.git@5743c268a972767c66f6941762851551efbf2388#egg=mnb_backend
 packaging==23.1
 parso==0.8.3
 pexpect==4.8.0

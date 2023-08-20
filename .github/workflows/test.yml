@@ -18,7 +18,6 @@ jobs:
 #        ref: main   # Change 'main' to your repository's default branch name
 #        repository: https://github.com/maltezc/mnb-backend.git
 
-
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
