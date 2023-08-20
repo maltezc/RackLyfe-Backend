@@ -55,8 +55,6 @@ class Address(db.Model):
     def serialize(self):
         """ returns self """
 
-        print("location: ", self.location.serialize())
-
         return {
             "address_uid": self.id,
             "user_id": self.user_id,

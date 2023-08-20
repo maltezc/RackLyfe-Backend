@@ -72,7 +72,7 @@ tests/test_factory.py ..                                         [100%]
 ====================== 24 passed in 0.64 seconds =======================
 ```
 
-If any tests fail, pytest will show the error that was raised. You can run pytest -v to get a list of each test function rather than dots.
+If any tests fail, pytest will show the error that was raised. You can run `pytest -v` to get a list of each test function rather than dots.
 
 To measure the code coverage of your tests, use the coverage command to run pytest instead of running it directly.
 
