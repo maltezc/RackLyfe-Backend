@@ -9,12 +9,12 @@ jobs:
     steps: # steps to run
     - name: Checkout code
       uses: actions/checkout@v2
-      with:
-        repository: maltezc/mnb-backend
-        fetch-depth: 1
-        ssh-strict: true
-        persist-credentials: false
-        ref: main   # Change 'main' to your repository's default branch name
+#      with:
+#        repository: maltezc/mnb-backend
+#        fetch-depth: 1
+#        ssh-strict: true
+#        persist-credentials: false
+#        ref: main   # Change 'main' to your repository's default branch name
 #        repository: https://github.com/maltezc/mnb-backend.git
 
     - name: Set up Python
