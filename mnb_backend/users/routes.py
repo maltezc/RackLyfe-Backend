@@ -41,6 +41,7 @@ def create_user():
             password=request.form.get('password'),
             firstname=request.form.get('firstname'),
             lastname=request.form.get('lastname'),
+            about_me=request.form.get('about_me')
         )
 
         token = create_access_token(identity=user.id)

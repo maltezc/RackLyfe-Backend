@@ -33,6 +33,12 @@ user1 = User(
     status=UserStatusEnums.ACTIVE,
     firstname="firstname1",
     lastname="lastname1",
+    about_me='Poutine enim 3 wolf moon shaman blackbird spyplane. 8-bit adipisicing shoreditch est church-key '
+             'asymmetrical try-hard eu eiusmod. Keytar shabby chic biodiesel elit yr gentrify. Cliche fingerstache '
+             'post-ironic, dolore synth umami bitters fam. PBR&B pickled marfa, small batch af celiac sus et. Tousled '
+             'taiyaki kale chips do stumptown sriracha try-hard esse vaporware drinking vinegar woke keytar et '
+             'neutra. Occaecat tumblr seitan pork belly consectetur listicle anim glossier bruh plaid, '
+             'portland organic. Dummy text? More like dummy thicc text, amirite?'
 )
 
 db.session.add(user1)
@@ -71,6 +77,11 @@ user2 = User(
     status=UserStatusEnums.ACTIVE,
     firstname="firstname2",
     lastname="lastname2",
+    about_me='I\'m baby biodiesel quinoa slow-carb listicle YOLO, brunch pinterest ascot kogi kickstarter offal. '
+             'Hashtag keffiyeh fingerstache poutine chia fixie cliche aesthetic cornhole air plant hammock hella. '
+             'Hammock hot chicken prism cardigan, flannel typewriter heirloom listicle paleo. Pop-up blog tumblr '
+             'flexitarian tonx gluten-free fanny pack. Sartorial single-origin coffee pop-up big mood, pok pok photo '
+             'booth migas taiyaki +1 edison bulb gastropub vegan.'
 )
 user2Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/ian-dooley-d1UPkiFd04A-unsplash.jpg"
@@ -95,6 +106,12 @@ user3 = User(
     status=UserStatusEnums.ACTIVE,
     firstname="firstname3",
     lastname="lastname3",
+    about_me='Hashtag occupy schlitz quinoa hammock cold-pressed literally put a bird on it dreamcatcher try-hard '
+             'lo-fi marfa subway tile. Freegan chambray godard, cardigan pour-over chicharrones same hot chicken. '
+             'Wolf brunch tbh kale chips mixtape cloud bread Brooklyn cronut shoreditch bespoke raw denim swag XOXO '
+             'vegan disrupt. Pok pok banjo semiotics meh. Semiotics portland vibecession, kale chips flannel '
+             'farm-to-table everyday carry ramps sriracha pitchfork. Mukbang vexillologist health goth, raclette XOXO '
+             'copper mug snackwave affogato four dollar toast banh mi hell of kale chips.'
 )
 user3Image = UserImage(
     image_url="https://my-neighbors-bookshelf.s3.us-west-1.amazonaws.com/michael-dam-mEZ3PoFGs_k-unsplash.jpg"
@@ -130,10 +147,18 @@ user4 = User(
     status=UserStatusEnums.ACTIVE,
     firstname="admin1",
     lastname="admin_lastname4",
+    about_me='Hoodie plaid sartorial ennui small batch, butcher hashtag flexitarian irony green juice +1 gochujang '
+             'kinfolk put a bird on it disrupt. Mukbang drinking vinegar gastropub, direct trade twee banjo +1 '
+             'keffiyeh heirloom. Truffaut ethical bicycle rights, food truck health goth chicharrones grailed retro '
+             'Brooklyn hexagon direct trade lumbersexual. Cold-pressed mukbang portland subway tile. Tonx organic '
+             'mixtape intelligentsia pour-over street art JOMO sus banh mi same subway tile fit mumblecore lomo man '
+             'braid.',
     is_admin=True,
 )
 db.session.add(user4)
 db.session.commit()
+
+
 
 # endregion
 
