@@ -24,8 +24,8 @@ def login():
         {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
 
     data = request.json
-    email = data['email']
-    password = data['password']
+    email = data.get('email')
+    password = data.get('password')
 
     user = User.authenticate(email, password)
     # TODO: SET UP CATCH FOR USER NOT FOUND
