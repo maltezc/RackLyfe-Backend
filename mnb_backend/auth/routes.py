@@ -29,6 +29,8 @@ def login():
 
     user = User.authenticate(email, password)
     # TODO: SET UP CATCH FOR USER NOT FOUND
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 401
     token = create_access_token(identity=user.id)
 
     return jsonify(token=token, user=user.serialize()), 200
