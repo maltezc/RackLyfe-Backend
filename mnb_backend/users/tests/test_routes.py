@@ -22,6 +22,7 @@ class UserCreateTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='TestA',
                 lastname='UserA',
+                about_me='I am a test user.',
             ))
 
             data = response.get_json()
@@ -30,7 +31,7 @@ class UserCreateTestCase(UserBaseViewTestCase):
             self.assertIn('user', data)
             self.assertIsInstance(data['user'], dict)
             self.assertTrue(all(key in data['user'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_create_user_duplicate_email_returns_400(self):
@@ -42,6 +43,7 @@ class UserCreateTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='TestA',
                 lastname='UserA',
+                about_me='I am a test user.'
             ))
 
             self.assertEqual(response.status_code, 400)
@@ -54,6 +56,7 @@ class UserCreateTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='TestA',
                 lastname='UserA',
+                about_me='I am a test user.'
             ))
 
             self.assertEqual(response.status_code, 201)
@@ -74,6 +77,7 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
                                        password='password',
                                        firstname='TestA',
                                        lastname='UserA',
+                                       about_me='I am a test user.'
                                    ))
 
             data = response.get_json()
@@ -83,7 +87,7 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             self.assertEqual(data['user']['is_admin'], True)
             self.assertIsInstance(data['user'], dict)
             self.assertTrue(all(key in data['user'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_create_admin_returns_status_code_201(self):
@@ -100,6 +104,7 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
                                        password='password',
                                        firstname='TestA',
                                        lastname='UserA',
+                                       about_me='I am a test user.'
                                    ))
 
             data = response.get_json()
@@ -120,6 +125,7 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
                                        password='password',
                                        firstname='TestA',
                                        lastname='UserA',
+                                       about_me='I am a test user.'
                                    ))
 
             data = response.get_json()
@@ -138,7 +144,7 @@ class UserListShowTestCase(UserBaseViewTestCase):
             self.assertIsInstance(data['users'], list)
             self.assertTrue(all(isinstance(user, dict) for user in data['users']))
             self.assertTrue(all(key in user for user in data['users'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_list_users_returns_status_code_200(self):
@@ -168,7 +174,7 @@ class UserListShowTestCase(UserBaseViewTestCase):
 
             for i in string.ascii_lowercase[:10]:
                 # for i in range(10):
-                User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', UserStatusEnums.ACTIVE)
+                User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', 'I am a test user',  UserStatusEnums.ACTIVE)
 
             response = client.get('/api/users/')
             data = response.get_json()
@@ -191,6 +197,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="Test",
                 lastname="User",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
 
@@ -204,6 +211,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             self.assertIn("image_url", response.json["user"])
             self.assertIn("firstname", response.json["user"])
             self.assertIn("lastname", response.json["user"])
+            self.assertIn("about_me", response.json["user"])
             self.assertIn("address", response.json["user"])
             # self.assertIn("owned_books", response.json["user"])
             # self.assertIn("reservations", response.json["user"])
@@ -238,6 +246,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="Test",
                 lastname="User",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
 
@@ -250,6 +259,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             self.assertIn("image_url", response.json["user"])
             self.assertIn("firstname", response.json["user"])
             self.assertIn("lastname", response.json["user"])
+            self.assertIn("about_me", response.json["user"])
             self.assertIn("address", response.json["user"])
             # self.assertIn("owned_books", response.json["user"])
             # self.assertIn("reservations", response.json["user"])
@@ -264,6 +274,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="Test",
                 lastname="User",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
 
@@ -276,6 +287,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             self.assertIn("email", response.json["user"])
             self.assertIn("firstname", response.json["user"])
             self.assertIn("lastname", response.json["user"])
+            self.assertIn("about_me", response.json["user"])
             self.assertIn("is_admin", response.json["user"])
             self.assertIn("image_url", response.json["user"])
             self.assertIn("preferred_trade_location", response.json["user"])
@@ -293,6 +305,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="Test",
                 lastname="User",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
 
@@ -319,6 +332,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='Test',
                 lastname='User',
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.commit()
@@ -347,6 +361,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='Test',
                 lastname='User',
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.commit()
@@ -370,6 +385,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='Test',
                 lastname='User',
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             user2 = User.signup(
@@ -377,6 +393,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='Test',
                 lastname='User',
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.commit()
@@ -405,6 +422,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
                 password='password',
                 firstname='Test',
                 lastname='User',
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.commit()
@@ -432,7 +450,7 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         """Test that a user can be deleted when authorized"""
 
         # Create a user to be deleted
-        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        user = User.signup('test@test.com', 'password', 'Test', 'User', 'Im a test user', UserStatusEnums.ACTIVE)
         db.session.add(user)
         db.session.commit()
 
@@ -451,12 +469,12 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         """Test that an admin can delete any user"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
         # Create a user to be deleted
-        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        user = User.signup('test@test.com', 'password', 'Test', 'User', 'Im a test user.', UserStatusEnums.ACTIVE)
         db.session.add(user)
         db.session.commit()
 
@@ -475,7 +493,7 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         """Test that an error message is returned when the user ID does not exist"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
@@ -494,12 +512,12 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         """Test that an error message is returned when the user is not authorized to delete the user"""
 
         # Create a user to be deleted
-        user = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        user = User.signup('test@test.com', 'password', 'Test', 'User', 'Im a test user', UserStatusEnums.ACTIVE)
         db.session.add(user)
         db.session.commit()
 
         # Create another user who is not authorized to delete the first user
-        other_user = User.signup('other@test.com', 'password', 'Other', 'User', UserStatusEnums.ACTIVE)
+        other_user = User.signup('other@test.com', 'password', 'Other', 'User', 'Im a test user', UserStatusEnums.ACTIVE)
         db.session.add(other_user)
         db.session.commit()
 
@@ -518,13 +536,13 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         """Test deleting a user when there are multiple users in the database"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
         # Create multiple users to be deleted
-        user1 = User.signup('test1@test.com', 'password', 'Test', 'UserA', UserStatusEnums.ACTIVE)
-        user2 = User.signup('test2@test.com', 'password', 'Test', 'UserB', UserStatusEnums.ACTIVE)
+        user1 = User.signup('test1@test.com', 'password', 'Test', 'UserA', 'Im a test user.', UserStatusEnums.ACTIVE)
+        user2 = User.signup('test2@test.com', 'password', 'Test', 'UserB', 'Im a test user.', UserStatusEnums.ACTIVE)
         db.session.add_all([user1, user2])
         db.session.commit()
 
@@ -580,6 +598,7 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="John",
                 lastname="Doe",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             user2 = User.signup(
@@ -587,6 +606,7 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="Jane",
                 lastname="Doe",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.add_all([user1, user2])
@@ -628,6 +648,7 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="John",
                 lastname="Doe",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.add(user)
@@ -654,6 +675,7 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="John",
                 lastname="Doe",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.add(user)

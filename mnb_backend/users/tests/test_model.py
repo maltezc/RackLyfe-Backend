@@ -56,9 +56,10 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         password = "password123"
         firstname = "Test"
         lastname = "User"
+        about_me = "I am a test user."
         status = UserStatusEnums.ACTIVE
 
-        user = User.signup(email, password, firstname, lastname, status)
+        user = User.signup(email, password, firstname, lastname, about_me, status)
 
         # Act
         serialized_user = user.serialize()
@@ -70,8 +71,8 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
             "email": email,
             "firstname": firstname,
             "lastname": lastname,
+            "about_me": about_me,
             "is_admin": False,
-            "image_url": None,
             "preferred_trade_location": None,
             "user_rating": 5.0,
             "user_image": None,
@@ -87,9 +88,10 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         password = "password123"
         firstname = "Test"
         lastname = "User"
+        about_me = "I am a test user."
         status = UserStatusEnums.ACTIVE
 
-        user = User.signup(email, password, firstname, lastname, status)
+        user = User.signup(email, password, firstname, lastname, about_me, status)
 
         # Act
         serialized_user = user.serialize()

@@ -90,6 +90,7 @@ class Reservation(db.Model):
             # "book": book.serialize(),
             "listing_owner": listing.owner.serialize(),
             "listing_renter": self.renter.serialize(),
+            "listing_id": listing.id,
         }
 
     def __repr__(self):

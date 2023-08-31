@@ -41,7 +41,8 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
                 "total": reservation1.total,
                 "cancellation_reason": reservation1.cancellation_reason,
                 "listing_owner": l1.owner.serialize(),
-                "listing_renter": reservation1.renter.serialize()
+                "listing_renter": reservation1.renter.serialize(),
+                "listing_id": l1.id,
             })
 
     def test_attempt_reservation_update_happy(self):
@@ -73,5 +74,6 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
                 "total": reservation1.total,
                 "cancellation_reason": reservation1.cancellation_reason,
                 "listing_owner": l1.owner.serialize(),
-                "listing_renter": reservation1.renter.serialize()
+                "listing_renter": reservation1.renter.serialize(),
+                "listing_id": l1.id,
             })

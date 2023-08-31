@@ -25,9 +25,9 @@ def create_user():
     Returns JSON like:
         {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
 
-    profile_image = request.form.get('profile_image')
-
-    email = request.form.get('email')
+    # profile_image = request.form.get('profile_image')
+    data = request.json
+    email = data.get('email')
 
     # check if email already exists
     existing_user = User.query.filter_by(email=email).first()
@@ -36,27 +36,28 @@ def create_user():
 
     try:
         user = User.signup(
-            email=request.form.get('email'),
+            email=data.get('email'),
             status=UserStatusEnums.ACTIVE,
-            password=request.form.get('password'),
-            firstname=request.form.get('firstname'),
-            lastname=request.form.get('lastname'),
+            password=data.get('password'),
+            firstname=data.get('firstname'),
+            lastname=data.get('lastname'),
+            about_me=data.get('about_me')
         )
 
         token = create_access_token(identity=user.id)
         print("jsonify token: ", jsonify(token=token))
 
-        if profile_image is not None:
-            url = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
-            # [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
-            user_image = UserImage(
-                image_url=url,
-                user_uid=user.id
-            )
-            db.session.add(user_image)
-            db.session.commit()
-
-            return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
+        # if profile_image is not None:
+        #     url = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+        #     # [url] = upload_to_aws(profile_image)  # TODO: refactor to account for [orig_size_img, small_size_img]
+        #     user_image = UserImage(
+        #         image_url=url,
+        #         user_uid=user.id
+        #     )
+        #     db.session.add(user_image)
+        #     db.session.commit()
+        #
+        #     return jsonify(token=token, user=user.serialize(), user_image=user_image.serialize()), 201
 
         return jsonify(token=token, user=user.serialize()), 201
 

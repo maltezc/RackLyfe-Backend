@@ -50,6 +50,11 @@ class User(db.Model):
         nullable=False,
     )
 
+    about_me = db.Column(
+        db.Text,
+        nullable=False,
+    )
+
     is_admin = db.Column(
         db.Boolean,
         default=False
@@ -98,8 +103,8 @@ class User(db.Model):
             "email": self.email,
             "firstname": self.firstname,
             "lastname": self.lastname,
+            "about_me": self.about_me,
             "is_admin": self.is_admin,
-            "image_url": self.image_url,
             "preferred_trade_location": self.preferred_trade_location,
             "user_rating": self.user_rating,
             "user_image": user_image_serialized,
@@ -107,7 +112,7 @@ class User(db.Model):
         }
 
     @classmethod
-    def signup(cls, email, password, firstname, lastname, status, is_admin=False):
+    def signup(cls, email, password, firstname, lastname, about_me, status, is_admin=False):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -132,6 +137,7 @@ class User(db.Model):
                 password=hashed_pwd,
                 firstname=firstname,
                 lastname=lastname,
+                about_me=about_me,
                 status=status,
                 is_admin=is_admin
             )
@@ -167,6 +173,6 @@ class User(db.Model):
 
     def __repr__(self):
         return f"< User #{self.id}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, " \
-               f"Status: {self.status}, is_admin: {self.is_admin} >"
+               f"About Me:{self.about_me} Status: {self.status}, is_admin: {self.is_admin} >"
 
 # endregion
