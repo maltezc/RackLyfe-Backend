@@ -30,6 +30,7 @@ class UserModelTestCase(TestCase):
             firstname="uAFirstname",
             lastname="uALastname",
             status=UserStatusEnums.ACTIVE,
+            about_me="I am a test user."
 
             # image_url=None,
         )
@@ -40,6 +41,7 @@ class UserModelTestCase(TestCase):
             firstname="uBFirstname",
             lastname="uBLastname",
             status=UserStatusEnums.ACTIVE,
+            about_me="I am a test user."
             # image_url=None,
         )
 

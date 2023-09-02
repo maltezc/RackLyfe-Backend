@@ -21,6 +21,8 @@ from mnb_backend.reservations.routes import reservations_routes
 from mnb_backend.messages.routes import messages_routes
 from mnb_backend.searches.routes import searches_routes
 
+from mnb_backend.error_handlers import error_handlers_bp
+
 
 # TODO: CREATE REVIEWS ROUTES / MODELS
 app = Flask(__name__)
@@ -64,3 +66,4 @@ app.register_blueprint(listing_images_routes, url_prefix='/api/listing_images')
 app.register_blueprint(reservations_routes, url_prefix='/api/reservations')
 app.register_blueprint(messages_routes, url_prefix='/api/messages')
 app.register_blueprint(searches_routes, url_prefix='/api/searches')
+app.register_blueprint(error_handlers_bp)

@@ -25,24 +25,26 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         self.assertEqual(len(u1.received_messages), 0)
 
     def test_valid_signup(self):
-        u3 = User.signup("uC@email.com", "password", "uCfirstname", "uClastname", UserStatusEnums.ACTIVE)
+        u3 = User.signup("uC@email.com", "password", "uCfirstname", "uClastname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
 
         # self.assertEqual(u3.username, "u3")
         self.assertEqual(u3.email, "uC@email.com")
         self.assertNotEqual(u3.password, "password")
         self.assertEqual(u3.firstname, "uCfirstname")
         self.assertEqual(u3.lastname, "uClastname")
+        self.assertEqual(u3.about_me, "I am a test user")
         self.assertEqual(u3.status, UserStatusEnums.ACTIVE)
         # Bcrypt strings should start with $2b$
         self.assertTrue(u3.password.startswith("$2b$"))
 
     def test_signup_duplicate_email(self):
         # Create the first user
-        user1 = User.signup('test@test.com', 'password', 'Test', 'User', UserStatusEnums.ACTIVE)
+        user1 = User.signup('test@test.com', 'password', 'Test', 'User', "I am a test user",UserStatusEnums.ACTIVE)
 
         # Attempt to create a second user with the same email
         with self.assertRaises(EmailAlreadyExistsError):
-            User.signup('test@test.com', 'password2', 'TestB', 'UserB', UserStatusEnums.ACTIVE)
+            User.signup('test@test.com', 'password2', 'TestB', 'UserB', "I am a test user",UserStatusEnums.ACTIVE)
 
             # Ensure that only one user was added to the database
             users = User.query.all()
@@ -80,7 +82,7 @@ class UserAuthAndSignupTestCase(UserModelTestCase):
         }
         self.assertEqual(serialized_user, expected_output)
 
-    def test_serialize_user_object_missing_related_objects(self): # TODO: REMOVE THIS TEST. ITS REDUNDANT
+    def test_serialize_user_object_missing_related_objects(self):  # TODO: REMOVE THIS TEST. ITS REDUNDANT
         """Test serializing a user object with missing related objects"""
 
         # Arrange

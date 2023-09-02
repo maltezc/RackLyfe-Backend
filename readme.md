@@ -20,8 +20,19 @@ aws_secret_access_key=your_aws_secret_key
 7) in your terminal run `flask run -p 5001`
 
 ### How to run tests
+##### through terminal
 FLASK_ENV=test python3 -m unittest discover
 NOTE: must sent environment variable to test for db.engine to use mnb_test database. Otherwise will use mnb database
+
+#### through pycharm
+1) set environment variable first. 
+    FLASK_DEBUG=test
+2) Set this my going to Run > Edit Configurations > Edit Configuration templates... 
+3) a new dialog window will open. click Python Tests > pytest
+4) Set the environment variable in the Environment Variables section here.
+5) click apply and ok
+6) environment variable should be set and you can run tests through pycharm without having to add an env variable individually to each test file
+
 
 ### TODOs / Aspirations
 

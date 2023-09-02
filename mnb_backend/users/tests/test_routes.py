@@ -1,7 +1,5 @@
 """Test case for user routes"""
-# FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k class
-# EXAMPLE: FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k UpdateSpecificUserTestCase
-
+import json
 import string
 
 from flask_jwt_extended import create_access_token
@@ -14,50 +12,61 @@ from mnb_backend.users.models import User
 from mnb_backend.users.tests.setup import UserBaseViewTestCase
 
 
+# FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k class
+# EXAMPLE: FLASK_DEBUG=test python3 -m unittest discover -s mnb_backend/users/tests -k UpdateSpecificUserTestCase
+
+
 class UserCreateTestCase(UserBaseViewTestCase):
     def test_create_user_returns_correct_json(self):
         with app.test_client() as client:
-            response = client.post('/api/users/signup', data=dict(
-                email='johndoe@email.com',
-                password='password',
-                firstname='TestA',
-                lastname='UserA',
-                about_me='I am a test user.',
-            ))
+            response = client.post('/api/users/signup',
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': 'johndoe@email.com',
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             data = response.get_json()
+            print("data: ", data)
 
             self.assertIsInstance(data, dict)
             self.assertIn('user', data)
             self.assertIsInstance(data['user'], dict)
             self.assertTrue(all(key in data['user'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_create_user_duplicate_email_returns_400(self):
         with app.test_client() as client:
             u1 = db.session.get(User, self.u1_id)
 
-            response = client.post('/api/users/signup', data=dict(
-                email=u1.email,
-                password='password',
-                firstname='TestA',
-                lastname='UserA',
-                about_me='I am a test user.'
-            ))
+            response = client.post('/api/users/signup',
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': u1.email,
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.get_json()['error'], 'Email already taken')
 
     def test_create_user_returns_status_code_201(self):
         with app.test_client() as client:
-            response = client.post('/api/users/signup', data=dict(
-                email="JohnDoe@email.com",
-                password='password',
-                firstname='TestA',
-                lastname='UserA',
-                about_me='I am a test user.'
-            ))
+            response = client.post('/api/users/signup',
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': "JohnDoe@email.com",
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             self.assertEqual(response.status_code, 201)
 
@@ -71,14 +80,16 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             # log in as the test user
             access_token = create_access_token(identity=admin1.id)
 
-            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
-                                   data=dict(
-                                       email="admin2@email.com",
-                                       password='password',
-                                       firstname='TestA',
-                                       lastname='UserA',
-                                       about_me='I am a test user.'
-                                   ))
+            response = client.post('/api/users/signup_admin',
+                                   headers={"Authorization": f"Bearer {access_token}"},
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': "admin2@email.com",
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             data = response.get_json()
 
@@ -87,7 +98,7 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             self.assertEqual(data['user']['is_admin'], True)
             self.assertIsInstance(data['user'], dict)
             self.assertTrue(all(key in data['user'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_create_admin_returns_status_code_201(self):
@@ -98,20 +109,22 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             # log in as the test user
             access_token = create_access_token(identity=admin1.id)
 
-            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
-                                   data=dict(
-                                       email="JohnDoeAdmin@email.com",
-                                       password='password',
-                                       firstname='TestA',
-                                       lastname='UserA',
-                                       about_me='I am a test user.'
-                                   ))
+            response = client.post('/api/users/signup_admin',
+                                   headers={"Authorization": f"Bearer {access_token}"},
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': "JohnDoeAdmin@email.com",
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             data = response.get_json()
 
             self.assertEqual(response.status_code, 201)
 
-    def test_create_admin_returns_status_code_401(self):
+    def test_create_admin_returns_status_code_403(self):
         with app.test_client() as client:
             # create a test user
             admin1 = db.session.get(User, self.u1_id)
@@ -119,14 +132,16 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             # log in as the test user
             access_token = create_access_token(identity=admin1.id)
 
-            response = client.post('/api/users/signup_admin', headers={"Authorization": f"Bearer {access_token}"},
-                                   data=dict(
-                                       email="JohnDoeAdmin@email.com",
-                                       password='password',
-                                       firstname='TestA',
-                                       lastname='UserA',
-                                       about_me='I am a test user.'
-                                   ))
+            response = client.post('/api/users/signup_admin',
+                                   headers={"Authorization": f"Bearer {access_token}"},
+                                   content_type="application/json",
+                                   data=json.dumps({
+                                       'email': "JohnDoeAdmin@email.com",
+                                       'password': 'password',
+                                       'firstname': 'TestA',
+                                       'lastname': 'UserA',
+                                       'about_me': 'I am a test user.'
+                                   }))
 
             data = response.get_json()
 
@@ -144,7 +159,7 @@ class UserListShowTestCase(UserBaseViewTestCase):
             self.assertIsInstance(data['users'], list)
             self.assertTrue(all(isinstance(user, dict) for user in data['users']))
             self.assertTrue(all(key in user for user in data['users'] for key in
-                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin', 'image_url',
+                                ['id', 'status', 'email', 'firstname', 'lastname', 'about_me', 'is_admin',
                                  'preferred_trade_location', 'user_rating', 'user_image', 'address']))
 
     def test_list_users_returns_status_code_200(self):
@@ -174,7 +189,8 @@ class UserListShowTestCase(UserBaseViewTestCase):
 
             for i in string.ascii_lowercase[:10]:
                 # for i in range(10):
-                User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', 'I am a test user',  UserStatusEnums.ACTIVE)
+                User.signup(f'user{i}@example.com', 'password', f'firstname{i}', f'lastname{i}', 'I am a test user',
+                            UserStatusEnums.ACTIVE)
 
             response = client.get('/api/users/')
             data = response.get_json()
@@ -208,7 +224,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn("user", response.json)
             self.assertIn("email", response.json["user"])
-            self.assertIn("image_url", response.json["user"])
+            self.assertIn("user_image", response.json["user"])
             self.assertIn("firstname", response.json["user"])
             self.assertIn("lastname", response.json["user"])
             self.assertIn("about_me", response.json["user"])
@@ -256,7 +272,7 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             # Check that response contains all expected fields
             self.assertIn("user", response.json)
             self.assertIn("email", response.json["user"])
-            self.assertIn("image_url", response.json["user"])
+            self.assertIn("user_image", response.json["user"])
             self.assertIn("firstname", response.json["user"])
             self.assertIn("lastname", response.json["user"])
             self.assertIn("about_me", response.json["user"])
@@ -289,7 +305,6 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
             self.assertIn("lastname", response.json["user"])
             self.assertIn("about_me", response.json["user"])
             self.assertIn("is_admin", response.json["user"])
-            self.assertIn("image_url", response.json["user"])
             self.assertIn("preferred_trade_location", response.json["user"])
             self.assertIn("user_rating", response.json["user"])
             self.assertIn("user_image", response.json["user"])
@@ -325,6 +340,8 @@ class ShowSpecificUserTestCase(UserBaseViewTestCase):
 class UpdateSpecificUserTestCase(UserBaseViewTestCase):
 
     def test_update_user_authenticated_and_authorized(self):
+        """Test that a user can update their own information when authenticated and authorized"""
+
         with app.test_client() as client:
             # create a user
             user = User.signup(
@@ -354,6 +371,8 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.json['user']['lastname'], 'Doe')
 
     def test_update_user_not_authenticated(self):
+        """Test that a user cannot update their own information when not authenticated"""
+
         with app.test_client() as client:
             # create a user
             user = User.signup(
@@ -377,7 +396,9 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.status_code, 401)
             self.assertEqual(response.json['msg'], 'Missing Authorization Header')
 
-    def test_update_user_not_authorized(self):
+    def test_update_another_user_not_authorized(self):
+        """Test that a user cannot update another user's information"""
+
         with app.test_client() as client:
             # create two users
             user1 = User.signup(
@@ -414,6 +435,8 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.json['error'], 'not authorized')
 
     def test_update_user_invalid_data(self):
+        """Test that a user cannot update their own information with invalid data"""
+
         with app.test_client() as client:
             # create a user
 
@@ -446,30 +469,28 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
 class DeleteSpecificUserTestCase(UserBaseViewTestCase):
 
     #  Tests that a user can be deleted when authorized.
-    def test_delete_user_happy_path(self):
+    def test_admin_delete_user_happy_path(self):
         """Test that a user can be deleted when authorized"""
 
-        # Create a user to be deleted
-        user = User.signup('test@test.com', 'password', 'Test', 'User', 'Im a test user', UserStatusEnums.ACTIVE)
-        db.session.add(user)
-        db.session.commit()
+        admin = db.session.get(User, self.uAdmin_id)
 
         # Login as the user to be deleted
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=admin.id)
 
         # Delete the user
-        response = self.client.delete(f'/api/users/{user.id}', headers={'Authorization': f'Bearer {access_token}'})
+        response = self.client.delete(f'/api/users/{admin.id}', headers={'Authorization': f'Bearer {access_token}'})
 
         # Check that the user was deleted
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, "User successfully deleted")
 
     #  Tests that an admin can delete any user.
-    def test_delete_user_admin(self):
+    def test_admin_delete_user(self):
         """Test that an admin can delete any user"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE,
+                            is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
@@ -488,12 +509,35 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, "User successfully deleted")
 
+    def test_admin_delete_admin(self):
+        """Test that an admin can delete another admin"""
+
+        # Create an admin user
+        admin = db.session.get(User, self.uAdmin_id)
+
+        # Create a user to be deleted
+        admin2 = User.signup('test@test.com', 'password', 'Test', 'User', 'Im a test user.', UserStatusEnums.ACTIVE,
+                             is_admin=True)
+        db.session.add(admin2)
+        db.session.commit()
+
+        # Login as the admin
+        access_token = create_access_token(identity=admin.id)
+
+        # Delete the user
+        response = self.client.delete(f'/api/users/{admin2.id}', headers={'Authorization': f'Bearer {access_token}'})
+
+        # Check that the user was deleted
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, "User successfully deleted")
+
     #  Tests that an error message is returned when the user ID does not exist.
     def test_delete_user_nonexistent_id(self):
         """Test that an error message is returned when the user ID does not exist"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE,
+                            is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
@@ -505,7 +549,7 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
 
         # Check that an error message is returned
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {"error": "User not found"})
+        self.assertEqual(response.json, {"error": "Not found"})
 
     #  Tests that an error message is returned when the user is not authorized to delete the user.
     def test_delete_user_unauthorized(self):
@@ -517,7 +561,8 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         db.session.commit()
 
         # Create another user who is not authorized to delete the first user
-        other_user = User.signup('other@test.com', 'password', 'Other', 'User', 'Im a test user', UserStatusEnums.ACTIVE)
+        other_user = User.signup('other@test.com', 'password', 'Other', 'User', 'Im a test user',
+                                 UserStatusEnums.ACTIVE)
         db.session.add(other_user)
         db.session.commit()
 
@@ -528,15 +573,16 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
         response = self.client.delete(f'/api/users/{user.id}', headers={'Authorization': f'Bearer {access_token}'})
 
         # Check that an error message is returned
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json, {"error": "not authorized"})
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json, {"error": "Not Authorized"})
 
     #  Tests deleting a user when there are multiple users in the database.
     def test_delete_user_multiple_users(self):
         """Test deleting a user when there are multiple users in the database"""
 
         # Create an admin user
-        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE, is_admin=True)
+        admin = User.signup('admin@test.com', 'password', 'Admin', 'User', 'Im a test user.', UserStatusEnums.ACTIVE,
+                            is_admin=True)
         db.session.add(admin)
         db.session.commit()
 
@@ -564,7 +610,8 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
     # Generated by CodiumAI
 
     def test_toggle_user_status_auth_success(self):
-        # Happy path test
+        """Happy path test"""
+
         with app.test_client() as client:
             # Create a user
             user = User.signup(
@@ -572,6 +619,7 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
                 password="password",
                 firstname="John",
                 lastname="Doe",
+                about_me='I am a test user.',
                 status=UserStatusEnums.ACTIVE
             )
             db.session.add(user)
@@ -588,9 +636,9 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json["user"]["status"], "Inactive")
 
-    #  Tests that a user cannot toggle another user's status when authenticated.
     def test_toggle_user_status_auth_fail(self):
-        # Edge case test: user cannot toggle another user's status
+        """Edge case test: user cannot toggle another user's status"""
+
         with app.test_client() as client:
             # Create two users
             user1 = User.signup(
@@ -625,7 +673,8 @@ class DeactivateSpecificUserTestCase(UserBaseViewTestCase):
 
     #  Tests that an error message is returned when a user that does not exist in the database is provided.
     def test_toggle_user_status_user_not_exist(self):
-        # Edge case test: error message returned when user does not exist
+        """Edge case test: error message returned when user does not exist"""
+
         with app.test_client() as client:
             # Authenticate a user
             access_token = create_access_token(identity=1)
