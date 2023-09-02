@@ -31,7 +31,8 @@ class ListingImagesBaseViewTestCase(TestCase):
             state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
             db.session.add(state)
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
         # u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
         # u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
         # u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
@@ -76,7 +77,7 @@ class ListingImagesBaseViewTestCase(TestCase):
         primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
         title = "Large Cargo basket"
         rack_mount_type = RackMountTypeEnum.ROOF.value
-        activity_type = RackActivityTypeEnum.CARGOBASKET.value
+        activity_type = RackActivityTypeEnum.CARGO.value
         rate_price = 2000,
 
         listing1 = Listing.create_listing(

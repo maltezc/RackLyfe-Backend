@@ -35,8 +35,10 @@ class ReservationsBaseViewTestCase(TestCase):
             state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
             db.session.add(state)
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
-        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
+        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
         # u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
         # u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
         # admin1 = User.signup("uAdmin@email.com", "password", "Admin", "Admin", UserStatusEnums.ACTIVE, is_admin=True)

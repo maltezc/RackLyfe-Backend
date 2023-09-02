@@ -3,7 +3,6 @@ from mnb_backend.addresses.model_helpers import fuzz_coordinates
 from mnb_backend.database import db
 from geoalchemy2 import Geometry
 
-
 from sqlalchemy.sql import select
 from sqlalchemy import func
 
@@ -70,7 +69,6 @@ class Address(db.Model):
 
 
 # region Location
-
 
 
 class Location(db.Model):
