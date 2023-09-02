@@ -35,6 +35,7 @@ class UserModelTestCase(TestCase):
             password=hashed_password,
             firstname="testFirstname",
             lastname="testLastname",
+            about_me="I am a test user.",
             status=UserStatusEnums.ACTIVE,
 
             # image_url=None,
@@ -45,6 +46,7 @@ class UserModelTestCase(TestCase):
             password=hashed_password,
             firstname="testSecondname",
             lastname="testSecondLastname",
+            about_me="I am a test user.",
             status=UserStatusEnums.ACTIVE,
 
             # image_url=None,

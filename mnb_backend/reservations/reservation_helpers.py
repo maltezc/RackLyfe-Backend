@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-
+from werkzeug.exceptions import abort
 from flask import jsonify
 
 from mnb_backend.database import db
@@ -44,7 +44,7 @@ def attempt_to_cancel_reservation(reservation, reason):
     except Exception as e:
         print(e)
         db.session.rollback()
-        return jsonify({"error": "unable to cancel reservation"}), 400
+        abort(500, "Unable to cancel reservation")
 
     return reservation
 
@@ -59,7 +59,7 @@ def attempt_to_accept_reservation_request(reservation):
     except Exception as e:
         print(e)
         db.session.rollback()
-        return jsonify({"error": "unable to accept reservation"}), 400
+        abort(500, description="Unable to accept reservation")
 
     return reservation
 
@@ -74,6 +74,6 @@ def attempt_to_decline_reservation_request(reservation):
     except Exception as e:
         print(e)
         db.session.rollback()
-        return jsonify({"error": "unable to decline reservation"}), 400
+        abort(500, description="Unable to decline reservation")
 
     return reservation

@@ -1,14 +1,13 @@
 """Routes for listings blueprint."""
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from werkzeug.exceptions import abort
 
 from mnb_backend.database import db
-from mnb_backend.api_helpers import aws_upload_image, db_add_listing_image
 from mnb_backend.decorators import user_address_required
 from mnb_backend.enums import ListingStatusEnum
 from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 from mnb_backend.listings.models import Listing
-# from mnb_backend.listings.helpers import db_post_listing
 from mnb_backend.users.models import User
 
 listings_routes = Blueprint('listings_routes', __name__)
@@ -55,8 +54,7 @@ def create_listing():
             # return jsonify(listing=listing_posted.serialize(), images_posted=images_posted), 201
 
         except Exception as error:
-            print("Error", error)
-            return jsonify({"error": f"Failed to add listing and listing image: {error}", }), 401
+            abort(500, description="Failed to create listing.")
 
 
 @listings_routes.get('/current')
@@ -143,7 +141,7 @@ def update_listing(listing_uid):
 
         return jsonify(listing=listing.serialize()), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")
 
 
 @listings_routes.patch('/toggle_status/<int:listing_uid>')
@@ -166,7 +164,7 @@ def toggle_listing_status(listing_uid):
 
         return jsonify(listing=listing.serialize()), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")
 
 
 @listings_routes.delete('/<int:listing_uid>')
@@ -188,4 +186,4 @@ def delete_listing(listing_uid):
 
         return jsonify("Listing successfully deleted"), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")

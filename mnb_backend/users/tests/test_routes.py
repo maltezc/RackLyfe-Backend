@@ -53,7 +53,7 @@ class UserCreateTestCase(UserBaseViewTestCase):
                                        'about_me': 'I am a test user.'
                                    }))
 
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, 409)
             self.assertEqual(response.get_json()['error'], 'Email already taken')
 
     def test_create_user_returns_status_code_201(self):
@@ -125,12 +125,13 @@ class UserCreateAdminTestCase(UserBaseViewTestCase):
             self.assertEqual(response.status_code, 201)
 
     def test_create_admin_returns_status_code_403(self):
+        """Test that a non-admin user cannot create an admin user"""
         with app.test_client() as client:
-            # create a test user
-            admin1 = db.session.get(User, self.u1_id)
+            # get a test user
+            user = db.session.get(User, self.u1_id)
 
             # log in as the test user
-            access_token = create_access_token(identity=admin1.id)
+            access_token = create_access_token(identity=user.id)
 
             response = client.post('/api/users/signup_admin',
                                    headers={"Authorization": f"Bearer {access_token}"},
@@ -432,7 +433,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
 
             # check that the response is an error message and the user information has not been updated
             self.assertEqual(response.status_code, 401)
-            self.assertEqual(response.json['error'], 'not authorized')
+            self.assertEqual(response.json['error'], 'Not authorized')
 
     def test_update_user_invalid_data(self):
         """Test that a user cannot update their own information with invalid data"""
@@ -463,7 +464,7 @@ class UpdateSpecificUserTestCase(UserBaseViewTestCase):
 
             # check that the response is an error message and the user information has not been updated
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.json['error'], 'invalid firstname')
+            self.assertEqual(response.json['error'], 'Invalid firstname')
 
 
 class DeleteSpecificUserTestCase(UserBaseViewTestCase):
@@ -549,7 +550,7 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
 
         # Check that an error message is returned
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json, {"error": "Not found"})
+        self.assertEqual(response.json, {"error": "User not found"})
 
     #  Tests that an error message is returned when the user is not authorized to delete the user.
     def test_delete_user_unauthorized(self):
@@ -574,7 +575,7 @@ class DeleteSpecificUserTestCase(UserBaseViewTestCase):
 
         # Check that an error message is returned
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json, {"error": "Not Authorized"})
+        self.assertEqual(response.json, {"error": "Not authorized. Admin required."})
 
     #  Tests deleting a user when there are multiple users in the database.
     def test_delete_user_multiple_users(self):

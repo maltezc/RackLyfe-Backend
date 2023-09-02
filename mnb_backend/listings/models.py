@@ -1,13 +1,10 @@
 """Models for listings"""
-from flask import jsonify
-
-from mnb_backend.api_helpers import aws_upload_image
-from mnb_backend.database import db
-from mnb_backend.enums import enum_serializer, PriceEnums, RentalDurationEnum, ListingStatusEnum, RackMountTypeEnum, \
-    RackActivityTypeEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
+from werkzeug.exceptions import abort
 
-from mnb_backend.listing_images.models import ListingImage
+from mnb_backend.database import db
+from mnb_backend.enums import enum_serializer, ListingStatusEnum, RackMountTypeEnum, \
+    RackActivityTypeEnum
 from mnb_backend.listings.helpers import get_mount_type_enum, get_activity_type_enum
 
 
@@ -140,9 +137,8 @@ class Listing(db.Model):
             return listing
 
         except Exception as error:
-            print("Error", error)
             db.session.rollback()
-            return jsonify(error="Failed to create listing.")
+            abort(500, description="Failed to create listing.")
 
     # TODO: listing must have in order to be shown but
 

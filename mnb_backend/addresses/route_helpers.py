@@ -112,7 +112,6 @@ def set_retrieve_location(address, full_address_str):
         address.location = location
         db.session.commit()
     except Exception as error:
-        print("Error", error)
         db.session.rollback()
         raise error
 

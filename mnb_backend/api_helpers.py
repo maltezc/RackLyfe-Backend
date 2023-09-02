@@ -9,6 +9,7 @@ from pathlib import Path
 import traceback
 
 from flask import jsonify
+from werkzeug.exceptions import abort
 
 from mnb_backend.database import db
 from mnb_backend.enums import PriceEnums
@@ -164,8 +165,7 @@ def db_add_listing_image(user_id, listing_uid, image_url):
 
         return listing_image
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to add listing_image"}), 401
+        abort(500, "Failed to add listing_image")
 
 
 
@@ -190,11 +190,10 @@ def db_add_user_image(user_id, image_url):
         user.profile_image = user_image
 
         db.session.commit()
-
         return user_image
+
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to add listing_image"}), 401
+        abort(500, description="Failed to add listing_image")
 
 
 

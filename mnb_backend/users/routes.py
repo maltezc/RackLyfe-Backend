@@ -14,7 +14,6 @@ from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
 
 from werkzeug.exceptions import NotFound, abort
 
-# from mnb_backend.error_handler import errorHandler
 
 
 
@@ -38,7 +37,7 @@ def create_user():
     # check if email already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({"error": "Email already taken"}), 400
+        abort(409, "Email already taken")
 
     try:
         user = User.signup(
@@ -68,12 +67,10 @@ def create_user():
         return jsonify(token=token, user=user.serialize()), 201
 
     except IntegrityError:
-        # if an IntegrityError occurs, it might be due to the email not being unique
         db.session.rollback()
-        return jsonify({"error": "Email already taken"}), 400
+        abort(400, "Email already taken")
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to signup"}), 424
+        abort(500, "Failed to signup")
 
 
 @user_routes.post("/signup_admin")
@@ -98,12 +95,13 @@ def create_admin_user():
         )
 
         token = create_access_token(identity=user.id)
-
         return jsonify(token=token, user=user.serialize()), 201
 
+    except IntegrityError:
+        abort(409, description="Email already in use.")
+
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to signup"}), 424
+        abort(500, description="Failed to signup.")
 
 
 @user_routes.get("/")
@@ -155,19 +153,19 @@ def update_user(user_uid):
         if is_valid_name(firstname):
             user.firstname = firstname
         else:
-            return jsonify({"error": "invalid firstname"}), 400
+            abort(400, "Invalid firstname")
 
         if is_valid_name(lastname):
             user.lastname = lastname
         else:
-            return jsonify({"error": "invalid lastname"}), 400
+            abort(400, "Invalid lastname")
 
         db.session.add(user)
         db.session.commit()
 
         return jsonify(user=user.serialize()), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")
 
 
 @user_routes.patch('/<int:user_uid>/toggle_status')
@@ -208,7 +206,7 @@ def delete_user(user_uid):
     user_to_delete = User.query.get(user_uid)
 
     if user_to_delete is None:
-        abort(404)
+        abort(404, description="User not found")
 
     current_user = User.query.get_or_404(current_user_id)
     db.session.delete(user_to_delete)
