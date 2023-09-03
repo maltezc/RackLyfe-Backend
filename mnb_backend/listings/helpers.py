@@ -22,5 +22,4 @@ def get_activity_type_enum(activity_type):
     """Gets activity type enum"""
 
     activity_type_enum = RackActivityTypeEnum[activity_type.upper()]
-    # activity_type_enum = RackActivityTypeEnum[activity_type.upper().replace(" ", "").replace("/", "")]
     return activity_type_enum
