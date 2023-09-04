@@ -89,7 +89,7 @@ class ReservationsBaseViewTestCase(TestCase):
         primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
         title = "Large Cargo basket"
         rack_mount_type = RackMountTypeEnum.ROOF.value
-        activity_type = RackActivityTypeEnum.CARGOBASKET.value
+        activity_type = RackActivityTypeEnum.CARGO.value
         rate_price = 2000,
 
         listing1 = Listing.create_listing(
