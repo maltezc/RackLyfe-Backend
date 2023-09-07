@@ -9,29 +9,25 @@ from mnb_backend.enums import UserStatusEnums
 from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
 
+from mnb_backend.test_setup_helpers import delete_all_tables
+
+
 
 class ListingBaseViewTestCase(TestCase):
     def setUp(self):
         """
         Create test client, add sample data."""
 
-        # This order is important
-        Listing.query.delete()
-        Location.query.delete()
-        Address.query.delete()  # This should come before ZipCode
-        ZipCode.query.delete()
-        State.query.delete()
-        City.query.delete()
-        User.query.delete()
-
-        db.session.commit()  # Commit after deletion
+        # Delete all tables
+        delete_all_tables(self)
 
         # Insert all states into the database
         for state_data in states:
             state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
             db.session.add(state)
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
         # u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
         # u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
         # u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)

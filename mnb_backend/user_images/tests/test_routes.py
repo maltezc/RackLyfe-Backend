@@ -168,5 +168,4 @@ class TestDeleteUserImage(UserModelTestCase):
             # check that the response is successful and contains the expected data
             self.assertEqual(response.status_code, 200)
             self.assertIn("id", response.json["user"])
-            self.assertIn("image_url", response.json["user"])
             self.assertIn("user_image", response.json["user"])

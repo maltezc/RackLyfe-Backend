@@ -173,6 +173,6 @@ class User(db.Model):
 
     def __repr__(self):
         return f"< User #{self.id}, Email: {self.email}, Firstname: {self.firstname}, Lastname: {self.lastname}, " \
-               f"About Me:{self.about_me} Status: {self.status}, is_admin: {self.is_admin} >"
+               f"About Me:{self.about_me}, Status: {self.status}, is_admin: {self.is_admin} >"
 
 # endregion

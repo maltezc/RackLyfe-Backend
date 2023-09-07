@@ -4,7 +4,7 @@ from geopy.distance import geodesic
 
 # region geo fuzzer
 
-def fuzz_coordinates(y, x):
+def fuzz_coordinates(y, x, distance_in_meters=200):
     """
     Fuzzes the coordinates of the location point by a random amount within a specified radius."""
 

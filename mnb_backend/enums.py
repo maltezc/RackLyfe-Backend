@@ -74,8 +74,8 @@ class RackActivityTypeEnum(Enum):
     # TODO: ADD FOR KAYAKs & others later.
 
     BICYCLE = "bike"
-    CARGOBASKET = "cargo"
-    SKISSNOWBOARD = "skisnowboard"
+    CARGO = "cargo"
+    SKISSNOWBOARD = "skissnowboard"
 
 
 class StatesEnum(Enum):

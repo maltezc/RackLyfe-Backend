@@ -1,5 +1,6 @@
 """Models for reservations"""
 from datetime import datetime
+from werkzeug.exceptions import abort
 
 from flask import jsonify
 
@@ -103,7 +104,7 @@ class Reservation(db.Model):
         """ Function for creating a reservation"""
 
         if listing.owner.id == user_renter.id:
-            return jsonify({"error": "The owner cannot rent out their own item."}), 400
+            abort(400, description="The owner cannot rent out their own item.")
 
         total, duration = get_time_duration_and_total(duration, listing)
 
@@ -131,7 +132,7 @@ class Reservation(db.Model):
         except Exception as e:
             print(e)
             db.session.rollback()
-            return jsonify({"error": "unable to create reservation"}), 400
+            abort(500, description="Unable to create reservation")
 
     @classmethod
     def attempt_reservation_update(cls, reservation, start_date, duration):
@@ -143,9 +144,7 @@ class Reservation(db.Model):
         try:
             reservation.start_date = start_date
             reservation.duration = duration
-            # reservation.duration = timedelta_duration
             reservation.end_date = start_date + duration
-            # reservation.end_date = start_date + timedelta_duration
             reservation.total = total
             db.session.commit()
 
@@ -154,6 +153,6 @@ class Reservation(db.Model):
         except Exception as e:
             print(e)
             db.session.rollback()
-            return jsonify({"error": "unable to create reservation"}), 400
+            abort(500, description="Unable to create reservation")
 
 # endregion

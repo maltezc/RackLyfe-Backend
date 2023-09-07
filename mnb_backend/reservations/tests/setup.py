@@ -10,6 +10,7 @@ from mnb_backend.enums import UserStatusEnums, RackMountTypeEnum, RackActivityTy
 from mnb_backend.listings.models import Listing
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
+from mnb_backend.test_setup_helpers import delete_all_tables
 
 
 class ReservationsBaseViewTestCase(TestCase):
@@ -18,25 +19,18 @@ class ReservationsBaseViewTestCase(TestCase):
         """
         Create test client, add sample data."""
 
-        # This order is important
-        Reservation.query.delete()
-        Listing.query.delete()
-        Location.query.delete()
-        Address.query.delete()  # This should come before ZipCode
-        ZipCode.query.delete()
-        State.query.delete()
-        City.query.delete()
-        User.query.delete()
+        delete_all_tables(self)
 
-        db.session.commit()  # Commit after deletion
 
         # Insert all states into the database
         for state_data in states:
             state = State(state_name=state_data['name'], state_abbreviation=state_data['abbreviation'])
             db.session.add(state)
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
-        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
+        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", "I am a test user",
+                         UserStatusEnums.ACTIVE)
         # u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
         # u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
         # admin1 = User.signup("uAdmin@email.com", "password", "Admin", "Admin", UserStatusEnums.ACTIVE, is_admin=True)
@@ -87,7 +81,7 @@ class ReservationsBaseViewTestCase(TestCase):
         primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
         title = "Large Cargo basket"
         rack_mount_type = RackMountTypeEnum.ROOF.value
-        activity_type = RackActivityTypeEnum.CARGOBASKET.value
+        activity_type = RackActivityTypeEnum.CARGO.value
         rate_price = 2000,
 
         listing1 = Listing.create_listing(

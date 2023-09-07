@@ -12,6 +12,11 @@ from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 from mnb_backend.auth.auth_helpers import is_valid_name, is_valid_email
 
+from werkzeug.exceptions import NotFound, abort
+
+
+
+
 root_views = Blueprint('user_views', __name__)
 
 user_routes = Blueprint('user_routes', __name__)
@@ -23,7 +28,7 @@ user_routes = Blueprint('user_routes', __name__)
 def create_user():
     """Add user, and return data about new user.
     Returns JSON like:
-        {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
+        {token: token, user: {user_uid, email, image_url, firstname, lastname ,about_me, address, is_admin, preferred_trade_location}}"""
 
     # profile_image = request.form.get('profile_image')
     data = request.json
@@ -32,7 +37,7 @@ def create_user():
     # check if email already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({"error": "Email already taken"}), 400
+        abort(409, "Email already taken")
 
     try:
         user = User.signup(
@@ -62,12 +67,10 @@ def create_user():
         return jsonify(token=token, user=user.serialize()), 201
 
     except IntegrityError:
-        # if an IntegrityError occurs, it might be due to the email not being unique
         db.session.rollback()
-        return jsonify({"error": "Email already taken"}), 400
+        abort(400, "Email already taken")
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to signup"}), 424
+        abort(500, "Failed to signup")
 
 
 @user_routes.post("/signup_admin")
@@ -78,23 +81,27 @@ def create_admin_user():
     Returns JSON like:
         {token: token, user: {user_uid, email, image_url, firstname, lastname, address, is_admin, preferred_trade_location}}"""
 
+    data = request.json
+
     try:
         user = User.signup(
-            email=request.form.get('email'),
-            password=request.form.get('password'),
-            firstname=request.form.get('firstname'),
-            lastname=request.form.get('lastname'),
+            email=data.get('email'),
+            password=data.get('password'),
+            firstname=data.get('firstname'),
+            lastname=data.get('lastname'),
+            about_me=data.get('about_me'),
             status=UserStatusEnums.ACTIVE,
             is_admin=True,
         )
 
         token = create_access_token(identity=user.id)
-
         return jsonify(token=token, user=user.serialize()), 201
 
+    except IntegrityError:
+        abort(409, description="Email already in use.")
+
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to signup"}), 424
+        abort(500, description="Failed to signup.")
 
 
 @user_routes.get("/")
@@ -146,19 +153,19 @@ def update_user(user_uid):
         if is_valid_name(firstname):
             user.firstname = firstname
         else:
-            return jsonify({"error": "invalid firstname"}), 400
+            abort(400, "Invalid firstname")
 
         if is_valid_name(lastname):
             user.lastname = lastname
         else:
-            return jsonify({"error": "invalid lastname"}), 400
+            abort(400, "Invalid lastname")
 
         db.session.add(user)
         db.session.commit()
 
         return jsonify(user=user.serialize()), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")
 
 
 @user_routes.patch('/<int:user_uid>/toggle_status')
@@ -168,9 +175,10 @@ def toggle_user_status(user_uid):
 
     current_user_id = get_jwt_identity()
     current_user = User.query.get_or_404(current_user_id)
-    user_to_update = User.query.get(user_uid)
+    user_to_update = db.session.get(User, user_uid)
 
-    if user_to_update is None: return jsonify({"error": "User not found"}), 404
+    if user_to_update is None:
+        abort(404)
 
     if current_user_id == user_uid or current_user.is_admin:
         user = User.query.get_or_404(user_uid)
@@ -185,27 +193,25 @@ def toggle_user_status(user_uid):
 
         return jsonify(user=user.serialize()), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @user_routes.delete('/<int:user_uid>')
 @jwt_required()
+@admin_required
 def delete_user(user_uid):
-    """Delete user. """
+    """Delete user. Must be Admin to delete user."""
 
-    # TODO: add admin role to delete users
     current_user_id = get_jwt_identity()
-    user_to_delete = User.query.get(user_uid)
+    user_to_delete = db.session.get(User, user_uid)
 
-    if user_to_delete is None: return jsonify({"error": "User not found"}), 404
+    if user_to_delete is None:
+        abort(404, description="User not found")
 
     current_user = User.query.get_or_404(current_user_id)
-    if current_user_id == user_uid or current_user.is_admin:
-        db.session.delete(user_to_delete)
-        db.session.commit()
+    db.session.delete(user_to_delete)
+    db.session.commit()
 
-        return jsonify("User successfully deleted"), 200
-
-    return jsonify({"error": "not authorized"}), 401
+    return jsonify("User successfully deleted"), 200
 
 # endregion

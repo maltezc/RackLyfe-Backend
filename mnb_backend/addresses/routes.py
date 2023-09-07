@@ -1,6 +1,7 @@
 """Routes for addresses blueprint."""
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from werkzeug.exceptions import NotFound, abort
 
 from mnb_backend.database import db
 
@@ -40,7 +41,6 @@ def create_address():
         state=state.serialize(),
         city=city.serialize(),
         zipcode=zipcode.serialize(),
-        # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
     ), 201
 
 
@@ -52,12 +52,13 @@ def get_address(address_id):
 
     try:
         address = Address.query.get_or_404(address_id)
-
         return jsonify(address=address.serialize()), 200
 
+    except NotFound:
+        abort(404)
+
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to get address"}), 424
+        abort(500)
 
 
 @addresses_routes.patch("/api/address/<int:address_id>")
@@ -76,12 +77,10 @@ def update_address(address_id):
         if address.location is not None:
             try:
                 db.session.delete(address.location)
-                db.session.delete(
-                    address)  # @Lucas: Should I be deleting the address here or should i just be changing it?
+                db.session.delete(address)  # @Lucas: Should I be deleting the address here or should i just be changing it?
                 db.session.commit()
             except Exception as error:
-                print("Error", error)
-                return jsonify({"error": "Failed to update address"}), 424
+                abort(500, description="Failed to update address")
 
         address_in = request.json['address']
         city_in = request.json['city']
@@ -97,10 +96,9 @@ def update_address(address_id):
             state=state.serialize(),
             city=city.serialize(),
             zipcode=zipcode.serialize(),
-            # location=location.serialize() # NOTE: getting this error: 'Object of type WKBElement is not JSON serializable'. NOT SURE HOW TO FIX
         ), 200
 
-    return jsonify({"error": "Failed to update address"}), 424
+    abort(500, description="Failed to update address")
 
 
 @addresses_routes.delete("/api/address/<int:address_id>")
@@ -120,11 +118,9 @@ def delete_address(address_id):
             db.session.commit()
 
             return jsonify(user=user.serialize()), 200
-
-        return jsonify({"error": "Failed to delete address"}), 424
+        abort(401, description="Not authorized")
 
     except Exception as error:
-        print("Error", error)
-        return jsonify({"error": "Failed to delete address"}), 424
+        abort(500, description="Failed to delete address")
 
 # endregion

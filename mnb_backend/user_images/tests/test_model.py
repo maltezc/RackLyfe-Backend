@@ -30,7 +30,8 @@ Fields:
 
 
 class TestUserImage(UserModelTestCase):
-    #  Tests creating a UserImage object with valid inputs.
+    """Tests creating a UserImage object with valid inputs."""
+
     def test_create_user_image_valid_inputs(self):
         """Tests creating a UserImage object with valid inputs."""
 
@@ -84,4 +85,4 @@ class TestUserImage(UserModelTestCase):
         db.session.commit()
 
         # Assert
-        self.assertIsNone(UserImage.query.get(user_image.id))
+        self.assertIsNone(db.session.get(UserImage, user_image.id))

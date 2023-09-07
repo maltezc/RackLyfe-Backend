@@ -165,7 +165,7 @@ class UpdateListingTestCase(ListingBaseViewTestCase):
         json_data = {
             "title": "updatedTitle",
             "mount_type": RackMountTypeEnum.HITCH.value,
-            "activity_type": RackActivityTypeEnum.BICYCLE.value,
+            "activity_type": "bicycle"
         }
         # TODO: COME BACK AND UPDATE AFTER MODELS CHANGE TO ROOFRACK
 

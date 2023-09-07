@@ -1,6 +1,7 @@
 """Routes for listing images blueprint."""
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from werkzeug.exceptions import abort
 
 from mnb_backend.database import db
 
@@ -11,7 +12,7 @@ from mnb_backend.users.models import User
 
 listing_images_routes = Blueprint('listing_images_routes', __name__)
 
-error_message_does_note_exist = "listing image does not exist"
+
 
 
 @listing_images_routes.post("/listing/<int:listing_uid>")
@@ -36,8 +37,7 @@ def add_listing_image(listing_uid):
 
         if len(files) == 0:
             # if len(files.items()) is 0:
-            error_message = 'Image is required.'
-            return jsonify({'error': error_message}), 400
+            abort(400, "Image required")
         for title, file in files.items():
             if file.content_type == "image/jpeg":
                 url = aws_upload_image(file)
@@ -57,11 +57,10 @@ def add_listing_image(listing_uid):
                 errors.append({f"{file.filename}": file.content_type})
 
             if len(files_uploaded) == 0 and len(errors) > 0:
-                return jsonify({'error': "No files were uploaded because filetype was incorrect."}), 400
+                abort(400, "No files were uploaded because filetype was incorrect.")
 
         return jsonify(uploaded_results=files_uploaded, errors=errors), 201
-
-    return jsonify({"error": "not authorized"}), 401
+    abort(401, "Not authorized")
 
 
 @listing_images_routes.get("/")
@@ -86,12 +85,13 @@ def get_listing_image(listing_image_id):
         {listing_image: {id, listing_owner, image_url }}
     """
 
-    listing_image = ListingImage.query.get(listing_image_id)
+
+    listing_image = db.session.get(ListingImage, listing_image_id)
     if listing_image:
         serialized = listing_image.serialize()
         return jsonify(listing_image=serialized)
 
-    return jsonify({"error": error_message_does_note_exist}), 404
+    abort(404)
 
 
 @listing_images_routes.delete("/<int:listing_image_id>")
@@ -100,9 +100,9 @@ def delete_listing_image(listing_image_id):
     """delete listing image"""
 
     current_user_id = get_jwt_identity()
-    listing_image = ListingImage.query.get(listing_image_id)
+    listing_image = db.session.get(ListingImage, listing_image_id)
     if not listing_image:
-        return jsonify({"error": error_message_does_note_exist}), 404
+        abort(404)
 
     user = User.query.get_or_404(current_user_id)
     is_admin = user.is_admin
@@ -113,4 +113,4 @@ def delete_listing_image(listing_image_id):
 
         return jsonify("Listing Image successfully deleted"), 200
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)

@@ -2,14 +2,7 @@
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required
-from sqlalchemy.exc import IntegrityError
-
-from mnb_backend.database import db
-from mnb_backend.decorators import admin_required
-from mnb_backend.enums import UserStatusEnums
-
-from mnb_backend.api_helpers import upload_to_aws
-from mnb_backend.user_images.models import UserImage
+from werkzeug.exceptions import NotFound, abort
 from mnb_backend.users.models import User
 
 auth_routes = Blueprint('auth_routes', __name__)
@@ -28,11 +21,11 @@ def login():
     password = data.get('password')
 
     user = User.authenticate(email, password)
-    # TODO: SET UP CATCH FOR USER NOT FOUND
-    if not user:
-        return jsonify({"error": "Invalid email or password"}), 401
-    token = create_access_token(identity=user.id)
 
+    if not user:
+        abort(404)
+
+    token = create_access_token(identity=user.id)
     return jsonify(token=token, user=user.serialize()), 200
 
 

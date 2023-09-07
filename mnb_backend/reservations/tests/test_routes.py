@@ -104,19 +104,20 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
         }
 
         json_data1 = {
-            "start_date": "2023-8-1",
+            "start_date": str(datetime.utcnow().date() - timedelta(days=4)),
             "duration": 5,
             "renter": u2.id
         }
 
         json_data2 = {
-            "start_date": "2023-9-1",
+            "start_date":  str(datetime.utcnow().date() + timedelta(days=1)),
+            # "start_date": "2023-9-1",
             "duration": 10,
             "renter": u2.id
         }
 
         json_data3 = {
-            "start_date": "2022-9-1",
+            "start_date": str(datetime.utcnow().date() + timedelta(days=2)),
             "duration": 10,
             "renter": u2.id
         }
@@ -201,7 +202,7 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
 
             # Assert
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(data["reservations"]), 1)
+            self.assertEqual(len(data["reservations"]), 3)
             self.assertEqual(len(l1.reservations), 3)
 
     def test_get_booked_reservations_for_user_uid_happy(self):

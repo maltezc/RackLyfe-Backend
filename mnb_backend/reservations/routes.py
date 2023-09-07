@@ -1,5 +1,6 @@
 """Routes for reservations blueprint."""
 from datetime import datetime, timedelta
+from werkzeug.exceptions import abort
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -51,7 +52,7 @@ def create_reservation(listing_uid):
 
         return jsonify(reservation=serialized), 201
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.get("/")
@@ -90,8 +91,7 @@ def get_all_upcoming_reservations_for_listing(listing_uid):
 
         return jsonify(reservations=serialized_reservations)
 
-    # TODO: better error handling for more diverse errors
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.get("/<int:listing_uid>/past")
@@ -115,8 +115,7 @@ def get_all_past_reservations_for_listing(listing_uid):
 
         return jsonify(reservations=serialized_reservations)
 
-    # TODO: better error handling for more diverse errors
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.get("/user/<int:user_uid>")
@@ -145,8 +144,7 @@ def get_booked_reservations_for_user_uid(user_uid):
 
         return jsonify(reservations=serialized_reservations)
 
-    # TODO: better error handling for more diverse errors
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.get("/<int:reservation_id>")
@@ -161,8 +159,7 @@ def get_reservation(reservation_id):
 
         return jsonify(reservation=serialized_reservation), 200
 
-    # TODO: better error handling for more diverse errors
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.patch("/<int:reservation_id>")
@@ -188,7 +185,7 @@ def update_reservation(reservation_id):
 
         return jsonify(reservation=reservation.serialize()), 201
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.patch("/<int:reservation_id>/cancel")
@@ -211,7 +208,7 @@ def cancel_reservation_request(reservation_id):
 
         return jsonify(reservation=reservation.serialize()), 201
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.patch("/<int:reservation_id>/accept")
@@ -229,7 +226,7 @@ def accept_reservation(reservation_id):
 
         return jsonify(reservation=reservation.serialize()), 201
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 
 @reservations_routes.patch("/<int:reservation_id>/decline")
@@ -247,6 +244,6 @@ def decline_reservation(reservation_id):
 
         return jsonify(reservation=reservation.serialize()), 201
 
-    return jsonify({"error": "not authorized"}), 401
+    abort(401)
 
 # endregion

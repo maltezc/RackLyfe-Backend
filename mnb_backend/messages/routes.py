@@ -2,6 +2,7 @@
 from flask import jsonify, Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from collections import defaultdict
+from werkzeug.exceptions import abort
 
 from mnb_backend.listings.models import Listing
 from mnb_backend.messages.models import (db, Message)
@@ -44,7 +45,7 @@ def create_message():
     except Exception as e:
         print(e)
         db.session.rollback()
-        return jsonify({"error": "not authorized"}), 401
+        abort(401)
 
 
 @messages_routes.get("/api/messages/all")

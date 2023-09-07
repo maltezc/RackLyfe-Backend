@@ -1,4 +1,5 @@
 """Setup for User tests"""
+import os
 from unittest import TestCase
 
 from mnb_backend import app
@@ -8,16 +9,18 @@ from mnb_backend.users.models import User
 
 
 class UserBaseViewTestCase(TestCase):
+    """Test views for users."""
+
     def setUp(self):
         """
         Create test client, add sample data."""
         User.query.delete()
 
-        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", UserStatusEnums.ACTIVE)
-        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", UserStatusEnums.ACTIVE)
-        u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", UserStatusEnums.ACTIVE)
-        u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", UserStatusEnums.ACTIVE)
-        admin1 = User.signup("uAdmin@email.com", "password", "Admin", "Admin", UserStatusEnums.ACTIVE, is_admin=True)
+        u1 = User.signup("ua@email.com", "password", "uafirstname", "uafirstname", "I am test user", UserStatusEnums.ACTIVE)
+        u2 = User.signup("ub@email.com", "password", "ubfirstname", "ubfirstname", "I am test user", UserStatusEnums.ACTIVE)
+        u3 = User.signup("uc@email.com", "password", "ucfirstname", "ucfirstname", "I am test user", UserStatusEnums.ACTIVE)
+        u4 = User.signup("ud@email.com", "password", "udfirstname", "udfirstname", "I am test user", UserStatusEnums.ACTIVE)
+        admin1 = User.signup("uAdmin@email.com", "password", "Admin", "Admin", "I am test user", UserStatusEnums.ACTIVE, is_admin=True)
 
         db.session.add_all([u1, u2, u3, u4])
         db.session.commit()

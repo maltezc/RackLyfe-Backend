@@ -8,6 +8,9 @@ from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums, PriceEnums, RentalDurationEnum, ListingStatusEnum, RackMountTypeEnum, \
     RackActivityTypeEnum
 from mnb_backend.users.models import User
+from unittest.mock import patch
+
+
 
 from flask_bcrypt import Bcrypt
 
@@ -33,7 +36,7 @@ class CreateListingTestCase(ListingBaseViewTestCase):
             primary_image_url = "https://books.google.com/books/publisher/content?id=5y6JEAAAQBAJ&pg=PP1&img=1&zoom=3&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
             title = "Large Cargo basket"
             rack_mount_type = RackMountTypeEnum.ROOF.value
-            activity_type = RackActivityTypeEnum.CARGOBASKET.value
+            activity_type = RackActivityTypeEnum.CARGO.value
             rate_price = 2000,
 
             # Create a listing
@@ -57,7 +60,10 @@ class CreateListingTestCase(ListingBaseViewTestCase):
 
 
 class GetListingTestCase(ListingBaseViewTestCase):
-    def test_serialize_listing_object(self):
+
+    @patch("mnb_backend.addresses.models.fuzz_coordinates")
+    def test_serialize_listing_object(self, mock_fuzz_coordinates):
+
         with app.app_context():
             u1 = db.session.get(User, self.u1_id)
             a1 = db.session.get(Address, self.a1_id)
@@ -66,7 +72,7 @@ class GetListingTestCase(ListingBaseViewTestCase):
                                 "&hl=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280"
             title = "Small Ski Rack"
             rack_mount_type = RackMountTypeEnum.ROOF.value
-            activity_type = RackActivityTypeEnum.SKISSNOWBOARD.value
+            activity_type = "skissnowboard"
             # rate_price = 1000,
 
             # Create a listing
@@ -77,11 +83,14 @@ class GetListingTestCase(ListingBaseViewTestCase):
                 mount_type=rack_mount_type,
                 activity_type=activity_type,
                 rate_price=1500,
-                # rate_schedule=RentalDurationEnum.WEEKLY,
                 # status=ListingStatusEnum.AVAILABLE,
             )
 
+            mock_fuzz_coordinates.return_value = (-122.28195077277807, 38.006370801958916)
+
             serialized_listing = listing1.serialize()
+
+            mock_fuzz_coordinates.assert_called_once()
 
             self.assertEqual(serialized_listing, {
                 "id": listing1.id,
@@ -92,7 +101,6 @@ class GetListingTestCase(ListingBaseViewTestCase):
                 "mount_type": listing1.mount_type.value,
                 "activity_type": listing1.activity_type.value,
                 "rate_price": listing1.rate_price,
-                # "rate_schedule": listing1.rate_schedule.value,
                 "status": listing1.status.value,
                 "reservations": []
             })
