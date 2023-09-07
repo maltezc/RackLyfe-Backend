@@ -175,7 +175,7 @@ def toggle_user_status(user_uid):
 
     current_user_id = get_jwt_identity()
     current_user = User.query.get_or_404(current_user_id)
-    user_to_update = User.query.get(user_uid)
+    user_to_update = db.session.get(User, user_uid)
 
     if user_to_update is None:
         abort(404)
@@ -203,7 +203,7 @@ def delete_user(user_uid):
     """Delete user. Must be Admin to delete user."""
 
     current_user_id = get_jwt_identity()
-    user_to_delete = User.query.get(user_uid)
+    user_to_delete = db.session.get(User, user_uid)
 
     if user_to_delete is None:
         abort(404, description="User not found")

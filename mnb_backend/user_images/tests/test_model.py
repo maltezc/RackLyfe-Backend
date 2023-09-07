@@ -85,4 +85,4 @@ class TestUserImage(UserModelTestCase):
         db.session.commit()
 
         # Assert
-        self.assertIsNone(UserImage.query.get(user_image.id))
+        self.assertIsNone(db.session.get(UserImage, user_image.id))

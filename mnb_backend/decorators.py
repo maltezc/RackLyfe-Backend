@@ -5,6 +5,7 @@ from functools import wraps
 from mnb_backend.messages.models import Message
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
+from mnb_backend.database import db
 
 
 def user_address_required(f):
@@ -18,7 +19,7 @@ def user_address_required(f):
 
         current_user_id = get_jwt_identity()
 
-        user = User.query.get(current_user_id)
+        user = db.session.get(User, current_user_id)
         if not user:
             abort(400)
         if not user.address:
@@ -40,8 +41,7 @@ def admin_required(f):
 
         current_user_id = get_jwt_identity()
 
-        # user_id = g.user_id  # assuming g.user_id is the user ID of the logged-in user
-        user = User.query.get(current_user_id)
+        user = db.session.get(User, current_user_id)
         if not user:
             abort(400)
         if not user.is_admin:

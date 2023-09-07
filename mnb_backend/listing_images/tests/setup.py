@@ -8,6 +8,7 @@ from mnb_backend.database import db
 from mnb_backend.enums import UserStatusEnums, RackMountTypeEnum, RackActivityTypeEnum
 from mnb_backend.listings.models import Listing
 from mnb_backend.users.models import User
+from mnb_backend.test_setup_helpers import delete_all_tables
 
 
 class ListingImagesBaseViewTestCase(TestCase):
@@ -15,16 +16,7 @@ class ListingImagesBaseViewTestCase(TestCase):
         """
         Create test client, add sample data."""
 
-        # This order is important
-        Listing.query.delete()
-        Location.query.delete()
-        Address.query.delete()  # This should come before ZipCode
-        ZipCode.query.delete()
-        State.query.delete()
-        City.query.delete()
-        User.query.delete()
-
-        db.session.commit()  # Commit after deletion
+        delete_all_tables(self)
 
         # Insert all states into the database
         for state_data in states:

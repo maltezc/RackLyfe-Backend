@@ -85,7 +85,8 @@ def get_listing_image(listing_image_id):
         {listing_image: {id, listing_owner, image_url }}
     """
 
-    listing_image = ListingImage.query.get(listing_image_id)
+
+    listing_image = db.session.get(ListingImage, listing_image_id)
     if listing_image:
         serialized = listing_image.serialize()
         return jsonify(listing_image=serialized)
@@ -99,7 +100,7 @@ def delete_listing_image(listing_image_id):
     """delete listing image"""
 
     current_user_id = get_jwt_identity()
-    listing_image = ListingImage.query.get(listing_image_id)
+    listing_image = db.session.get(ListingImage, listing_image_id)
     if not listing_image:
         abort(404)
 

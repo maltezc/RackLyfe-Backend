@@ -72,8 +72,6 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
 
             serialized_reservation = updated_reservation.serialize()
 
-            # mock_fuzz_coordinates.assert_called_once()
-
             self.assertEqual(len(l1.reservations), 1)
             self.assertEqual(reservation1.start_date, updated_start_date)
             self.assertEqual(serialized_reservation, {

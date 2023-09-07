@@ -185,8 +185,8 @@ def db_add_user_image(user_id, image_url):
         db.session.add(user_image)
         db.session.commit()
 
-        user = User.query.get(user_id)
-        user_image = UserImage.query.get(user_image.id)
+        user = db.session.get(User, user_id)
+        user_image = db.session.get(UserImage, user_image.id)
         user.profile_image = user_image
 
         db.session.commit()

@@ -6,6 +6,7 @@ from mnb_backend.enums import UserStatusEnums
 from mnb_backend.user_images.models import UserImage
 from mnb_backend.users.models import User
 from mnb_backend import app
+from mnb_backend.test_setup_helpers import delete_all_tables
 
 from flask_bcrypt import Bcrypt
 
@@ -22,8 +23,9 @@ class UserModelTestCase(TestCase):
         """
         Create test client, add sample data."""
 
-        UserImage.query.delete()
-        User.query.delete()
+        # UserImage.query.delete()
+        # User.query.delete()
+        delete_all_tables(self)
 
         hashed_password = (bcrypt
                            .generate_password_hash("password")

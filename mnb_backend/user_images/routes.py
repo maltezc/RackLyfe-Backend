@@ -58,7 +58,6 @@ def update_user_image():
         current_user_id = get_jwt_identity()
         user = User.query.get_or_404(current_user_id)
         user_image = user.profile_image
-        # user_image = UserImage.query.get_or_404(user_image_id)
 
         if user.id == user_image.user.id:
             profile_image = request.files.get("profile_image")
