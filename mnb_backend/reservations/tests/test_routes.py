@@ -1,18 +1,17 @@
 """test file for reservation routes"""
+import json
 from datetime import datetime, timedelta
-from io import BytesIO
+from mnb_backend.general_helpers import date_short_format_string
 
+from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
+from sqlalchemy import JSON
 
 from mnb_backend import app
 from mnb_backend.database import db
-from mnb_backend.enums import ListingStatusEnum, RackMountTypeEnum, RackActivityTypeEnum
 from mnb_backend.listings.models import Listing
-from mnb_backend.listings.tests.setup import ListingBaseViewTestCase
 from mnb_backend.reservations.tests.setup import ReservationsBaseViewTestCase
 from mnb_backend.users.models import User
-
-from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt()
 
@@ -33,15 +32,19 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
         access_token = create_access_token(identity=u1.id)
 
         json_data = {
-            "start_date": "2023-8-1",
+            "start_date": datetime.utcnow().strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             response = client.post(f"/api/reservations/{l1.id}",
-                                   headers={"Authorization": f"Bearer {access_token}"},
-                                   data=json_data)
+                                   headers={
+                                       "Content-Type": "application/json",
+                                       "Authorization": f"Bearer {access_token}"
+                                   },
+                                   data=json.dumps(json_data))
+            # data=json_data)
 
             # Assert
             self.assertEqual(response.status_code, 201)
@@ -59,25 +62,35 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
         access_token = create_access_token(identity=u1.id)
 
         json_data1 = {
-            "start_date": "2023-8-1",
+            "start_date": "Wed Sep 03 2023",
             "duration": 5,
             "renter": u2.id
         }
 
         json_data2 = {
-            "start_date": "2023-9-1",
+            "start_date": "Thu Sep 04 2023",
             "duration": 10,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             response1 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data1)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"
+                                    },
+                                    data=json.dumps(
+                                        json_data1
+                                    ))
 
             response2 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data2)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"
+                                    },
+                                    data=json.dumps(
+                                        json_data2
+                                    ))
 
             # Assert
             self.assertEqual(response1.status_code, 201)
@@ -98,46 +111,56 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data = {
-            "start_date": str(future_date),
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         json_data1 = {
-            "start_date": str(datetime.utcnow().date() - timedelta(days=4)),
+            "start_date": (datetime.utcnow().date() - timedelta(days=4)).strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         json_data2 = {
-            "start_date":  str(datetime.utcnow().date() + timedelta(days=1)),
+            "start_date": (datetime.utcnow().date() + timedelta(days=1)).strftime(date_short_format_string),
             # "start_date": "2023-9-1",
             "duration": 10,
             "renter": u2.id
         }
 
         json_data3 = {
-            "start_date": str(datetime.utcnow().date() + timedelta(days=2)),
+            "start_date": (datetime.utcnow().date() + timedelta(days=2)).strftime(date_short_format_string),
             "duration": 10,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             response1 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data1)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data1))
 
             response2 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data2)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data2))
 
             response3 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data3)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"
+                                    },
+                                    data=json.dumps(json_data3))
 
             response = client.get(f"/api/reservations/{l1.id}/upcoming",
-                                  headers={"Authorization": f"Bearer {access_token}"},
-                                  data=json_data)
+                                  headers={
+                                      "Content-Type": "application/json",
+                                      "Authorization": f"Bearer {access_token}"
+                                  },
+                                  data=json.dumps(json_data))
             data = response.get_json()
 
             # Assert
@@ -159,45 +182,53 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data = {
-            "start_date": str(future_date),
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         json_data1 = {
-            "start_date": "2023-8-1",
+            "start_date": "Wed Aug 30 2023",
             "duration": 5,
             "renter": u2.id
         }
 
         json_data2 = {
-            "start_date": "2023-9-1",
+            "start_date": "Fri Aug 23 2023",
             "duration": 10,
             "renter": u2.id
         }
 
         json_data3 = {
-            "start_date": "2022-9-1",
+            "start_date": "Wed Aug 16 2023",
             "duration": 10,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             response1 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data1)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data1))
 
             response2 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data2)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data2))
 
             response3 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data3)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data3))
 
             response = client.get(f"/api/reservations/{l1.id}/past",
-                                  headers={"Authorization": f"Bearer {access_token}"},
-                                  data=json_data)
+                                  headers={
+                                      "Content-Type": "application/json",
+                                      "Authorization": f"Bearer {access_token}"},
+                                  data=json.dumps(json_data))
             data = response.get_json()
 
             # Assert
@@ -276,21 +307,25 @@ class ReadReservationTestCase(ReservationsBaseViewTestCase):
         access_token = create_access_token(identity=u1.id)
 
         json_data1 = {
-            "start_date": "2023-8-1",
+            "start_date": datetime.utcnow().strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             response1 = client.post(f"/api/reservations/{l1.id}",
-                                    headers={"Authorization": f"Bearer {access_token}"},
-                                    data=json_data1)
+                                    headers={
+                                        "Content-Type": "application/json",
+                                        "Authorization": f"Bearer {access_token}"},
+                                    data=json.dumps(json_data1))
 
             data = response1.get_json()
             response1_id = data["reservation"]["id"]
 
             response = client.get(f"/api/reservations/{response1_id}",
-                                  headers={"Authorization": f"Bearer {access_token}"})
+                                  headers={
+                                      "Content-Type": "application/json",
+                                      "Authorization": f"Bearer {access_token}"})
 
             # Assert
             self.assertEqual(response1.status_code, 201)
@@ -313,27 +348,31 @@ class UpdateReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data1 = {
-            "start_date": future_date,
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         patch_data1 = {
-            "start_date": future_date,
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 6,
         }
 
         with app.test_client() as client:
             post_response = client.post(f"/api/reservations/{l1.id}",
-                                        headers={"Authorization": f"Bearer {access_token}"},
-                                        data=json_data1)
+                                        headers={
+                                            "Content-Type": "application/json",
+                                            "Authorization": f"Bearer {access_token}"},
+                                        data=json.dumps(json_data1))
 
             data = post_response.get_json()
             response1_id = data["reservation"]["id"]
 
             patch_response = client.patch(f"/api/reservations/{response1_id}",
-                                          headers={"Authorization": f"Bearer {access_token}"},
-                                          data=patch_data1)
+                                          headers={
+                                              "Content-Type": "application/json",
+                                              "Authorization": f"Bearer {access_token}"},
+                                          data=json.dumps(patch_data1))
 
             data = patch_response.get_json()
 
@@ -356,7 +395,7 @@ class UpdateReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data1 = {
-            "start_date": future_date,
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
@@ -367,15 +406,19 @@ class UpdateReservationTestCase(ReservationsBaseViewTestCase):
 
         with app.test_client() as client:
             post_response = client.post(f"/api/reservations/{l1.id}",
-                                        headers={"Authorization": f"Bearer {access_token}"},
-                                        data=json_data1)
+                                        headers={
+                                            "Content-Type": "application/json",
+                                            "Authorization": f"Bearer {access_token}"},
+                                        data=json.dumps(json_data1))
 
             data = post_response.get_json()
             response1_id = data["reservation"]["id"]
 
             patch_response = client.patch(f"/api/reservations/{response1_id}/cancel",
-                                          headers={"Authorization": f"Bearer {access_token}"},
-                                          data=patch_data1)
+                                          headers={
+                                              "Content-Type": "application/json",
+                                              "Authorization": f"Bearer {access_token}"},
+                                          data=json.dumps(patch_data1))
 
             data = patch_response.get_json()
 
@@ -396,29 +439,31 @@ class UpdateReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data1 = {
-            "start_date": future_date,
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             post_response = client.post(f"/api/reservations/{l1.id}",
-                                        headers={"Authorization": f"Bearer {access_token}"},
-                                        data=json_data1)
+                                        headers={
+                                            "Content-Type": "application/json",
+                                            "Authorization": f"Bearer {access_token}"},
+                                        data=json.dumps(json_data1))
 
             data = post_response.get_json()
             response1_id = data["reservation"]["id"]
 
             patch_response = client.patch(f"/api/reservations/{response1_id}/accept",
-                                          headers={"Authorization": f"Bearer {access_token}"})
+                                          headers={
+                                              "Content-Type": "application/json",
+                                              "Authorization": f"Bearer {access_token}"})
 
             data = patch_response.get_json()
 
             # Assert
             self.assertEqual(data["reservation"]["status"], "Accepted")
 
-
-class DeleteReservationTestCase(ReservationsBaseViewTestCase):
     def test_decline_reservation_happy(self):
         # Arrange
         u1 = db.session.get(User, self.u1_id)
@@ -433,21 +478,25 @@ class DeleteReservationTestCase(ReservationsBaseViewTestCase):
         future_date = today.date() + days
 
         json_data1 = {
-            "start_date": future_date,
+            "start_date": future_date.strftime(date_short_format_string),
             "duration": 5,
             "renter": u2.id
         }
 
         with app.test_client() as client:
             post_response = client.post(f"/api/reservations/{l1.id}",
-                                        headers={"Authorization": f"Bearer {access_token}"},
-                                        data=json_data1)
+                                        headers={
+                                            "Content-Type": "application/json",
+                                            "Authorization": f"Bearer {access_token}"},
+                                        data=json.dumps(json_data1))
 
             data = post_response.get_json()
             response1_id = data["reservation"]["id"]
 
             patch_response = client.patch(f"/api/reservations/{response1_id}/decline",
-                                          headers={"Authorization": f"Bearer {access_token}"})
+                                          headers={
+                                              "Content-Type": "application/json",
+                                              "Authorization": f"Bearer {access_token}"})
 
             data = patch_response.get_json()
 

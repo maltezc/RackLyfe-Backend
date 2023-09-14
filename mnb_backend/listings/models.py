@@ -84,7 +84,7 @@ class Listing(db.Model):
             "activity_type": enum_serializer(self.activity_type),
             "rate_price": self.rate_price,
             "status": enum_serializer(self.status),
-            "reservations": [reservation.serialize() for reservation in self.reservations]
+            # "reservations": [reservation.serialize() for reservation in self.reservations]
         }
 
     @classmethod

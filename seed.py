@@ -173,7 +173,7 @@ listing1 = Listing(
                       "=en&bul=1&sig=ACfU3U0tX540c49AVK3fB3P75wrNGyzlNg&w=1280",
     title="Large Cargo Basket",
     mount_type=RackMountTypeEnum.ROOF,
-    activity_type=RackActivityTypeEnum.CARGOBASKET,
+    activity_type=RackActivityTypeEnum.CARGO,
     # condition=ListingConditionEnum.FAIR,
     rate_price=2000,
     # rate_schedule=RentalDurationEnum.WEEKLY,
@@ -237,7 +237,7 @@ listing4 = Listing(
                       "=1&sig=ACfU3U10EpXuljnFioBTtk3Kc_duZ83How&w=1280",
     title="Small Cargo Basket",
     mount_type=RackMountTypeEnum.ROOF,
-    activity_type=RackActivityTypeEnum.CARGOBASKET,
+    activity_type=RackActivityTypeEnum.CARGO,
     rate_price=1000,
     status=ListingStatusEnum.AVAILABLE
 )
@@ -269,7 +269,10 @@ reservation1 = Reservation(
     total=total1,
 )
 reservation1.renter = user2
-reservation1.listing = listing1
+# reservation1.listing = listing1
+db.session.add(reservation1)
+db.session.flush()
+listing1.reservations.append(reservation1)
 
 start_date2 = datetime(2023, 5, 25, 12, 1)
 timedelta2 = timedelta(weeks=2)
@@ -284,6 +287,8 @@ reservation2 = Reservation(
     total=total2
 )
 reservation2.renter = user1
+db.session.add(reservation2)
+db.session.flush()
 listing2.reservations.append(reservation2)
 
 
@@ -300,9 +305,10 @@ reservation3 = Reservation(
 )
 
 reservation3.renter = user1
+db.session.add(reservation3)
+db.session.flush()
 listing3.reservations.append(reservation3)
 
-db.session.add_all([reservation1, reservation2, reservation3])
 db.session.commit()
 
 # endregion
