@@ -1,4 +1,4 @@
-# Pool Party BnB - Backend
+# RackLyfe - Backend
 
 ### How to start the program
 1) Fork  or Clone the project to your machine
@@ -36,21 +36,27 @@ NOTE: must sent environment variable to test for db.engine to use mnb_test datab
 
 
 ### TODOs / Aspirations
+- See github project
 
 ### Deployed link
+- coming soon.
 
 ### Proud Code Snippet and How You Solved It
+- coming soon
 
 
+### Project Modules
+├── RackLyfe-Backend
+│   ├── addresses
+│   ├── auth
+│   ├── listing_images
+│   ├── listings
+│   ├── messages
+│   ├── reservations
+│   ├── searches
+│   ├── user_images
+│   └──  users
 
-### Project Structure
-├── ShareBnB-Backend
-│   ├── api_helpers.py
-│   ├── app.py
-│   ├── models.py
-│   ├── readme.md
-│   ├── requirements.txt
-│   └── seed.py
 
 <br/>
 
@@ -87,6 +93,9 @@ tests/test_factory.py ..                                         [100%]
 If any tests fail, pytest will show the error that was raised. You can run `pytest -v` to get a list of each test function rather than dots.
 
 To measure the code coverage of your tests, use the coverage command to run pytest instead of running it directly.
+
+Run full test suite: 
+`$ pytest -v --cov=mnb_backend --cov-report term-missing`
 
 `$ coverage run -m pytest`
 You can either view a simple coverage report in the terminal:
