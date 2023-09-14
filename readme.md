@@ -94,8 +94,8 @@ If any tests fail, pytest will show the error that was raised. You can run `pyte
 
 To measure the code coverage of your tests, use the coverage command to run pytest instead of running it directly.
 
-Run full test suite: 
-`$ pytest -v --cov=mnb_backend --cov-report term-missing`
+Run full test suite with test db: 
+`$ FLASK_DEBUG=test pytest -v --cov=mnb_backend --cov-report term-missing`
 
 `$ coverage run -m pytest`
 You can either view a simple coverage report in the terminal:
