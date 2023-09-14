@@ -5,6 +5,7 @@ from werkzeug.exceptions import abort
 from flask import jsonify
 
 from mnb_backend.database import db
+from mnb_backend.general_helpers import date_short_format_string, date_numbers_format_string
 from mnb_backend.listings.models import Listing
 from mnb_backend.enums import enum_serializer, ReservationStatusEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -88,10 +89,9 @@ class Reservation(db.Model):
             "duration": str(self.duration),
             "total": self.total,
             "cancellation_reason": self.cancellation_reason,
-            # "book": book.serialize(),
-            "listing_owner": listing.owner.serialize(),
+            # "listing_owner": listing.owner.serialize(),
             "listing_renter": self.renter.serialize(),
-            "listing_id": listing.id,
+            "listing": listing.serialize(),
         }
 
     def __repr__(self):
@@ -108,16 +108,12 @@ class Reservation(db.Model):
 
         total, duration = get_time_duration_and_total(duration, listing)
 
-        # TODO: ADD CHECK FOR RENTER AND OWNER CANNOT BE THE SAME USER
-
         try:
             reservation = Reservation(
                 reservation_date_created=datetime.utcnow(),
-                start_date=start_date,  # TODO: hook up with calendly to be able to coordinate pickup/dropoff times
+                start_date=start_date,
                 duration=duration,
-                # duration=timedelta_duration,
                 end_date=start_date + duration,
-                # end_date=start_date + timedelta_duration,
                 status=ReservationStatusEnum.PENDING,
                 total=total
             )

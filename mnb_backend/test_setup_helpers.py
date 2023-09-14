@@ -27,3 +27,6 @@ def delete_all_tables(self):
     User.query.delete()
 
     db.session.commit()  # Commit after deletion
+
+
+

@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 
 from mnb_backend import app
 from mnb_backend.database import db
+from mnb_backend.general_helpers import date_short_format_string
 from mnb_backend.listings.models import Listing
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.reservations.tests.setup import ReservationsBaseViewTestCase
@@ -47,9 +48,8 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
                 "duration": str(reservation1.duration),
                 "total": reservation1.total,
                 "cancellation_reason": reservation1.cancellation_reason,
-                "listing_owner": l1.owner.serialize(),
                 "listing_renter": reservation1.renter.serialize(),
-                "listing_id": l1.id,
+                "listing": l1.serialize(),
             })
 
     @patch("mnb_backend.addresses.models.fuzz_coordinates")
@@ -83,7 +83,6 @@ class CreateReservationTestCase(ReservationsBaseViewTestCase):
                 "duration": str(reservation1.duration),
                 "total": reservation1.total,
                 "cancellation_reason": reservation1.cancellation_reason,
-                "listing_owner": l1.owner.serialize(),
                 "listing_renter": reservation1.renter.serialize(),
-                "listing_id": l1.id,
+                "listing": l1.serialize(),
             })

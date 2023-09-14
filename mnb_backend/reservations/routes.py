@@ -5,6 +5,7 @@ from werkzeug.exceptions import abort
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from mnb_backend.general_helpers import date_short_format_string, date_numbers_format_string
 from mnb_backend.listings.models import Listing
 from mnb_backend.reservations.models import Reservation
 from mnb_backend.users.models import User
@@ -34,16 +35,16 @@ def create_reservation(listing_uid):
     user = User.query.get_or_404(current_user)
 
     if user:
-        data = request.form
+        data = request.json
 
-        start_date_in = data.get('start_date')
-        duration_in = data.get('duration')
-        renter_in = data.get('renter')
+        start_date_in = data['start_date']
+        duration_in = data['duration']
+        renter_in = data['renter']
 
         renter = User.query.get_or_404(renter_in)
 
         listing = Listing.query.get_or_404(listing_uid)
-        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        start_date = datetime.strptime(start_date_in, date_short_format_string)
         duration = timedelta(days=int(duration_in))
 
         reservation = Reservation.create_new_reservation(start_date, duration, listing, renter)
@@ -173,11 +174,11 @@ def update_reservation(reservation_id):
     is_in_future = reservation_is_in_future(reservation)
 
     if is_in_future:
-        data = request.form
-        start_date_in = data.get('start_date')
-        duration_in = data.get('duration')
+        data = request.json
+        start_date_in = data['start_date']
+        duration_in = data['duration']
 
-        start_date = datetime.strptime(start_date_in, '%Y-%m-%d')
+        start_date = datetime.strptime(start_date_in, date_short_format_string)
         int_duration = int(duration_in)
         duration = timedelta(days=int(duration_in))
 
@@ -198,8 +199,8 @@ def cancel_reservation_request(reservation_id):
     current_user_id = get_jwt_identity()
     reservation = Reservation.query.get_or_404(reservation_id)
     is_in_future = reservation_is_in_future(reservation)
-    data = request.form
-    cancellation_reason = data.get('cancellation_reason')
+    data = request.json
+    cancellation_reason = data['cancellation_reason']
     reservation_status = reservation.status
     # TODO: CHECK USERS' CANCELLATION POLICY
 
